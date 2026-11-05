@@ -1,0 +1,15 @@
+{
+  "name": "grid-basic",
+  "view": "grid",
+  "title": "动态表 / 多维透视表",
+  "input_types": ["csv", "json", "xlsx"],
+  "required_columns": [],
+  "optional_columns": ["任意维度列", "任意数值列"],
+  "options": {
+    "theme": ["light", "dark"],
+    "palette": ["signal", "cinnabar", "patina", "blueprint", "inkwash", "mono", "sundown", "dunhuang", "aurora", "morandi"],
+    "modes": ["detail", "pivot"],
+    "aggregation": ["sum", "count", "avg", "min", "max"]
+  },
+  "description": "动态表/多维透视表：任意表格的直接交付。明细模式：列头点击排序（升/降/原序）、全文搜索、列显隐、分页（50 行/页）。透视模式：行维度≤2 级（嵌套小计）× 列维度≤1 级 × 值列 × 五种聚合（sum/count/avg/min/max），合计行/列自动。列类型自动识别（解析率≥80% 为数值列），≥2 维度列时默认进入透视模式；空值显示 — 并计入识别报告；行数 >5000 截断警告。双主题 + 10 配色；冻结表头、斑马纹、行 hover。--view grid 明细 / --view pivot 透视；auto 对 ≥3 维度列的多维数据自动推荐。离线单文件。"
+}

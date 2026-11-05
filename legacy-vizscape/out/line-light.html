@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sample-line · vizscape line-basic</title>
+<style>
+:root{--sans:"Noto Sans SC",system-ui,sans-serif;--serif:"Fraunces",Georgia,serif;--mono:"JetBrains Mono",ui-monospace,monospace}
+html[data-theme="light"]{--bg:#f6f3ec;--paper:#fffdf7;--ink:#171a1e;--muted:#6b6f6a;--faint:#9a9d96;--line:#e2ded2;--line2:#d1ccc0;--acc:#0f766e;--shadow:0 10px 36px rgba(23,26,30,.08);--grid:rgba(23,26,30,.06);--tip:#171a1e;--tipink:#fffdf7}
+html[data-theme="dark"]{--bg:#0d0e0a;--paper:#131410;--ink:#ede9dc;--muted:#9aa08a;--faint:#5e6450;--line:#23261d;--line2:#2e3323;--acc:#c6f13f;--shadow:0 10px 36px rgba(0,0,0,.4);--grid:rgba(237,233,220,.05);--tip:#ede9dc;--tipink:#0d0e0a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);padding:28px;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:56px 56px;opacity:.6}
+.wrap{max-width:1080px;margin:0 auto;position:relative}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1.5px solid var(--ink);padding-bottom:16px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--acc);text-transform:uppercase}
+h1{font-family:var(--serif);font-weight:300;font-size:clamp(32px,5vw,52px);letter-spacing:-.02em}
+h1 em{font-style:italic;color:var(--acc)}
+.seg{display:flex;background:var(--paper);border:1px solid var(--line2);border-radius:99px;padding:3px;box-shadow:var(--shadow)}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:13px;padding:8px 14px;border-radius:99px;cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0}
+.toolbar .label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.toggle{appearance:none;border:1px solid var(--line2);background:var(--paper);color:var(--muted);border-radius:99px;padding:8px 14px;font-size:13px;cursor:pointer}
+.toggle.on{background:var(--acc);border-color:var(--acc);color:var(--paper);font-weight:700}
+.meta{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--muted);margin:4px 0 14px}
+.meta b{color:var(--ink)}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);position:relative}
+#legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:transparent;color:var(--ink);border-radius:99px;padding:6px 12px;font-size:12px;cursor:pointer;transition:.2s}
+.chip i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.chip.off{opacity:.38;text-decoration:line-through}
+canvas{width:100%;height:380px;display:block;cursor:crosshair}
+#tooltip{position:absolute;pointer-events:none;background:var(--tip);color:var(--tipink);padding:10px 12px;border-radius:10px;font-family:var(--mono);font-size:12px;line-height:1.7;display:none;z-index:10;min-width:180px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+#tooltip b{color:var(--acc)}
+#detail{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;min-height:22px}
+#detail b{color:var(--ink)}
+.table{width:100%;border-collapse:collapse;font-size:13px;margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.table th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-align:left;color:var(--muted);border-bottom:1.5px solid var(--ink);padding:10px}
+.table td{border-bottom:1px solid var(--line);padding:9px 10px}
+.table td.num,.table th.num{text-align:right;font-family:var(--mono)}
+.bar-cell{height:8px;border-radius:99px;background:var(--acc)}
+footer{margin-top:18px;font-family:var(--mono);font-size:11px;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.hint{font-size:12px;color:var(--faint);margin-top:8px}
+.quality{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--paper);border-radius:16px;padding:14px;margin:14px 0 12px;box-shadow:0 1px 0 rgba(0,0,0,.02) inset}
+.quality.warn{border-left-color:#e85d3f}
+.quality-head{display:flex;justify-content:space-between;gap:14px;align-items:center;border-bottom:1px dashed var(--line);padding-bottom:10px;margin-bottom:10px}
+.quality-head h2{font-family:var(--serif);font-size:20px;font-weight:420;letter-spacing:-.02em}
+.quality-score{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;line-height:1.6}.quality-score b{display:block;color:var(--acc);font-size:13px}.quality.warn .quality-score b{color:#e85d3f}
+.quality-grid{display:flex;gap:8px;flex-wrap:wrap}.qs{border:1px solid var(--line2);border-radius:999px;padding:5px 9px;font-family:var(--mono);font-size:11px;color:var(--muted)}.qs b{color:var(--ink);font-weight:500}
+.quality-warnings{margin:11px 0 0;padding-left:18px;color:#b5412f;font-size:12px;line-height:1.75}.quality-ok{margin:11px 0 0;color:var(--acc);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">vizscape · line-basic · LIGHT</div><h1>sample-line <em>· 折线图</em></h1></div>
+  <div class="seg" id="themeSeg" role="group" aria-label="主题"><button type="button" data-theme="light" aria-pressed="false">☀ 浅色</button><button type="button" data-theme="dark" aria-pressed="false">☾ 深色</button></div>
+</header>
+
+<div class="toolbar">
+  <span class="label">平滑</span>
+  <button class="toggle on" id="btnSmooth" type="button" aria-pressed="true">∿ 平滑曲线</button>
+  <button class="toggle" id="btnArea" type="button" aria-pressed="false">◣ 面积填充</button>
+  <span class="label">视图</span>
+  <div class="seg" id="viewSeg" role="group" aria-label="视图预设"><button type="button" data-view="all" class="on" aria-pressed="true">全部</button><button type="button" data-view="last6" aria-pressed="false">近6点</button><button type="button" data-view="last12" aria-pressed="false">近12点</button><button type="button" data-view="first6" aria-pressed="false">前6点</button></div>
+  <button class="toggle" id="btnReset" type="button">⌂ 重置缩放</button>
+</div>
+
+<div class="meta">
+  <span>来源 <b>sample-line.csv</b></span><span>点数 <b>12</b></span><span>系列 <b>3</b></span><span>总和 <b>15,790</b></span><span>峰值 <b>12月 · 消费 = 780</b></span>
+</div>
+
+<div class="card">
+  <div id="legend"></div>
+  <canvas id="chart" role="img" aria-label="sample-line 折线图，明细见下方表格"></canvas>
+  <div id="tooltip"></div>
+  <div id="detail">💡 悬浮查看各系列值 · 拖拽框选缩放 · 双击重置 · 点图例开关系列</div>
+  <div class="hint">支持：平滑/直线切换 · 面积填充 · 悬浮多系列 tooltip（含占比） · 框选缩放 · 图例显隐 · 视图预设（全部/近6/近12/前6） · 负值自动下探</div>
+</div>
+
+<section class="quality ok" aria-label="数据识别报告">
+  <div class="quality-head"><div><p class="eyebrow">data quality</p><h2>数据识别报告</h2></div><div class="quality-score"><b>高置信识别</b>3 个数值列 · 阈值 ≥ 80%</div></div>
+  <div class="quality-grid"><span class="qs"><b>模式</b> wide</span><span class="qs"><b>行数</b> 12</span><span class="qs"><b>分类列</b> label</span><span class="qs"><b>系列</b> (每个数值列=一个系列)</span><span class="qs"><b>数值</b> 消费, 出行, 政务</span><span class="qs"><b>缺失按0计</b> 0</span><span class="qs"><b>非法按0计</b> 0</span><span class="qs"><b>重复组合</b> 0</span></div>
+  <p class="quality-ok">未发现缺失/非法/重复风险；字段映射可直接信任。</p>
+</section>
+
+<table class="table"><thead><tr><th>分类</th><th class="num">消费</th><th class="num">出行</th><th class="num">政务</th><th class="num">小计</th><th>相对占比</th><th class="num">占总</th></tr></thead><tbody><tr><td>1月</td><td class="num">420</td><td class="num">300</td><td class="num">180</td><td class="num">900</td><td><div class="bar-cell" style="width:52%"></div></td><td class="num">5.7%</td></tr><tr><td>2月</td><td class="num">460</td><td class="num">330</td><td class="num">200</td><td class="num">990</td><td><div class="bar-cell" style="width:57%"></div></td><td class="num">6.3%</td></tr><tr><td>3月</td><td class="num">520</td><td class="num">310</td><td class="num">230</td><td class="num">1,060</td><td><div class="bar-cell" style="width:61%"></div></td><td class="num">6.7%</td></tr><tr><td>4月</td><td class="num">510</td><td class="num">360</td><td class="num">250</td><td class="num">1,120</td><td><div class="bar-cell" style="width:65%"></div></td><td class="num">7.1%</td></tr><tr><td>5月</td><td class="num">580</td><td class="num">390</td><td class="num">270</td><td class="num">1,240</td><td><div class="bar-cell" style="width:72%"></div></td><td class="num">7.9%</td></tr><tr><td>6月</td><td class="num">620</td><td class="num">410</td><td class="num">290</td><td class="num">1,320</td><td><div class="bar-cell" style="width:76%"></div></td><td class="num">8.4%</td></tr><tr><td>7月</td><td class="num">610</td><td class="num">430</td><td class="num">310</td><td class="num">1,350</td><td><div class="bar-cell" style="width:78%"></div></td><td class="num">8.5%</td></tr><tr><td>8月</td><td class="num">660</td><td class="num">450</td><td class="num">330</td><td class="num">1,440</td><td><div class="bar-cell" style="width:83%"></div></td><td class="num">9.1%</td></tr><tr><td>9月</td><td class="num">640</td><td class="num">470</td><td class="num">340</td><td class="num">1,450</td><td><div class="bar-cell" style="width:84%"></div></td><td class="num">9.2%</td></tr><tr><td>10月</td><td class="num">700</td><td class="num">490</td><td class="num">360</td><td class="num">1,550</td><td><div class="bar-cell" style="width:90%"></div></td><td class="num">9.8%</td></tr><tr><td>11月</td><td class="num">740</td><td class="num">520</td><td class="num">380</td><td class="num">1,640</td><td><div class="bar-cell" style="width:95%"></div></td><td class="num">10.4%</td></tr><tr><td>12月</td><td class="num">780</td><td class="num">550</td><td class="num">400</td><td class="num">1,730</td><td><div class="bar-cell" style="width:100%"></div></td><td class="num">11.0%</td></tr></tbody></table>
+
+<footer><span>vizscape · line-basic · 多系列折线 · 纯 Canvas 无 CDN</span><span>输入兼容：label+value / label+series+value / 宽表 / ECharts JSON</span></footer>
+</div>
+
+<script>
+const RAW={"labels": ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"], "series": [{"name": "消费", "values": [420, 460, 520, 510, 580, 620, 610, 660, 640, 700, 740, 780]}, {"name": "出行", "values": [300, 330, 310, 360, 390, 410, 430, 450, 470, 490, 520, 550]}, {"name": "政务", "values": [180, 200, 230, 250, 270, 290, 310, 330, 340, 360, 380, 400]}]};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let labels=[...RAW.labels], series=RAW.series.map(s=>({name:s.name, values:[...s.values]}));
+let smooth=true, area=false, view='all';
+let hidden=new Set(), hoverIdx=-1, zoomRange=null, dragging=false, dragX0=0, dragX1=0;
+let G={a:0,b:0,padL:48,padR:14,padT:18,padB:34,cw:1,ch:1,w:1,h:1,lo:0,hi:1};
+const PALETTE={light:['#0f766e','#e85d3f','#d99a06','#2563eb','#7c3aed','#059669','#db2777','#0891b2'],dark:['#c6f13f','#ff6b4a','#ffb224','#4de3c2','#7dd3fc','#f472b6','#a78bfa','#facc15']};
+const cv=document.getElementById('chart'), tip=document.getElementById('tooltip'), detail=document.getElementById('detail'), legendEl=document.getElementById('legend');
+const FONT='11px JetBrains Mono, monospace';
+function theme(){return document.documentElement.dataset.theme}
+function colors(){return PALETTE[theme()]||PALETTE.light}
+function fmt(v){return Math.abs(v)>=10?Math.round(v).toLocaleString():(+v.toFixed(2)).toLocaleString()}
+function niceStep(span){const raw=(span||1)/4, p=Math.pow(10,Math.floor(Math.log10(raw))), m=raw/p; return (m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10)*p}
+function visibleIdx(){
+  if(zoomRange) return zoomRange;
+  const n=labels.length;
+  if(view==='last6') return {a:Math.max(0,n-6),b:n-1};
+  if(view==='last12') return {a:Math.max(0,n-12),b:n-1};
+  if(view==='first6') return {a:0,b:Math.min(n-1,5)};
+  return {a:0,b:n-1};
+}
+function visibleSeries(){return series.map((s,i)=>({s,i})).filter(x=>!hidden.has(x.i))}
+function yRange(vis,a,b){
+  let lo=0,hi=0;
+  vis.forEach(x=>{for(let k=a;k<=b;k++){const v=x.s.values[k];if(v>hi)hi=v;if(v<lo)lo=v}});
+  const span=(hi-lo)||Math.max(Math.abs(hi),1);
+  return {lo:lo<0?lo-span*0.14:0, hi:hi+span*0.14};
+}
+function trace(g,pts){
+  g.moveTo(pts[0].x,pts[0].y);
+  if(!smooth){for(let i=1;i<pts.length;i++)g.lineTo(pts[i].x,pts[i].y);return}
+  for(let i=0;i<pts.length-1;i++){
+    const p0=pts[Math.max(0,i-1)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(pts.length-1,i+2)];
+    g.bezierCurveTo(p1.x+(p2.x-p0.x)/6,p1.y+(p2.y-p0.y)/6,p2.x-(p3.x-p1.x)/6,p2.y-(p3.y-p1.y)/6,p2.x,p2.y);
+  }
+}
+function draw(){
+  const dpr=window.devicePixelRatio||1, r=cv.getBoundingClientRect();
+  cv.width=r.width*dpr; cv.height=r.height*dpr;
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  const w=r.width, h=r.height, padR=14, padT=18, padB=34;
+  const cs=getComputedStyle(document.documentElement);
+  const ink=cs.getPropertyValue('--ink').trim(), faint=cs.getPropertyValue('--faint').trim(), line=cs.getPropertyValue('--line').trim(), acc=cs.getPropertyValue('--acc').trim();
+  const {a,b}=visibleIdx(), cols=colors(), vis=visibleSeries();
+  g.font=FONT;
+  if(!vis.length){
+    g.fillStyle=faint; g.textAlign='center'; g.fillText('所有系列已隐藏 · 点击图例恢复',w/2,h/2); g.textAlign='left';
+    tip.style.display='none'; detail.textContent='💡 点击图例恢复系列'; return;
+  }
+  const yr=yRange(vis,a,b), st=niceStep(yr.hi-yr.lo), lo=Math.floor(yr.lo/st)*st, hi=Math.ceil(yr.hi/st)*st;
+  const ticks=[];
+  for(let v=hi;v>=lo-st*1e-9;v-=st) ticks.push(+v.toFixed(10));
+  const padL=Math.max(48,Math.ceil(Math.max(...ticks.map(t=>g.measureText(fmt(t)).width)))+18);
+  const pr=Math.max(padR,Math.ceil(g.measureText(String(labels[b])).width/2)+6);
+  const cw=w-padL-pr, ch=h-padT-padB;
+  G={a,b,padL,padR:pr,padT,padB,cw,ch,w,h,lo,hi};
+  const X=k=>padL+(k-a)/Math.max(1,b-a)*cw, Y=v=>padT+ch-(v-lo)/((hi-lo)||1)*ch;
+  g.lineWidth=1; g.textAlign='right';
+  ticks.forEach(t=>{const y=Y(t);g.strokeStyle=line;g.beginPath();g.moveTo(padL,y);g.lineTo(w-pr,y);g.stroke();g.fillStyle=faint;g.fillText(fmt(t),padL-8,y+3)});
+  g.textAlign='left';
+  if(lo<0){g.strokeStyle=ink;g.globalAlpha=.35;g.beginPath();g.moveTo(padL,Y(0));g.lineTo(w-pr,Y(0));g.stroke();g.globalAlpha=1}
+  g.fillStyle=faint; g.textAlign='center';
+  const step=Math.ceil((b-a+1)/8)||1;
+  for(let k=a;k<=b;k++) if((b-a)<=14||(k-a)%step===0) g.fillText(String(labels[k]),X(k),h-12);
+  g.textAlign='left';
+  const base=Math.min(padT+ch,Math.max(padT,Y(0)));
+  vis.forEach(x=>{
+    const col=cols[x.i%cols.length], pts=[];
+    for(let k=a;k<=b;k++) pts.push({x:X(k),y:Y(x.s.values[k])});
+    if(area&&pts.length>1){
+      g.beginPath(); trace(g,pts); g.lineTo(pts[pts.length-1].x,base); g.lineTo(pts[0].x,base); g.closePath();
+      const gr=g.createLinearGradient(0,padT,0,padT+ch); gr.addColorStop(0,col+'55'); gr.addColorStop(1,col+'00'); g.fillStyle=gr; g.fill();
+    }
+    if(pts.length>1){g.beginPath(); trace(g,pts); g.strokeStyle=col; g.lineWidth=2.4; g.lineJoin='round'; g.stroke()}
+    pts.forEach((p,j)=>{const active=a+j===hoverIdx; g.beginPath(); g.arc(p.x,p.y,active?5:3.2,0,7); g.fillStyle=col; g.fill(); if(active){g.strokeStyle=ink;g.lineWidth=1.4;g.stroke()}});
+  });
+  if(dragging&&Math.abs(dragX1-dragX0)>4){const x0=Math.min(dragX0,dragX1),x1=Math.max(dragX0,dragX1);g.fillStyle=acc+'22';g.fillRect(x0,padT,x1-x0,ch)}
+  if(hoverIdx>=a&&hoverIdx<=b){
+    const x=X(hoverIdx); g.strokeStyle=acc; g.setLineDash([4,4]); g.beginPath(); g.moveTo(x,padT); g.lineTo(x,padT+ch); g.stroke(); g.setLineDash([]);
+    showTip(hoverIdx);
+  } else tip.style.display='none';
+  updateDetail();
+}
+function showTip(idx){
+  const vis=visibleSeries(), cols=colors();
+  const tot=vis.reduce((s,x)=>s+x.s.values[idx],0);
+  let html=`<b>${esc(labels[idx])}</b><br>`;
+  vis.forEach(x=>{const v=x.s.values[idx], share=(tot>0&&v>=0)?` · ${(v/tot*100).toFixed(1)}%`:''; html+=`<span style="color:${cols[x.i%cols.length]}">●</span> ${esc(x.s.name)} <b>${v.toLocaleString()}</b>${share}<br>`});
+  html+=`小计 <b>${tot.toLocaleString()}</b>`;
+  tip.innerHTML=html; tip.style.display='block';
+  const x=G.padL+(idx-G.a)/Math.max(1,G.b-G.a)*G.cw;
+  const flip=x>G.w*0.6;
+  tip.style.left=(cv.offsetLeft+(flip?x-tip.offsetWidth-12:x+12))+'px';
+  tip.style.top=(cv.offsetTop+8)+'px';
+}
+function updateDetail(){
+  if(hoverIdx<0||hoverIdx<G.a||hoverIdx>G.b){detail.textContent='💡 悬浮查看各系列值 · 拖拽框选缩放 · 双击重置 · 点图例开关系列';return}
+  const vis=visibleSeries();
+  const tot=vis.reduce((s,x)=>s+x.s.values[hoverIdx],0);
+  detail.innerHTML=`📌 <b>${esc(labels[hoverIdx])}</b> · 小计 ${tot.toLocaleString()} · ${vis.map(x=>esc(x.s.name)+' '+x.s.values[hoverIdx].toLocaleString()).join(' · ')}`;
+}
+function clampX(mx){return Math.max(G.padL,Math.min(G.padL+G.cw,mx))}
+function idxAt(mx){return G.a+Math.round((clampX(mx)-G.padL)/G.cw*(G.b-G.a))}
+cv.addEventListener('mousemove',e=>{
+  const r=cv.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  const inside=my>=G.padT&&my<=G.padT+G.ch&&mx>=G.padL&&mx<=G.padL+G.cw;
+  hoverIdx=inside?idxAt(mx):-1;
+  if(dragging) dragX1=clampX(mx);
+  draw();
+});
+cv.addEventListener('mousedown',e=>{const r=cv.getBoundingClientRect();dragging=true;dragX0=dragX1=clampX(e.clientX-r.left)});
+window.addEventListener('mouseup',()=>{
+  if(!dragging) return;
+  dragging=false;
+  if(Math.abs(dragX1-dragX0)>8){
+    const k1=idxAt(dragX0), k2=idxAt(dragX1);
+    if(k1!==k2) zoomRange={a:Math.min(k1,k2),b:Math.max(k1,k2)};
+  }
+  draw();
+});
+cv.addEventListener('mouseleave',()=>{hoverIdx=-1;draw()});
+cv.addEventListener('dblclick',()=>{zoomRange=null;draw()});
+function renderLegend(){
+  const cols=colors();
+  legendEl.innerHTML=series.map((s,i)=>`<button type="button" class="chip ${hidden.has(i)?'off':''}" data-i="${i}" aria-pressed="${!hidden.has(i)}"><i style="background:${cols[i%cols.length]}"></i>${esc(s.name)}</button>`).join('')+`<span style="font-family:var(--mono);font-size:11px;color:var(--faint);margin-left:6px">点击图例开关系列</span>`;
+}
+legendEl.addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const i=+b.dataset.i;hidden.has(i)?hidden.delete(i):hidden.add(i);renderLegend();draw()});
+function setOn(el,on){el.classList.toggle('on',on);el.setAttribute('aria-pressed',String(on))}
+document.getElementById('btnSmooth').onclick=e=>{smooth=!smooth;setOn(e.currentTarget,smooth);draw()};
+document.getElementById('btnArea').onclick=e=>{area=!area;setOn(e.currentTarget,area);draw()};
+document.getElementById('viewSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;view=b.dataset.view;zoomRange=null;document.querySelectorAll('#viewSeg button').forEach(x=>setOn(x,x===b));draw()});
+document.getElementById('btnReset').onclick=()=>{zoomRange=null;view='all';document.querySelectorAll('#viewSeg button').forEach(x=>setOn(x,x.dataset.view==='all'));draw()};
+document.getElementById('themeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.dataset.theme=b.dataset.theme;document.querySelectorAll('#themeSeg button').forEach(x=>setOn(x,x===b));renderLegend();draw()});
+document.querySelectorAll('#themeSeg button').forEach(b=>setOn(b,theme()===b.dataset.theme));
+renderLegend();draw();
+window.addEventListener('resize',draw);
+</script>
+</body>
+</html>

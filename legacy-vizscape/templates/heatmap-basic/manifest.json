@@ -1,0 +1,18 @@
+{
+  "name": "heatmap-basic",
+  "view": "heat",
+  "title": "热力图",
+  "input_types": ["csv", "json", "xlsx"],
+  "required_columns": ["x", "y", "value"],
+  "optional_columns": ["date"],
+  "options": {
+    "theme": ["light", "dark"],
+    "palette": ["signal", "cinnabar", "patina", "blueprint", "inkwash", "mono", "sundown", "dunhuang", "aurora", "morandi"],
+    "density": ["comfort", "compact"],
+    "scale": ["sequential", "diverging"],
+    "valuelabel": true,
+    "yearnav": true,
+    "replay": true
+  },
+  "description": "热力图：看密度与模式。双模式自动判定：有 date+value 列 → 日历模式（GitHub 风格周×星期年图，多年数据年份切换，复用甘特日期解析）；否则 x+y+value → 矩阵模式（类目×类目，全数字轴自动数值排序）。色带：顺序（纸面→主色单色 ramp）/ 发散（负红正主色以 0 为界，仅数据跨 0 可用）；缺值格留空；重复 (x,y) 求和合并、非数值剔除、稀疏网格警告全部计入数据识别报告。矩阵悬停显示行列合计占比；日历模式月份标注在月初所在周。数值标注开关、舒适/紧凑密度、10 配色、错峰入场动画。双主题可切换；离线单文件。"
+}

@@ -1,0 +1,18 @@
+{
+  "name": "pie-basic",
+  "view": "pie",
+  "title": "占比环形图",
+  "input_types": ["csv", "json", "xlsx"],
+  "required_columns": ["label", "value"],
+  "optional_columns": ["series"],
+  "options": {
+    "theme": ["light", "dark"],
+    "palette": ["signal", "cinnabar", "patina", "blueprint", "inkwash", "mono", "sundown", "dunhuang", "aurora", "morandi"],
+    "mode": ["pie", "donut"],
+    "ring_width": [0.72, 0.6, 0.45],
+    "labels": ["none", "inside", "leader"],
+    "sort_by_total": true,
+    "legend_toggle": true
+  },
+  "description": "占比环形图 / 饼图：看一个分类维度占整体的份额。按占比降序，占比 < 3% 的尾部扇区自动并入「其他」；负值、0 值自动剔除并在数据识别报告中警告。环形 / 实心切换、3 档环宽（实心自动禁用）、标注三模式（无 / 扇内 / 外侧引导线，带防重叠）、10 种配色、悬浮命中（数值 + 占比）、图例显隐、中心显示总计或悬停项。双主题可切换；离线单文件。输入兼容：label+value / label+series+value / 宽表 / ECharts JSON。"
+}

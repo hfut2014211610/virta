@@ -1,0 +1,18 @@
+{
+  "name": "line3d-basic",
+  "view": "line3d",
+  "title": "3D 折线图",
+  "input_types": ["csv", "json", "xlsx"],
+  "required_columns": ["label", "value"],
+  "optional_columns": ["series"],
+  "options": {
+    "theme": ["light", "dark"],
+    "projection": ["perspective"],
+    "drag_rotate": true,
+    "wheel_zoom": true,
+    "ribbon_fill": true,
+    "reference_wall": true,
+    "floor_grid": true
+  },
+  "description": "三维折线图（真三维投影）：X=分类/时间轴，Y=系列深度轴，Z=数值高度轴，每条系列沿深度轴排列成一条带状折线。所有系列共用同一 Z 刻度可直接比较。支持拖拽旋转、滚轮缩放、倾角调节、参考墙（最远景高程网格，直接读数）、地面网格、三轴线框、飘带填充到底面、顶点数值、悬浮命中（tooltip 显示数值/较前期/占系列峰值）、图例显隐系列、主题切换。输入兼容：宽表（每个数值列=一条系列）/ label+series+value / ECharts JSON；auto 推荐不纳入（需显式 --view line3d）。"
+}

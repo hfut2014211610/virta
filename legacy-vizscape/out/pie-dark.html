@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sample-multi · vizscape pie-basic</title>
+<style>
+:root{--sans:"Noto Sans SC",system-ui,sans-serif;--serif:"Fraunces",Georgia,serif;--mono:"JetBrains Mono",ui-monospace,monospace}
+html[data-theme="light"]{--bg:#f6f3ec;--paper:#fffdf7;--ink:#171a1e;--muted:#6b6f6a;--faint:#9a9d96;--line:#e2ded2;--line2:#d1ccc0;--acc:#0f766e;--neg:#b5412f;--shadow:0 10px 36px rgba(23,26,30,.08);--grid:rgba(23,26,30,.06);--tip:#171a1e;--tipink:#fffdf7}
+html[data-theme="dark"]{--bg:#0d0e0a;--paper:#131410;--ink:#ede9dc;--muted:#9aa08a;--faint:#5e6450;--line:#23261d;--line2:#2e3323;--acc:#c6f13f;--neg:#ff6b4a;--shadow:0 10px 36px rgba(0,0,0,.4);--grid:rgba(237,233,220,.05);--tip:#ede9dc;--tipink:#0d0e0a}
+html[data-palette="cinnabar"]{--acc:#b5412f}
+html[data-palette="patina"]{--acc:#2f7f78}
+html[data-palette="blueprint"]{--acc:#2f5fd0}
+html[data-palette="inkwash"]{--acc:#4b5563}
+html[data-palette="mono"]{--acc:#171a1e}
+html[data-palette="sundown"]{--acc:#c2410c}
+html[data-palette="dunhuang"]{--acc:#b34a38}
+html[data-palette="aurora"]{--acc:#0d9488}
+html[data-palette="morandi"]{--acc:#8b9dad}
+html[data-theme="dark"][data-palette="mono"]{--acc:#ede9dc}
+html[data-theme="dark"][data-palette="sundown"]{--acc:#fb923c}
+html[data-theme="dark"][data-palette="dunhuang"]{--acc:#e07a5f}
+html[data-theme="dark"][data-palette="aurora"]{--acc:#5eead4}
+html[data-theme="dark"][data-palette="morandi"]{--acc:#b8c7d4}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:4px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(circle at 12% 8%,color-mix(in srgb,var(--acc) 14%,transparent),transparent 28rem),radial-gradient(circle at 88% 4%,rgba(232,93,63,.10),transparent 30rem),var(--bg);color:var(--ink);font-family:var(--sans);padding:28px;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:56px 56px;opacity:.6}
+.wrap{max-width:1080px;margin:0 auto;position:relative}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1.5px solid var(--ink);padding-bottom:16px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--acc);text-transform:uppercase}
+h1{font-family:var(--serif);font-weight:300;font-size:clamp(32px,5vw,52px);letter-spacing:-.02em}
+h1 em{font-style:italic;color:var(--acc)}
+.seg{display:flex;background:var(--paper);border:1px solid var(--line2);border-radius:99px;padding:3px;box-shadow:var(--shadow)}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:13px;padding:8px 14px;border-radius:99px;cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.seg.wrap{flex-wrap:wrap;border-radius:18px}
+.seg button[disabled]{opacity:.35;pointer-events:none}
+.deck{display:flex;flex-direction:column;gap:10px;margin:16px 0}
+.trow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:9px 12px}
+.trow .label{min-width:34px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.trow .spacer{flex:1}
+.trow .seg{box-shadow:none}
+.toggle{appearance:none;border:1px solid var(--line2);background:var(--paper);color:var(--muted);border-radius:99px;padding:8px 14px;font-size:13px;cursor:pointer}
+.toggle.on{background:var(--acc);border-color:var(--acc);color:var(--paper);font-weight:700}
+.summary{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 14px}
+.sum-card{display:inline-flex;align-items:baseline;gap:8px;border:1px solid var(--line2);border-radius:14px;padding:9px 12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sum-card b{color:var(--ink);font-size:19px;font-weight:500;letter-spacing:-.02em}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);position:relative}
+#legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:transparent;color:var(--ink);border-radius:99px;padding:6px 12px;font-size:12px;cursor:pointer;transition:.2s}
+.chip i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.chip.off{opacity:.38;text-decoration:line-through}
+.chart-row{display:flex;align-items:center;gap:20px}
+canvas{width:420px;height:420px;display:block;cursor:pointer;flex:0 0 auto}
+#side{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+#detail{font-family:var(--mono);font-size:12.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:10px;line-height:1.8}
+#detail b{color:var(--ink)}
+#detail .big{font-family:var(--serif);font-size:40px;font-weight:350;color:var(--acc);letter-spacing:-.03em;line-height:1.1;display:block}
+#detail .name{font-size:13px;color:var(--ink);display:block;margin-bottom:4px}
+#tooltip{position:absolute;pointer-events:none;background:var(--tip);color:var(--tipink);padding:10px 12px;border-radius:10px;font-family:var(--mono);font-size:12px;line-height:1.7;display:none;z-index:10;min-width:150px;box-shadow:0 10px 30px rgba(0,0,0,.25);white-space:nowrap}
+#tooltip b{color:var(--acc)}
+.table{width:100%;border-collapse:collapse;font-size:13px;margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.table th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-align:left;color:var(--muted);border-bottom:1.5px solid var(--ink);padding:10px}
+.table td{border-bottom:1px solid var(--line);padding:9px 10px}
+.table td.num,.table th.num{text-align:right;font-family:var(--mono)}
+footer{margin-top:18px;font-family:var(--mono);font-size:11px;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.hint{font-size:12px;color:var(--faint);margin-top:8px}
+.quality{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--paper);border-radius:16px;padding:14px;margin:16px 0 8px;box-shadow:0 1px 0 rgba(0,0,0,.02) inset}
+.quality.warn{border-left-color:var(--neg)}
+.quality-head{display:flex;justify-content:space-between;gap:14px;align-items:center;border-bottom:1px dashed var(--line);padding-bottom:10px;margin-bottom:10px}
+.quality-head h2{font-family:var(--serif);font-size:20px;font-weight:420;letter-spacing:-.02em}
+.quality-score{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;line-height:1.6}.quality-score b{display:block;color:var(--acc);font-size:13px}.quality.warn .quality-score b{color:var(--neg)}
+.quality-grid{display:flex;gap:8px;flex-wrap:wrap}.qs{border:1px solid var(--line2);border-radius:999px;padding:5px 9px;font-family:var(--mono);font-size:11px;color:var(--muted)}.qs b{color:var(--ink);font-weight:500}
+.quality-warnings{margin:11px 0 0;padding-left:18px;color:var(--neg);font-size:12px;line-height:1.75}.quality-ok{margin:11px 0 0;color:var(--acc);font-size:12px}
+@media(max-width:820px){.chart-row{flex-direction:column}canvas{width:100%;height:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">vizscape · pie-basic · DARK</div><h1>sample-multi <em>· 占比图</em></h1></div>
+  <div class="seg" id="themeSeg" role="group" aria-label="主题"><button type="button" data-theme="light" aria-pressed="false">☀ 浅色</button><button type="button" data-theme="dark" aria-pressed="false">☾ 深色</button></div>
+</header>
+
+<div class="deck">
+  <div class="trow">
+    <span class="label">形态</span>
+    <div class="seg" id="modeSeg" role="group" aria-label="形态"><button type="button" data-mode="donut" class="on" aria-pressed="true">◍ 环形</button><button type="button" data-mode="pie" aria-pressed="false">● 实心</button></div>
+    <span class="label">环宽</span>
+    <div class="seg" id="ringSeg" role="group" aria-label="环宽"><button type="button" data-ring="0.72" aria-pressed="false">细</button><button type="button" data-ring="0.6" class="on" aria-pressed="true">中</button><button type="button" data-ring="0.45" aria-pressed="false">厚</button></div>
+    <span class="label">标注</span>
+    <div class="seg" id="labelSeg" role="group" aria-label="扇区标注"><button type="button" data-label="none" aria-pressed="false">无</button><button type="button" data-label="inside" class="on" aria-pressed="true">扇内</button><button type="button" data-label="leader" aria-pressed="false">◜ 引导线</button></div>
+  </div>
+  <div class="trow">
+    <span class="label">风格</span>
+    <div class="seg wrap" id="paletteSeg" role="group" aria-label="配色风格">
+      <button type="button" data-palette="signal" class="on" aria-pressed="true">Signal</button>
+      <button type="button" data-palette="cinnabar" aria-pressed="false">朱砂</button>
+      <button type="button" data-palette="patina" aria-pressed="false">铜绿</button>
+      <button type="button" data-palette="blueprint" aria-pressed="false">蓝图</button>
+      <button type="button" data-palette="inkwash" aria-pressed="false">水墨</button>
+      <button type="button" data-palette="mono" aria-pressed="false">单色</button>
+      <button type="button" data-palette="sundown" aria-pressed="false">落日</button>
+      <button type="button" data-palette="dunhuang" aria-pressed="false">敦煌</button>
+      <button type="button" data-palette="aurora" aria-pressed="false">极光</button>
+      <button type="button" data-palette="morandi" aria-pressed="false">莫兰迪</button>
+    </div>
+  </div>
+</div>
+
+<div class="summary" aria-label="摘要"><span class="sum-card"><b>8</b>扇区</span><span class="sum-card"><b>2,496</b>总和</span><span class="sum-card"><b>19.3%</b>最大占比</span><span class="sum-card"><b>北京</b>领先项</span><span class="sum-card"><b>8</b>分类数</span></div>
+
+<div class="card">
+  <div id="legend"></div>
+  <div class="chart-row">
+    <canvas id="chart" role="img" aria-label="sample-multi 占比图，共 8 个扇区，最大占比 19.3%；明细见下方表格"></canvas>
+    <div id="tooltip"></div>
+    <div id="side"><div id="detail"></div></div>
+  </div>
+  <div class="hint">读法：扇区角度 = 占比份额，自 12 点顺时针；占比 < 3% 的尾部小扇区已并入「其他」。支持：环形/实心切换 · 3 档环宽 · 标注（无 / 扇内 / 引导线） · 10 种配色 · 悬浮命中 · 点击扇区/图例显隐 · 中心显示总计或悬停项</div>
+</div>
+
+<section class="quality ok" aria-label="数据识别报告"><div class="quality-head"><div><p class="eyebrow">data quality</p><h2>数据识别报告</h2></div><div class="quality-score"><b>高置信识别</b>pie · label × value</div></div><div class="quality-grid"><span class="qs"><b>模式</b> pie</span><span class="qs"><b>扇区</b> 8</span><span class="qs"><b>系列</b> 1</span><span class="qs"><b>分类列</b> label</span><span class="qs"><b>数值列</b> value</span><span class="qs"><b>总和</b> 2,496</span><span class="qs"><b>最大</b> 北京 19.3%</span></div><p class="quality-ok">未发现缺失/非法/负值风险；占比可直接引用。</p></section>
+
+<table class="table"><thead><tr><th>扇区</th><th class="num">数值</th><th class="num">占比</th></tr></thead><tbody><tr><td>北京</td><td class="num">482</td><td class="num">19.3%</td></tr><tr><td>上海</td><td class="num">468</td><td class="num">18.8%</td></tr><tr><td>广州</td><td class="num">312</td><td class="num">12.5%</td></tr><tr><td>深圳</td><td class="num">298</td><td class="num">11.9%</td></tr><tr><td>成都</td><td class="num">276</td><td class="num">11.1%</td></tr><tr><td>杭州</td><td class="num">258</td><td class="num">10.3%</td></tr><tr><td>武汉</td><td class="num">214</td><td class="num">8.6%</td></tr><tr><td>西安</td><td class="num">188</td><td class="num">7.5%</td></tr></tbody></table>
+
+<footer><span>vizscape · pie-basic · 占比 · 纯 Canvas 无 CDN</span><span>输入兼容：label+value / label+series+value / 宽表 / ECharts JSON</span></footer>
+</div>
+
+<script>
+const RAW={"slices": [{"label": "北京", "value": 482, "share": 0.19310897435897437}, {"label": "上海", "value": 468, "share": 0.1875}, {"label": "广州", "value": 312, "share": 0.125}, {"label": "深圳", "value": 298, "share": 0.11939102564102565}, {"label": "成都", "value": 276, "share": 0.11057692307692307}, {"label": "杭州", "value": 258, "share": 0.10336538461538461}, {"label": "武汉", "value": 214, "share": 0.08573717948717949}, {"label": "西安", "value": 188, "share": 0.07532051282051282}]};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let slices=RAW.slices.map((s,i)=>({...s,i}));
+let hidden=new Set(), hoverIdx=-1;
+let mode='donut', labelMode='inside', ringFrac=0.6, paletteKey='signal';
+const PALETTES={
+  signal:{light:['#0f766e','#e85d3f','#d99a06','#2563eb','#7c3aed','#059669','#db2777','#0891b2'],dark:['#c6f13f','#ff6b4a','#ffb224','#4de3c2','#7dd3fc','#f472b6','#a78bfa','#facc15']},
+  cinnabar:{light:['#b5412f','#d36a2e','#8a3324','#c08a2d','#6b4f2c','#a16207','#0f766e','#3f3f46'],dark:['#ff8a5c','#ffd166','#ef4444','#fbbf24','#f97316','#fef08a','#5eead4','#fda4af']},
+  patina:{light:['#2f7f78','#386641','#588157','#a3b18a','#c69a4a','#344e41','#7f5539','#40916c'],dark:['#67a58d','#a7c957','#d2b46a','#8ecae6','#c9f2c7','#ffd166','#bde0fe','#80ed99']},
+  blueprint:{light:['#2f5fd0','#0b3b75','#3b82f6','#60a5fa','#1d4ed8','#0f766e','#475569','#93c5fd'],dark:['#7dd3fc','#38bdf8','#93c5fd','#a5f3fc','#60a5fa','#22d3ee','#e0f2fe','#67e8f9']},
+  inkwash:{light:['#171a1e','#3f4650','#69707d','#9299a5','#6b7280','#a3a3a3','#525252','#d4d4d4'],dark:['#ede9dc','#d6d3c8','#b8b4a8','#8f8b80','#6e6a61','#4b4841','#a8a29e','#f5f5f4']},
+  mono:{light:['#171a1e','#2f343c','#555d68','#7a828d','#a0a6af','#c5c8cd','#3f4650','#6b6f6a'],dark:['#ede9dc','#c9c6ba','#a5a296','#817e73','#5e5b52','#f5f5f4','#b9b5a8','#8f8b80']},
+  sundown:{light:['#c2410c','#ea580c','#f59e0b','#b91c1c','#db2777','#7c2d12','#f97316','#a16207'],dark:['#fb923c','#fbbf24','#f87171','#f472b6','#fdba74','#fde047','#fca5a5','#e879f9']},
+  dunhuang:{light:['#35618e','#4d8a6a','#b34a38','#c89b3c','#7a5c3e','#2f4f4f','#8e5a2b','#5b7a8c'],dark:['#7fb3d5','#7fc7a3','#e07a5f','#e5c07b','#b0927a','#81b29a','#d4a373','#a8c3cf']},
+  aurora:{light:['#0d9488','#0891b2','#7c3aed','#db2777','#059669','#2563eb','#c026d3','#0f766e'],dark:['#5eead4','#67e8f9','#a78bfa','#f0abfc','#6ee7b7','#93c5fd','#e879f9','#4ade80']},
+  morandi:{light:['#8b9dad','#c9a7a0','#a8b5a0','#b8b0a4','#9d8fa8','#c4b198','#8fa39e','#ad9b8f'],dark:['#b8c7d4','#dbc4be','#c3cfc0','#d0c9be','#c0b5c9','#d9cbb8','#b5c4bf','#c9bcb0']}
+};
+const cv=document.getElementById('chart'), tip=document.getElementById('tooltip'), detail=document.getElementById('detail'), legendEl=document.getElementById('legend');
+const FONT='12px JetBrains Mono, monospace';
+const TAU=Math.PI*2;
+function theme(){return document.documentElement.dataset.theme}
+function colors(){const grp=PALETTES[paletteKey]||PALETTES.signal;return grp[theme()]||grp.light}
+function geom(size){const R=labelMode==='leader'?size/2-66:size/2-8;const rIn=mode==='donut'?R*ringFrac:0;return {R,rIn}}
+function fmt(v){return Math.abs(v)>=10?Math.round(v).toLocaleString():(+v.toFixed(2)).toLocaleString()}
+function visSlices(){return slices.map(s=>s).filter(s=>!hidden.has(s.label))}
+function draw(){
+  if(cv.getBoundingClientRect().width<40)return; // resize 中间态（如整页截图）保留 backing store
+  const dpr=window.devicePixelRatio||1, r=cv.getBoundingClientRect();
+  const size=Math.min(r.width, r.height);
+  cv.style.width=size+'px'; cv.style.height=size+'px';
+  cv.width=size*dpr; cv.height=size*dpr;
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  const cs=getComputedStyle(document.documentElement);
+  const ink=cs.getPropertyValue('--ink').trim(), paper=cs.getPropertyValue('--paper').trim(), faint=cs.getPropertyValue('--faint').trim();
+  g.clearRect(0,0,size,size);
+  g.font=FONT;
+  const cx=size/2, cy=size/2, gm=geom(size), R=gm.R, rIn=gm.rIn;
+  const vis=visSlices();
+  const total=vis.reduce((a,s)=>a+s.value,0);
+  // 高亮：悬停项外扩，其他淡化
+  const isHL=i=>hoverIdx<0||hoverIdx===i;
+  let ang=-Math.PI/2;
+  vis.forEach(s=>{
+    const sw=total>0?(s.value/total)*TAU:0;
+    const col=colors()[s.i%8];
+    const mid=ang+sw/2;
+    const grow=hoverIdx===s.i?10:0;
+    g.save();
+    g.globalAlpha=isHL(s.i)?1:0.28;
+    g.translate(cx+Math.cos(mid)*grow, cy+Math.sin(mid)*grow);
+    g.beginPath();
+    if(rIn>0){g.arc(0,0,R,ang,ang+sw);g.arc(0,0,rIn,ang+sw,ang,true);g.closePath()}
+    else{g.moveTo(0,0);g.arc(0,0,R,ang,ang+sw);g.closePath()}
+    g.fillStyle=col; g.fill();
+    // 分隔线
+    if(sw>0.02){g.strokeStyle=paper;g.lineWidth=2;g.stroke()}
+    // 扇内标注
+    if(labelMode==='inside'&&sw>0.14){
+      const rr=(R+rIn)/2+grow, tx=Math.cos(mid)*rr, ty=Math.sin(mid)*rr;
+      const share=(s.value/total)*100;
+      const big=share>=12;
+      g.fillStyle=col===colors()[0]&&false?'#fff':paper;
+      g.textAlign='center'; g.textBaseline='middle';
+      g.globalAlpha=isHL(s.i)?1:0.4;
+      g.font=big?'bold 15px JetBrains Mono, monospace':'bold 11px JetBrains Mono, monospace';
+      g.fillText(share.toFixed(0)+'%',tx,ty);
+      g.font='9px JetBrains Mono, monospace';
+    }
+    g.restore();
+    ang+=sw;
+  });
+  // 引导线标注（外侧两段引线 + 名称 + 百分比，按侧分组纵向防重叠）
+  if(labelMode==='leader'&&total>0){
+    const items=[]; let a0=-Math.PI/2;
+    vis.forEach(s=>{
+      const sw=(s.value/total)*TAU, mid=a0+sw/2; a0+=sw;
+      if(sw>0.03) items.push({s,mid,side:Math.cos(mid)>=0?1:-1,yP:Math.sin(mid)*(R+16)});
+    });
+    [1,-1].forEach(side=>{
+      const arr=items.filter(o=>o.side===side).sort((a,b)=>a.yP-b.yP);
+      for(let k=1;k<arr.length;k++) arr[k].yP=Math.max(arr[k].yP,arr[k-1].yP+15);
+      for(let k=arr.length-2;k>=0;k--) arr[k].yP=Math.min(arr[k].yP,arr[k+1].yP-15);
+    });
+    g.font='10px JetBrains Mono, monospace'; g.textBaseline='middle';
+    items.forEach(o=>{
+      const col=colors()[o.s.i%8];
+      const x1=cx+Math.cos(o.mid)*(R+2), y1=cy+Math.sin(o.mid)*(R+2);
+      const x2=cx+Math.cos(o.mid)*(R+11), y2=cy+Math.sin(o.mid)*(R+11);
+      const x3=cx+o.side*(R+17), y3=cy+o.yP;
+      g.strokeStyle=col; g.globalAlpha=.55; g.lineWidth=1;
+      g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.lineTo(x3,y3); g.stroke(); g.globalAlpha=1;
+      g.fillStyle=col; g.beginPath(); g.arc(x1,y1,1.8,0,7); g.fill();
+      const name=o.s.label.length>5?o.s.label.slice(0,4)+'…':o.s.label;
+      const share=(o.s.value/total*100).toFixed(0)+'%';
+      g.textAlign=o.side>0?'left':'right';
+      g.fillStyle=ink; g.fillText(name,x3+o.side*5,y3-5);
+      g.fillStyle=faint; g.fillText(share,x3+o.side*5,y3+6);
+    });
+    g.textBaseline='alphabetic';
+  }
+  // 中心
+  g.textAlign='center'; g.textBaseline='middle';
+  if(hoverIdx>=0&&hoverIdx<slices.length){
+    const s=slices[hoverIdx]; const vis2=visSlices(); const tot2=vis2.reduce((a,x)=>a+x.value,0);
+    g.fillStyle=ink; g.font='bold 26px Fraunces, Georgia, serif';
+    g.fillText((tot2>0?(s.value/tot2*100).toFixed(1):'0')+'%',cx,cy-10);
+    g.fillStyle=faint; g.font='11px JetBrains Mono, monospace';
+    const lbl=s.label.length>12?s.label.slice(0,11)+'…':s.label;
+    g.fillText(lbl,cx,cy+16);
+  }else{
+    g.fillStyle=ink; g.font='bold 26px Fraunces, Georgia, serif';
+    g.fillText(fmt(total),cx,cy-10);
+    g.fillStyle=faint; g.font='11px JetBrains Mono, monospace';
+    g.fillText('总计',cx,cy+16);
+  }
+  if(!vis.length){g.fillStyle=faint;g.fillText('所有扇区已隐藏 · 点击图例恢复',cx,cy+R*0.75)}
+}
+function showTip(i){
+  const s=slices[i]; if(!s) return;
+  const tot=visSlices().reduce((a,x)=>a+x.value,0);
+  const share=tot>0?(s.value/tot*100).toFixed(1):'0.0';
+  tip.innerHTML=`<b>${esc(s.label)}</b><br>${fmt(s.value)} · <b>${share}%</b>`;
+  tip.style.display='block';
+  const r=cv.getBoundingClientRect();
+  tip.style.left=(cv.offsetLeft+r.width/2+30)+'px';
+  tip.style.top=(cv.offsetTop+20)+'px';
+}
+function updateDetail(){
+  if(hoverIdx<0||hoverIdx>=slices.length){
+    const tot=visSlices().reduce((a,x)=>a+x.value,0);
+    const top=visSlices().sort((a,b)=>b.value-a.value)[0];
+    detail.innerHTML=top?`<span class="name">领先项</span><span class="big">${((top.value/tot)*100).toFixed(1)}%</span><b>${esc(top.label)}</b> · ${fmt(top.value)}<br><br>💡 悬停扇区查看占比 · 点击图例显隐`:'<b>所有扇区已隐藏</b> · 点击图例恢复';
+    return;
+  }
+  const s=slices[hoverIdx]; const tot=visSlices().reduce((a,x)=>a+x.value,0);
+  const share=tot>0?(s.value/tot*100).toFixed(1):'0.0';
+  detail.innerHTML=`<span class="name">${esc(s.label)}</span><span class="big">${share}%</span><b>${fmt(s.value)}</b> / ${fmt(tot)}<br>占比排名 第 ${slices.filter(x=>x.value>s.value).length+1} 位`;
+}
+function hitTest(mx,my){
+  const r=cv.getBoundingClientRect(), size=Math.min(r.width,r.height);
+  const cx=r.width/2, cy=r.height/2, gm=geom(size), R=gm.R, rIn=gm.rIn;
+  const dx=mx-cx, dy=my-cy, d=Math.hypot(dx,dy);
+  if(d>R||d<rIn) return -1;
+  let ang=Math.atan2(dy,dx); // -PI..PI
+  if(ang<-Math.PI/2) ang+=TAU;
+  let a0=-Math.PI/2;
+  const vis=visSlices(); const total=vis.reduce((a,s)=>a+s.value,0);
+  for(const s of vis){ const sw=total>0?(s.value/total)*TAU:0; if(ang>=a0&&ang<a0+sw) return s.i; a0+=sw; }
+  return -1;
+}
+cv.addEventListener('mousemove',e=>{const r=cv.getBoundingClientRect();const i=hitTest(e.clientX-r.left,e.clientY-r.top);if(i!==hoverIdx){hoverIdx=i;if(i>=0)showTip(i);else tip.style.display='none';draw();updateDetail()}});
+cv.addEventListener('mouseleave',()=>{hoverIdx=-1;tip.style.display='none';draw();updateDetail()});
+cv.addEventListener('click',e=>{const r=cv.getBoundingClientRect();const i=hitTest(e.clientX-r.left,e.clientY-r.top);if(i>=0){const lab=slices[i].label;hidden.has(lab)?hidden.delete(lab):hidden.add(lab);renderLegend();draw();updateDetail()}});
+function renderLegend(){
+  const cols=colors();
+  legendEl.innerHTML=slices.map(s=>`<button type="button" class="chip ${hidden.has(s.label)?'off':''}" data-l="${esc(s.label)}" aria-pressed="${!hidden.has(s.label)}"><i style="background:${cols[s.i%8]}"></i>${esc(s.label)} <span style="font-family:var(--mono);opacity:.7">${(s.share*100).toFixed(0)}%</span></button>`).join('')+'<span style="font-family:var(--mono);font-size:11px;color:var(--faint);margin-left:6px">点击显隐扇区</span>';
+}
+legendEl.addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const l=b.dataset.l;hidden.has(l)?hidden.delete(l):hidden.add(l);renderLegend();draw();updateDetail()});
+function setOn(el,on){el.classList.toggle('on',on);el.setAttribute('aria-pressed',String(on))}
+document.getElementById('modeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;mode=b.dataset.mode;document.querySelectorAll('#modeSeg button').forEach(x=>setOn(x,x===b));document.querySelectorAll('#ringSeg button').forEach(x=>{x.disabled=mode==='pie';x.title=mode==='pie'?'实心模式不可调环宽':''});draw()});
+document.getElementById('ringSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;ringFrac=+b.dataset.ring;document.querySelectorAll('#ringSeg button').forEach(x=>setOn(x,x===b));draw()});
+document.getElementById('labelSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;labelMode=b.dataset.label;document.querySelectorAll('#labelSeg button').forEach(x=>setOn(x,x===b));draw()});
+document.getElementById('paletteSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;paletteKey=b.dataset.palette;document.documentElement.dataset.palette=paletteKey;document.querySelectorAll('#paletteSeg button').forEach(x=>setOn(x,x===b));renderLegend();draw()});
+document.getElementById('themeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.dataset.theme=b.dataset.theme;document.querySelectorAll('#themeSeg button').forEach(x=>setOn(x,x===b));renderLegend();draw()});
+document.querySelectorAll('#themeSeg button').forEach(b=>setOn(b,theme()===b.dataset.theme));
+renderLegend();hoverIdx=-1;draw();updateDetail();
+window.addEventListener('resize',draw);
+// @@SCRIPT2@@
+</script>
+</body>
+</html>

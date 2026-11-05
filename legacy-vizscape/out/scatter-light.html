@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sample-scatter · vizscape scatter-basic</title>
+<style>
+:root{--sans:"Noto Sans SC",system-ui,sans-serif;--serif:"Fraunces",Georgia,serif;--mono:"JetBrains Mono",ui-monospace,monospace}
+html[data-theme="light"]{--bg:#f6f3ec;--paper:#fffdf7;--ink:#171a1e;--muted:#6b6f6a;--faint:#9a9d96;--line:#e2ded2;--line2:#d1ccc0;--acc:#0f766e;--neg:#b5412f;--shadow:0 10px 36px rgba(23,26,30,.08);--grid:rgba(23,26,30,.06);--tip:#171a1e;--tipink:#fffdf7}
+html[data-theme="dark"]{--bg:#0d0e0a;--paper:#131410;--ink:#ede9dc;--muted:#9aa08a;--faint:#5e6450;--line:#23261d;--line2:#2e3323;--acc:#c6f13f;--neg:#ff6b4a;--shadow:0 10px 36px rgba(0,0,0,.4);--grid:rgba(237,233,220,.05);--tip:#ede9dc;--tipink:#0d0e0a}
+html[data-palette="cinnabar"]{--acc:#b5412f}
+html[data-palette="patina"]{--acc:#2f7f78}
+html[data-palette="blueprint"]{--acc:#2f5fd0}
+html[data-palette="inkwash"]{--acc:#4b5563}
+html[data-palette="mono"]{--acc:#171a1e}
+html[data-palette="sundown"]{--acc:#c2410c}
+html[data-palette="dunhuang"]{--acc:#b34a38}
+html[data-palette="aurora"]{--acc:#0d9488}
+html[data-palette="morandi"]{--acc:#8b9dad}
+html[data-theme="dark"][data-palette="mono"]{--acc:#ede9dc}
+html[data-theme="dark"][data-palette="sundown"]{--acc:#fb923c}
+html[data-theme="dark"][data-palette="dunhuang"]{--acc:#e07a5f}
+html[data-theme="dark"][data-palette="aurora"]{--acc:#5eead4}
+html[data-theme="dark"][data-palette="morandi"]{--acc:#b8c7d4}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:4px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(circle at 12% 8%,color-mix(in srgb,var(--acc) 14%,transparent),transparent 28rem),radial-gradient(circle at 88% 4%,rgba(232,93,63,.10),transparent 30rem),var(--bg);color:var(--ink);font-family:var(--sans);padding:28px;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:56px 56px;opacity:.6}
+.wrap{max-width:1080px;margin:0 auto;position:relative}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1.5px solid var(--ink);padding-bottom:16px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--acc);text-transform:uppercase}
+h1{font-family:var(--serif);font-weight:300;font-size:clamp(32px,5vw,52px);letter-spacing:-.02em}
+h1 em{font-style:italic;color:var(--acc)}
+.seg{display:flex;background:var(--paper);border:1px solid var(--line2);border-radius:99px;padding:3px;box-shadow:var(--shadow)}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:13px;padding:8px 14px;border-radius:99px;cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.deck{display:flex;flex-direction:column;gap:10px;margin:16px 0}
+.trow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:9px 12px}
+.trow .label{min-width:34px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.trow .spacer{flex:1}
+.trow .seg{box-shadow:none}
+.toggle{appearance:none;border:1px solid var(--line2);background:var(--paper);color:var(--muted);border-radius:99px;padding:8px 14px;font-size:13px;cursor:pointer}
+.toggle.on{background:var(--acc);border-color:var(--acc);color:var(--paper);font-weight:700}
+.summary{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 14px}
+.sum-card{display:inline-flex;align-items:baseline;gap:8px;border:1px solid var(--line2);border-radius:14px;padding:9px 12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sum-card b{color:var(--ink);font-size:19px;font-weight:500;letter-spacing:-.02em}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);position:relative}
+#legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:transparent;color:var(--ink);border-radius:99px;padding:6px 12px;font-size:12px;cursor:pointer;transition:.2s}
+.chip i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.chip.off{opacity:.38;text-decoration:line-through}
+canvas{width:100%;height:420px;display:block;cursor:crosshair;touch-action:none}
+#tooltip{position:absolute;pointer-events:none;background:var(--tip);color:var(--tipink);padding:10px 12px;border-radius:10px;font-family:var(--mono);font-size:12px;line-height:1.7;display:none;z-index:10;min-width:160px;box-shadow:0 10px 30px rgba(0,0,0,.25);white-space:nowrap}
+#tooltip b{color:var(--acc)}
+#detail{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;min-height:22px;line-height:1.7}
+#detail b{color:var(--ink)}
+.brushinfo{display:none;font-family:var(--mono);font-size:12px;color:var(--acc);margin-top:8px}
+.brushinfo.on{display:block}
+.table{width:100%;border-collapse:collapse;font-size:13px;margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.table th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-align:left;color:var(--muted);border-bottom:1.5px solid var(--ink);padding:10px}
+.table td{border-bottom:1px solid var(--line);padding:9px 10px}
+.table td.num,.table th.num{text-align:right;font-family:var(--mono)}
+footer{margin-top:18px;font-family:var(--mono);font-size:11px;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.hint{font-size:12px;color:var(--faint);margin-top:8px}
+.quality{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--paper);border-radius:16px;padding:14px;margin:16px 0 8px;box-shadow:0 1px 0 rgba(0,0,0,.02) inset}
+.quality.warn{border-left-color:var(--neg)}
+.quality-head{display:flex;justify-content:space-between;gap:14px;align-items:center;border-bottom:1px dashed var(--line);padding-bottom:10px;margin-bottom:10px}
+.quality-head h2{font-family:var(--serif);font-size:20px;font-weight:420;letter-spacing:-.02em}
+.quality-score{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;line-height:1.6}.quality-score b{display:block;color:var(--acc);font-size:13px}.quality.warn .quality-score b{color:var(--neg)}
+.quality-grid{display:flex;gap:8px;flex-wrap:wrap}.qs{border:1px solid var(--line2);border-radius:999px;padding:5px 9px;font-family:var(--mono);font-size:11px;color:var(--muted)}.qs b{color:var(--ink);font-weight:500}
+.quality-warnings{margin:11px 0 0;padding-left:18px;color:var(--neg);font-size:12px;line-height:1.75}.quality-ok{margin:11px 0 0;color:var(--acc);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">vizscape · scatter-basic · LIGHT</div><h1>sample-scatter <em>· 散点图</em></h1></div>
+  <div class="seg" id="themeSeg" role="group" aria-label="主题"><button type="button" data-theme="light" aria-pressed="false">☀ 浅色</button><button type="button" data-theme="dark" aria-pressed="false">☾ 深色</button></div>
+</header>
+
+<div class="deck">
+  <div class="trow">
+    <span class="label">拟合</span>
+    <button class="toggle on" id="btnFit" type="button" aria-pressed="true">／ 趋势线</button>
+    <button class="toggle" id="btnLogX" type="button" aria-pressed="false">log X</button>
+    <button class="toggle" id="btnLogY" type="button" aria-pressed="false">log Y</button>
+    <span class="label">参考</span>
+    <button class="toggle" id="btnMean" type="button" aria-pressed="false">┼ 均值线</button>
+    <button class="toggle" id="btnEllipse" type="button" aria-pressed="false">◯ 置信椭圆</button>
+    <span class="spacer"></span>
+    <button class="toggle" id="btnReset" type="button">⌂ 重置刷选</button>
+  </div>
+  <div class="trow">
+    <span class="label">风格</span>
+    <div class="seg wrap" id="paletteSeg" role="group" aria-label="配色风格">
+      <button type="button" data-palette="signal" class="on" aria-pressed="true">Signal</button>
+      <button type="button" data-palette="cinnabar" aria-pressed="false">朱砂</button>
+      <button type="button" data-palette="patina" aria-pressed="false">铜绿</button>
+      <button type="button" data-palette="blueprint" aria-pressed="false">蓝图</button>
+      <button type="button" data-palette="inkwash" aria-pressed="false">水墨</button>
+      <button type="button" data-palette="mono" aria-pressed="false">单色</button>
+      <button type="button" data-palette="sundown" aria-pressed="false">落日</button>
+      <button type="button" data-palette="dunhuang" aria-pressed="false">敦煌</button>
+      <button type="button" data-palette="aurora" aria-pressed="false">极光</button>
+      <button type="button" data-palette="morandi" aria-pressed="false">莫兰迪</button>
+    </div>
+  </div>
+  <div class="trow">
+    <span class="label">点形</span>
+    <div class="seg wrap" id="markerSeg" role="group" aria-label="点形状"><button type="button" data-marker="circle" class="on" aria-pressed="true">● 圆点</button><button type="button" data-marker="square" aria-pressed="false">■ 方块</button><button type="button" data-marker="diamond" aria-pressed="false">◆ 菱形</button><button type="button" data-marker="triangle" aria-pressed="false">▲ 三角</button><button type="button" data-marker="mixed" aria-pressed="false">✦ 按分组</button></div>
+    <span class="label">点径</span>
+    <div class="seg" id="dotSeg" role="group" aria-label="点径"><button type="button" data-dot="0.72" aria-pressed="false">小</button><button type="button" data-dot="1" class="on" aria-pressed="true">中</button><button type="button" data-dot="1.45" aria-pressed="false">大</button></div>
+    <span class="label">气泡</span>
+    <div class="seg" id="sizeSeg" role="group" aria-label="气泡大小"><button type="button" data-size="uniform" class="on" aria-pressed="true">统一</button><button type="button" data-size="metric" aria-pressed="false">按 size 列</button></div>
+    <span class="label">标注</span>
+    <div class="seg" id="labelSeg" role="group" aria-label="点标注"><button type="button" data-label="none" class="on" aria-pressed="true">无</button><button type="button" data-label="outlier" aria-pressed="false">离群值</button><button type="button" data-label="all" aria-pressed="false">全部</button></div>
+  </div>
+</div>
+
+<div class="summary" aria-label="摘要"><span class="sum-card"><b>15</b>点数</span><span class="sum-card"><b>1</b>分组</span><span class="sum-card"><b>0.965</b>相关 r</span><span class="sum-card"><b>强正相关</b>相关</span><span class="sum-card"><b>投放入(万元)</b>X 轴</span><span class="sum-card"><b>转化数(单)</b>Y 轴</span></div>
+
+<div class="card">
+  <div id="legend"></div>
+  <canvas id="chart" role="img" aria-label="sample-scatter 散点图，X 轴 投放入(万元)，Y 轴 转化数(单)，相关系数 0.965；明细见下方表格"></canvas>
+  <div id="tooltip"></div>
+  <div id="detail">💡 悬浮命中查看 X/Y · 拖拽框选刷选 · 双击重置 · 点图例开关分组 · 按住 alt 拖拽为减选</div>
+  <div class="brushinfo" id="brushinfo"></div>
+  <div class="hint">读法：点云自左下向右上倾斜 = 正相关，r 接近 ±1 越强；远离点云的孤立点是离群值。支持：趋势线（线性拟合） · log X / log Y · 均值参考线（象限 Ⅰ~Ⅳ） · 分组 1σ 置信椭圆 · 5 种点形（可按分组编码） · 3 档点径 · 离群 / 全量标注 · 10 种配色 · 框选刷选 · 图例显隐 · 气泡大小</div>
+</div>
+
+<section class="quality ok" aria-label="数据识别报告"><div class="quality-head"><div><p class="eyebrow">data quality</p><h2>数据识别报告</h2></div><div class="quality-score"><b>高置信识别</b>scatter · 投放入(万元) × 转化数(单)</div></div><div class="quality-grid"><span class="qs"><b>模式</b> scatter</span><span class="qs"><b>点数</b> 15</span><span class="qs"><b>气泡列</b> 规模</span><span class="qs"><b>分组</b> 1</span><span class="qs"><b>X 轴</b> 投放入(万元)</span><span class="qs"><b>Y 轴</b> 转化数(单)</span><span class="qs"><b>相关系数 r</b> 0.965</span><span class="qs"><b>缺失按0计</b> 0</span><span class="qs"><b>非法按0计</b> 0</span></div><p class="quality-ok">未发现缺失/非法风险；相关系数可直接引用。</p></section>
+
+<table class="table"><thead><tr><th>点</th><th>分组</th><th>投放入(万元)</th><th>转化数(单)</th><th>规模</th></tr></thead><tbody><tr><td>1</td><td>全部</td><td class="num">120</td><td class="num">860</td><td class="num">45</td></tr><tr><td>2</td><td>全部</td><td class="num">180</td><td class="num">1,320</td><td class="num">62</td></tr><tr><td>3</td><td>全部</td><td class="num">95</td><td class="num">640</td><td class="num">30</td></tr><tr><td>4</td><td>全部</td><td class="num">240</td><td class="num">1,980</td><td class="num">80</td></tr><tr><td>5</td><td>全部</td><td class="num">60</td><td class="num">380</td><td class="num">22</td></tr><tr><td>6</td><td>全部</td><td class="num">150</td><td class="num">720</td><td class="num">55</td></tr><tr><td>7</td><td>全部</td><td class="num">210</td><td class="num">1,100</td><td class="num">70</td></tr><tr><td>8</td><td>全部</td><td class="num">80</td><td class="num">410</td><td class="num">28</td></tr><tr><td>9</td><td>全部</td><td class="num">300</td><td class="num">2,260</td><td class="num">95</td></tr><tr><td>10</td><td>全部</td><td class="num">45</td><td class="num">260</td><td class="num">18</td></tr><tr><td>11</td><td>全部</td><td class="num">170</td><td class="num">940</td><td class="num">58</td></tr><tr><td>12</td><td>全部</td><td class="num">130</td><td class="num">880</td><td class="num">48</td></tr><tr><td>13</td><td>全部</td><td class="num">220</td><td class="num">1,650</td><td class="num">74</td></tr><tr><td>14</td><td>全部</td><td class="num">55</td><td class="num">330</td><td class="num">20</td></tr><tr><td>15</td><td>全部</td><td class="num">260</td><td class="num">1,880</td><td class="num">88</td></tr></tbody></table>
+
+<footer><span>vizscape · scatter-basic · 散点 · 纯 Canvas 无 CDN</span><span>输入兼容：x/y 列 / 宽表前两数值列 / ECharts [x,y,size]</span></footer>
+</div>
+
+<script>
+const RAW={"points": [{"label": "线上A", "group": "全部", "x": 120.0, "y": 860.0, "size": 45.0}, {"label": "线上B", "group": "全部", "x": 180.0, "y": 1320.0, "size": 62.0}, {"label": "线上C", "group": "全部", "x": 95.0, "y": 640.0, "size": 30.0}, {"label": "线上D", "group": "全部", "x": 240.0, "y": 1980.0, "size": 80.0}, {"label": "线上E", "group": "全部", "x": 60.0, "y": 380.0, "size": 22.0}, {"label": "门店A", "group": "全部", "x": 150.0, "y": 720.0, "size": 55.0}, {"label": "门店B", "group": "全部", "x": 210.0, "y": 1100.0, "size": 70.0}, {"label": "门店C", "group": "全部", "x": 80.0, "y": 410.0, "size": 28.0}, {"label": "门店D", "group": "全部", "x": 300.0, "y": 2260.0, "size": 95.0}, {"label": "门店E", "group": "全部", "x": 45.0, "y": 260.0, "size": 18.0}, {"label": "品牌A", "group": "全部", "x": 170.0, "y": 940.0, "size": 58.0}, {"label": "品牌B", "group": "全部", "x": 130.0, "y": 880.0, "size": 48.0}, {"label": "品牌C", "group": "全部", "x": 220.0, "y": 1650.0, "size": 74.0}, {"label": "品牌D", "group": "全部", "x": 55.0, "y": 330.0, "size": 20.0}, {"label": "品牌E", "group": "全部", "x": 260.0, "y": 1880.0, "size": 88.0}], "groups": ["全部"], "fit": {"m": 7.769625716199122, "b": -158.44556886673104, "x0": 45.0, "x1": 300.0, "r": 0.9650693935364517}};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let points=RAW.points.map((p,i)=>({...p,i}));
+let groups=RAW.groups, fit=RAW.fit;
+let hidden=new Set(), hoverPt=-1, brush=null, dragging=false, dragX0=0, dragY0=0, dragX1=0, dragY1=0, subtract=false;
+let showFit=true, logX=false, logY=false, sizeMode=points.some(p=>p.size!=null)?'metric':'uniform';
+let paletteKey='signal', marker='circle', dotScale=1, labelMode='none', showMean=false, showEllipse=false;
+let G={padL:60,padR:18,padT:18,padB:40,cw:1,ch:1,w:1,h:1,xmin:0,xmax:1,ymin:0,ymax:1};
+const PALETTES={
+  signal:{light:['#0f766e','#e85d3f','#d99a06','#2563eb','#7c3aed','#059669','#db2777','#0891b2'],dark:['#c6f13f','#ff6b4a','#ffb224','#4de3c2','#7dd3fc','#f472b6','#a78bfa','#facc15']},
+  cinnabar:{light:['#b5412f','#d36a2e','#8a3324','#c08a2d','#6b4f2c','#a16207','#0f766e','#3f3f46'],dark:['#ff8a5c','#ffd166','#ef4444','#fbbf24','#f97316','#fef08a','#5eead4','#fda4af']},
+  patina:{light:['#2f7f78','#386641','#588157','#a3b18a','#c69a4a','#344e41','#7f5539','#40916c'],dark:['#67a58d','#a7c957','#d2b46a','#8ecae6','#c9f2c7','#ffd166','#bde0fe','#80ed99']},
+  blueprint:{light:['#2f5fd0','#0b3b75','#3b82f6','#60a5fa','#1d4ed8','#0f766e','#475569','#93c5fd'],dark:['#7dd3fc','#38bdf8','#93c5fd','#a5f3fc','#60a5fa','#22d3ee','#e0f2fe','#67e8f9']},
+  inkwash:{light:['#171a1e','#3f4650','#69707d','#9299a5','#6b7280','#a3a3a3','#525252','#d4d4d4'],dark:['#ede9dc','#d6d3c8','#b8b4a8','#8f8b80','#6e6a61','#4b4841','#a8a29e','#f5f5f4']},
+  mono:{light:['#171a1e','#2f343c','#555d68','#7a828d','#a0a6af','#c5c8cd','#3f4650','#6b6f6a'],dark:['#ede9dc','#c9c6ba','#a5a296','#817e73','#5e5b52','#f5f5f4','#b9b5a8','#8f8b80']},
+  sundown:{light:['#c2410c','#ea580c','#f59e0b','#b91c1c','#db2777','#7c2d12','#f97316','#a16207'],dark:['#fb923c','#fbbf24','#f87171','#f472b6','#fdba74','#fde047','#fca5a5','#e879f9']},
+  dunhuang:{light:['#35618e','#4d8a6a','#b34a38','#c89b3c','#7a5c3e','#2f4f4f','#8e5a2b','#5b7a8c'],dark:['#7fb3d5','#7fc7a3','#e07a5f','#e5c07b','#b0927a','#81b29a','#d4a373','#a8c3cf']},
+  aurora:{light:['#0d9488','#0891b2','#7c3aed','#db2777','#059669','#2563eb','#c026d3','#0f766e'],dark:['#5eead4','#67e8f9','#a78bfa','#f0abfc','#6ee7b7','#93c5fd','#e879f9','#4ade80']},
+  morandi:{light:['#8b9dad','#c9a7a0','#a8b5a0','#b8b0a4','#9d8fa8','#c4b198','#8fa39e','#ad9b8f'],dark:['#b8c7d4','#dbc4be','#c3cfc0','#d0c9be','#c0b5c9','#d9cbb8','#b5c4bf','#c9bcb0']}
+};
+const SHAPES=['circle','square','diamond','triangle'];
+const cv=document.getElementById('chart'), tip=document.getElementById('tooltip'), detail=document.getElementById('detail'), legendEl=document.getElementById('legend'), brushEl=document.getElementById('brushinfo');
+const FONT='11px JetBrains Mono, monospace';
+function theme(){return document.documentElement.dataset.theme}
+function colors(){const grp=PALETTES[paletteKey]||PALETTES.signal;return grp[theme()]||grp.light}
+function shapeOf(p){return marker==='mixed'?SHAPES[groups.indexOf(p.group)%SHAPES.length]:marker}
+function dotPath(g,x,y,r,shape){
+  g.beginPath();
+  if(shape==='square'){g.rect(x-r*.92,y-r*.92,r*1.84,r*1.84)}
+  else if(shape==='diamond'){g.moveTo(x,y-r*1.15);g.lineTo(x+r*1.15,y);g.lineTo(x,y+r*1.15);g.lineTo(x-r*1.15,y);g.closePath()}
+  else if(shape==='triangle'){g.moveTo(x,y-r*1.15);g.lineTo(x+r,y+r*.85);g.lineTo(x-r,y+r*.85);g.closePath()}
+  else{g.arc(x,y,r,0,7)}
+}
+function groupColor(g){return colors()[groups.indexOf(g)%8]}
+function fmt(v){return Math.abs(v)>=10?Math.round(v).toLocaleString():(+v.toFixed(2)).toLocaleString()}
+function niceStep(span){const raw=(span||1)/5,p=Math.pow(10,Math.floor(Math.log10(raw))),m=raw/p;return (m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10)*p}
+function ticksFor(a,b){const st=niceStep(b-a),out=[];for(let v=Math.ceil(a/st)*st;v<=b+st*1e-9;v+=st)out.push(+v.toFixed(10));return out}
+const lg=x=>Math.log10(x);
+function sx(p,w){return G.padL+(p-G.xmin)/(G.xmax-G.xmin||1)*w}
+function sy(p,h){return G.padT+G.ch-(p-G.ymin)/(G.ymax-G.ymin||1)*h}
+function visPoints(){return points.filter(p=>!hidden.has(p.group))}
+function inBrush(p){
+  if(!brush) return true;
+  const {x0,x1,y0,y1,sub}=brush;
+  const ok=p.x>=x0&&p.x<=x1&&p.y>=y0&&p.y<=y1;
+  return sub?!ok:ok;
+}
+function ranges(){
+  const vis=visPoints().filter(inBrush);
+  let xs=vis.map(p=>p.x), ys=vis.map(p=>p.y);
+  if(!xs.length){xs=[0,1];ys=[0,1]}
+  let xmin=Math.min(...xs), xmax=Math.max(...xs), ymin=Math.min(...ys), ymax=Math.max(...ys);
+  if(logX) xmin=Math.max(xmin,0.0001);
+  if(logY) ymin=Math.max(ymin,0.0001);
+  const pad=(a,b)=>{const sp=(b-a)||Math.max(Math.abs(b),1);return [a-sp*0.08,b+sp*0.08]};
+  [xmin,xmax]=pad(xmin,xmax); [ymin,ymax]=pad(ymin,ymax);
+  if(logX){xmin=lg(xmin);xmax=lg(xmax)}
+  if(logY){ymin=lg(ymin);ymax=lg(ymax)}
+  return {xmin,xmax,ymin,ymax};
+}
+function draw(){
+  if(cv.getBoundingClientRect().width<40)return; // resize 中间态（如整页截图）保留 backing store
+  const dpr=window.devicePixelRatio||1, r=cv.getBoundingClientRect();
+  cv.width=r.width*dpr; cv.height=r.height*dpr;
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  const w=r.width, h=r.height, padR=18, padT=18, padB=40;
+  const cs=getComputedStyle(document.documentElement);
+  const ink=cs.getPropertyValue('--ink').trim(), faint=cs.getPropertyValue('--faint').trim(), line=cs.getPropertyValue('--line').trim(), acc=cs.getPropertyValue('--acc').trim();
+  g.font=FONT;
+  Object.assign(G,ranges());
+  G.padL=Math.max(52,g.measureText(fmt(10**G.ymax)).width+18); G.padR=padR; G.padT=padT; G.padB=padB;
+  G.cw=w-G.padL-G.padR; G.ch=h-G.padT-G.padB; G.w=w; G.h=h;
+  // 网格 + 刻度
+  const xt=ticksFor(G.xmin,G.xmax), yt=ticksFor(G.ymin,G.ymax);
+  g.textAlign='right'; g.fillStyle=faint;
+  yt.forEach(t=>{const y=sy(t,h);g.strokeStyle=line;g.beginPath();g.moveTo(G.padL,y);g.lineTo(G.padL+G.cw,y);g.stroke();g.fillText(logY?fmtTick(t):fmt(t),G.padL-8,y+3)});
+  g.textAlign='center';
+  xt.forEach(t=>{const x=sx(t,w);g.strokeStyle=line;g.beginPath();g.moveTo(x,G.padT);g.lineTo(x,G.padT+G.ch);g.stroke();g.fillText(logX?fmtTick(t):fmt(t),x,h-14)});
+  // 轴名
+  g.textAlign='center'; g.fillStyle=faint;
+  g.fillText('投放入(万元)',G.padL+G.cw/2,h-2);
+  g.save(); g.translate(12,G.padT+G.ch/2); g.rotate(-Math.PI/2); g.fillText('转化数(单)',0,0); g.restore();
+  // 刷选区
+  if(brush){const x0=sx(brush.x0,w),x1=sx(brush.x1,w),y0=sy(brush.y1,h),y1=sy(brush.y0,h);g.fillStyle=acc+'18';g.fillRect(Math.min(x0,x1),Math.min(y0,y1),Math.abs(x1-x0),Math.abs(y1-y0));g.strokeStyle=acc;g.setLineDash([4,4]);g.strokeRect(Math.min(x0,x1),Math.min(y0,y1),Math.abs(x1-x0),Math.abs(y1-y0));g.setLineDash([])}
+  // 分组 1σ 置信椭圆（协方差旋转，数据空间采样再投影，兼容 log 轴）
+  if(showEllipse){
+    const byG={}; visPoints().forEach(p=>{(byG[p.group]=byG[p.group]||[]).push(p)});
+    Object.keys(byG).forEach(gr=>{
+      const ps=byG[gr]; if(ps.length<3)return;
+      const mx=ps.reduce((s,p)=>s+p.x,0)/ps.length, my=ps.reduce((s,p)=>s+p.y,0)/ps.length;
+      let sxx=0,syy=0,sxy=0; ps.forEach(p=>{const dx=p.x-mx,dy=p.y-my;sxx+=dx*dx;syy+=dy*dy;sxy+=dx*dy});
+      sxx/=ps.length; syy/=ps.length; sxy/=ps.length;
+      const tr=sxx+syy, det=sxx*syy-sxy*sxy, disc=Math.sqrt(Math.max(0,tr*tr/4-det));
+      const l1=tr/2+disc, ang=Math.abs(sxy)<1e-12?(sxx>=syy?0:Math.PI/2):Math.atan2(l1-sxx,sxy);
+      const rx=Math.sqrt(Math.max(l1,1e-12)), ry=Math.sqrt(Math.max(tr/2-disc,1e-12));
+      const col=groupColor(gr), cA=Math.cos(ang), sA=Math.sin(ang);
+      g.beginPath();
+      for(let k=0;k<=48;k++){
+        const t=k/48*Math.PI*2, ex=Math.cos(t)*rx, ey=Math.sin(t)*ry;
+        const dx=ex*cA-ey*sA, dy=ex*sA+ey*cA;
+        const X=sx(logX?lg(Math.max(mx+dx,1e-4)):mx+dx,w), Y=sy(logY?lg(Math.max(my+dy,1e-4)):my+dy,h);
+        k?g.lineTo(X,Y):g.moveTo(X,Y);
+      }
+      g.closePath(); g.fillStyle=col+'14'; g.fill(); g.strokeStyle=col+'99'; g.lineWidth=1.2; g.stroke();
+    });
+  }
+  // 均值参考线 + 象限标注
+  if(showMean){
+    const vis=visPoints().filter(inBrush);
+    if(vis.length>=2){
+      const mx=vis.reduce((s,p)=>s+p.x,0)/vis.length, my=vis.reduce((s,p)=>s+p.y,0)/vis.length;
+      const px=sx(logX?lg(Math.max(mx,1e-4)):mx,w), py=sy(logY?lg(Math.max(my,1e-4)):my,h);
+      g.strokeStyle=faint; g.setLineDash([3,5]); g.lineWidth=1.2;
+      g.beginPath(); g.moveTo(px,G.padT); g.lineTo(px,G.padT+G.ch); g.moveTo(G.padL,py); g.lineTo(G.padL+G.cw,py); g.stroke(); g.setLineDash([]);
+      g.fillStyle=faint; g.font='10px JetBrains Mono, monospace';
+      g.textAlign='left';
+      g.fillText('Ⅱ',G.padL+7,G.padT+15); g.fillText('Ⅲ',G.padL+7,G.padT+G.ch-8);
+      g.fillText('x̄',px+5,G.padT+13); g.fillText('ȳ',G.padL+5,py-6);
+      g.textAlign='right';
+      g.fillText('Ⅰ',G.padL+G.cw-7,G.padT+15); g.fillText('Ⅳ',G.padL+G.cw-7,G.padT+G.ch-8);
+      g.font=FONT;
+    }
+  }
+  // 拟合线
+  if(showFit&&fit){
+    const pts=[[fit.x0,fit.m*fit.x0+fit.b],[fit.x1,fit.m*fit.x1+fit.b]];
+    const inR=pts.filter(([a,b])=>a>=G.xmin&&a<=G.xmax&&b>=G.ymin&&b<=G.ymax);
+    if(inR.length===2){g.strokeStyle=ink;g.globalAlpha=.55;g.setLineDash([6,4]);g.lineWidth=1.6;g.beginPath();g.moveTo(sx(inR[0][0],w),sy(inR[0][1],h));g.lineTo(sx(inR[1][0],w),sy(inR[1][1],h));g.stroke();g.globalAlpha=1;g.setLineDash([])}
+  }
+  // 点
+  const sizes=sizesMap();
+  visPoints().forEach(p=>{
+    const x=sx(logX?lg(Math.max(p.x,1e-4)):p.x,w), y=sy(logY?lg(Math.max(p.y,1e-4)):p.y,h);
+    const rad=sizes[p.i]; const col=groupColor(p.group);
+    g.globalAlpha=(brush&&!inBrush(p))?.18:.85;
+    dotPath(g,x,y,rad,shapeOf(p)); g.fillStyle=col; g.fill();
+    if(p.i===hoverPt){g.globalAlpha=1;g.strokeStyle=ink;g.lineWidth=2;g.stroke()}
+  });
+  g.globalAlpha=1;
+  // 点标注（离群值 / 全部）
+  if(labelMode!=='none'){
+    const vis=visPoints().filter(inBrush);
+    let targets=vis;
+    if(labelMode==='outlier'||vis.length>60){
+      const mx=vis.reduce((s,p)=>s+p.x,0)/(vis.length||1), my=vis.reduce((s,p)=>s+p.y,0)/(vis.length||1);
+      const ds=vis.map(p=>({p,d:Math.hypot(p.x-mx,p.y-my)}));
+      const md=ds.reduce((s,o)=>s+o.d,0)/(ds.length||1), sd=Math.sqrt(ds.reduce((s,o)=>s+(o.d-md)*(o.d-md),0)/(ds.length||1));
+      targets=ds.filter(o=>o.d>md+1.6*sd).sort((a,b)=>b.d-a.d).slice(0,8).map(o=>o.p);
+    }
+    g.font='10px JetBrains Mono, monospace'; g.textAlign='left';
+    targets.forEach(p=>{
+      const x=sx(logX?lg(Math.max(p.x,1e-4)):p.x,w), y=sy(logY?lg(Math.max(p.y,1e-4)):p.y,h);
+      g.fillStyle=groupColor(p.group); g.fillText(p.label,x+sizes[p.i]+4,y+3);
+    });
+    g.font=FONT;
+  }
+  // 拖拽框
+  if(dragging){const x0=Math.min(dragX0,dragX1),y0=Math.min(dragY0,dragY1);g.fillStyle=acc+'22';g.fillRect(x0,y0,Math.abs(dragX1-dragX0),Math.abs(dragY1-dragY0))}
+  if(hoverPt>=0) showTip(hoverPt); else tip.style.display='none';
+  updateDetail();
+}
+function fmtTick(t){return t===0?'0':Math.abs(t)>=1000?fmt(10**t):fmt(10**t)}
+function sizesMap(){
+  const m={}; const vis=points.filter(p=>p.size!=null&&p.size>0);
+  if(sizeMode!=='metric'||!vis.length){points.forEach(p=>m[p.i]=4.5*dotScale);return m}
+  const vs=vis.map(p=>p.size), mn=Math.min(...vs), mx=Math.max(...vs);
+  points.forEach(p=>{const s=p.size==null?mn:p.size; const t=mx>mn?(s-mn)/(mx-mn):.5; m[p.i]=(3+t*11)*dotScale});
+  return m;
+}
+function hit(mx,my){
+  const w=G.w,h=G.h,sizes=sizesMap(); let best=-1,bd=1e9;
+  visPoints().forEach(p=>{
+    const x=sx(logX?lg(Math.max(p.x,1e-4)):p.x,w), y=sy(logY?lg(Math.max(p.y,1e-4)):p.y,h);
+    const d=Math.hypot(x-mx,y-my);
+    if(d<=sizes[p.i]+5&&d<bd){bd=d;best=p.i}
+  });
+  return best;
+}
+function toData(x,y){return [G.xmin+(x-G.padL)/G.cw*(G.xmax-G.xmin),G.ymin+(G.padT+G.ch-y)/G.ch*(G.ymax-G.ymin)]}
+function showTip(i){
+  const p=points[i]; if(!p) return;
+  let html=`<b>${esc(p.label)}</b><br>分组 ${esc(p.group)}<br>X <b>${fmt(p.x)}</b><br>Y <b>${fmt(p.y)}</b>`;
+  if(p.size!=null) html+=`<br>size <b>${fmt(p.size)}</b>`;
+  tip.innerHTML=html; tip.style.display='block';
+  const px=sx(logX?lg(Math.max(p.x,1e-4)):p.x,G.w), py=sy(logY?lg(Math.max(p.y,1e-4)):p.y,G.h);
+  const flip=px>G.w*.6;
+  tip.style.left=(cv.offsetLeft+(flip?px-tip.offsetWidth-14:px+14))+'px';
+  tip.style.top=(cv.offsetTop+Math.max(4,py-tip.offsetHeight/2))+'px';
+}
+function updateDetail(){
+  if(brush){const sel=points.filter(inBrush);brushEl.className='brushinfo on';brushEl.textContent=`▣ 刷选 ${sel.length} / ${points.length} 点 · Y 均值 ${sel.length?fmt(sel.reduce((s,p)=>s+p.y,0)/sel.length):'—'}`;detail.innerHTML='▣ 刷选中，双击或点「重置刷选」清除';return}
+  brushEl.className='brushinfo'; brushEl.textContent='';
+  if(hoverPt<0){detail.textContent='💡 悬浮命中查看 X/Y · 拖拽框选刷选 · 双击重置 · 点图例开关分组 · 按住 alt 拖拽为减选';return}
+  const p=points[hoverPt];
+  detail.innerHTML=`📌 <b>${esc(p.label)}</b> · ${esc(p.group)} · X ${fmt(p.x)} · Y ${fmt(p.y)}${p.size!=null?' · size '+fmt(p.size):''}`;
+}
+cv.addEventListener('mousemove',e=>{
+  const r=cv.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  if(dragging){dragX1=mx;dragY1=my}
+  hoverPt=dragging?-1:hit(mx,my);
+  draw();
+});
+cv.addEventListener('mousedown',e=>{
+  const r=cv.getBoundingClientRect(); dragging=true; subtract=e.altKey;
+  dragX0=dragX1=e.clientX-r.left; dragY0=dragY1=e.clientY-r.top;
+});
+window.addEventListener('mouseup',()=>{
+  if(!dragging) return; dragging=false;
+  const w=G.w,h=G.h;
+  if(Math.abs(dragX1-dragX0)>6&&Math.abs(dragY1-dragY0)>6){
+    const [x0,y1]=toData(Math.min(dragX0,dragX1),Math.min(dragY0,dragY1));
+    const [x1,y0]=toData(Math.max(dragX0,dragX1),Math.max(dragY0,dragY1));
+    brush={x0,x1,y0,y1,sub:subtract};
+  }
+  draw();
+});
+cv.addEventListener('mouseleave',()=>{hoverPt=-1;draw()});
+cv.addEventListener('dblclick',()=>{brush=null;draw()});
+function renderLegend(){
+  legendEl.innerHTML=groups.map((g,i)=>{
+    const sh=marker==='mixed'?SHAPES[i%SHAPES.length]:marker, col=groupColor(g);
+    let st=`background:${col};`;
+    if(sh==='square')st+='border-radius:2.5px';
+    else if(sh==='diamond')st+='border-radius:2.5px;transform:rotate(45deg) scale(.82)';
+    else if(sh==='triangle')st+='clip-path:polygon(50% 0,100% 100%,0 100%)';
+    return `<button type="button" class="chip ${hidden.has(g)?'off':''}" data-g="${esc(g)}" aria-pressed="${!hidden.has(g)}"><i style="${st}"></i>${esc(g)}</button>`;
+  }).join('')+'<span style="font-family:var(--mono);font-size:11px;color:var(--faint);margin-left:6px">点图例开关分组</span>';
+}
+legendEl.addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const g=b.dataset.g;hidden.has(g)?hidden.delete(g):hidden.add(g);renderLegend();draw()});
+function setOn(el,on){el.classList.toggle('on',on);el.setAttribute('aria-pressed',String(on))}
+document.getElementById('btnFit').onclick=e=>{showFit=!showFit;setOn(e.currentTarget,showFit);draw()};
+document.getElementById('btnLogX').onclick=e=>{logX=!logX;setOn(e.currentTarget,logX);draw()};
+document.getElementById('btnLogY').onclick=e=>{logY=!logY;setOn(e.currentTarget,logY);draw()};
+document.getElementById('btnReset').onclick=()=>{brush=null;draw()};
+document.getElementById('sizeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;sizeMode=b.dataset.size;document.querySelectorAll('#sizeSeg button').forEach(x=>setOn(x,x===b));draw()});
+document.getElementById('btnMean').onclick=e=>{showMean=!showMean;setOn(e.currentTarget,showMean);draw()};
+document.getElementById('btnEllipse').onclick=e=>{showEllipse=!showEllipse;setOn(e.currentTarget,showEllipse);draw()};
+document.getElementById('markerSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;marker=b.dataset.marker;document.querySelectorAll('#markerSeg button').forEach(x=>setOn(x,x===b));renderLegend();draw()});
+document.getElementById('dotSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;dotScale=+b.dataset.dot;document.querySelectorAll('#dotSeg button').forEach(x=>setOn(x,x===b));draw()});
+document.getElementById('labelSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;labelMode=b.dataset.label;document.querySelectorAll('#labelSeg button').forEach(x=>setOn(x,x===b));draw()});
+document.getElementById('paletteSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;paletteKey=b.dataset.palette;document.documentElement.dataset.palette=paletteKey;document.querySelectorAll('#paletteSeg button').forEach(x=>setOn(x,x===b));renderLegend();draw()});
+document.getElementById('themeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.dataset.theme=b.dataset.theme;document.querySelectorAll('#themeSeg button').forEach(x=>setOn(x,x===b));renderLegend();draw()});
+document.querySelectorAll('#themeSeg button').forEach(b=>setOn(b,theme()===b.dataset.theme));
+document.querySelectorAll('#sizeSeg button').forEach(b=>setOn(b,b.dataset.size===sizeMode));
+renderLegend();draw();
+window.addEventListener('resize',draw);
+// @@SCRIPT2@@
+</script>
+</body>
+</html>

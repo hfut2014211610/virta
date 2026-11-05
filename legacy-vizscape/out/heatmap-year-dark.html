@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>每日步数年历 · vizscape heatmap-basic</title>
+<style>
+:root{--sans:"Noto Sans SC",system-ui,sans-serif;--serif:"Fraunces",Georgia,serif;--mono:"JetBrains Mono",ui-monospace,monospace}
+html[data-theme="light"]{--bg:#f6f3ec;--paper:#fffdf7;--ink:#171a1e;--muted:#6b6f6a;--faint:#9a9d96;--line:#e2ded2;--line2:#d1ccc0;--acc:#0f766e;--neg:#b5412f;--shadow:0 10px 36px rgba(23,26,30,.08);--grid:rgba(23,26,30,.06);--tip:#171a1e;--tipink:#fffdf7}
+html[data-theme="dark"]{--bg:#0d0e0a;--paper:#131410;--ink:#ede9dc;--muted:#9aa08a;--faint:#5e6450;--line:#23261d;--line2:#2e3323;--acc:#c6f13f;--neg:#ff6b4a;--shadow:0 10px 36px rgba(0,0,0,.4);--grid:rgba(237,233,220,.05);--tip:#ede9dc;--tipink:#0d0e0a}
+html[data-palette="cinnabar"]{--acc:#b5412f}
+html[data-palette="patina"]{--acc:#2f7f78}
+html[data-palette="blueprint"]{--acc:#2f5fd0}
+html[data-palette="inkwash"]{--acc:#4b5563}
+html[data-palette="mono"]{--acc:#171a1e}
+html[data-palette="sundown"]{--acc:#c2410c}
+html[data-palette="dunhuang"]{--acc:#b34a38}
+html[data-palette="aurora"]{--acc:#0d9488}
+html[data-palette="morandi"]{--acc:#8b9dad}
+html[data-theme="dark"][data-palette="mono"]{--acc:#ede9dc}
+html[data-theme="dark"][data-palette="sundown"]{--acc:#fb923c}
+html[data-theme="dark"][data-palette="dunhuang"]{--acc:#e07a5f}
+html[data-theme="dark"][data-palette="aurora"]{--acc:#5eead4}
+html[data-theme="dark"][data-palette="morandi"]{--acc:#b8c7d4}
+*{box-sizing:border-box;margin:0;padding:0}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:4px}
+body{background:radial-gradient(circle at 12% 8%,color-mix(in srgb,var(--acc) 12%,transparent),transparent 28rem),radial-gradient(circle at 88% 4%,rgba(232,93,63,.08),transparent 30rem),var(--bg);color:var(--ink);font-family:var(--sans);padding:28px;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:56px 56px;opacity:.6}
+.wrap{max-width:1080px;margin:0 auto;position:relative}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1.5px solid var(--ink);padding-bottom:16px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--acc);text-transform:uppercase}
+h1{font-family:var(--serif);font-weight:300;font-size:clamp(32px,5vw,52px);letter-spacing:-.02em}
+h1 em{font-style:italic;color:var(--acc)}
+.seg{display:flex;background:var(--paper);border:1px solid var(--line2);border-radius:99px;padding:3px;box-shadow:var(--shadow)}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:13px;padding:8px 14px;border-radius:99px;cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.deck{display:flex;flex-direction:column;gap:10px;margin:16px 0}
+.trow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:9px 12px}
+.trow .label{min-width:34px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.trow .spacer{flex:1}
+.trow .seg{box-shadow:none}
+.seg.wrap{flex-wrap:wrap;border-radius:18px}
+.seg button[disabled],.toggle[disabled]{opacity:.35;pointer-events:none}
+.toggle{appearance:none;border:1px solid var(--line2);background:var(--paper);color:var(--muted);border-radius:99px;padding:8px 14px;font-size:13px;cursor:pointer}
+.toggle.on{background:var(--acc);border-color:var(--acc);color:var(--paper);font-weight:700}
+.summary{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 14px}
+.sum-card{display:inline-flex;align-items:baseline;gap:8px;border:1px solid var(--line2);border-radius:14px;padding:9px 12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sum-card b{color:var(--ink);font-size:19px;font-weight:500;letter-spacing:-.02em}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);position:relative}
+#scalebar{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+#scalebar .bar{flex:0 0 220px;height:10px;border-radius:5px;border:1px solid var(--line2)}
+canvas{width:100%;display:block;cursor:crosshair}
+.table tbody tr:hover td{background:color-mix(in srgb,var(--acc) 5%,transparent)}
+.table{font-variant-numeric:tabular-nums}
+#tooltip{position:absolute;pointer-events:none;background:var(--tip);color:var(--tipink);padding:10px 12px;border-radius:10px;font-family:var(--mono);font-size:12px;line-height:1.7;display:none;z-index:10;min-width:140px;box-shadow:0 10px 30px rgba(0,0,0,.25);white-space:nowrap}
+#tooltip b{color:var(--acc)}
+#detail{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;line-height:1.8;min-height:44px}
+#detail b{color:var(--ink)}
+.table{width:100%;border-collapse:collapse;font-size:13px;margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.table th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-align:left;color:var(--muted);border-bottom:1.5px solid var(--ink);padding:10px}
+.table td{border-bottom:1px solid var(--line);padding:9px 10px}
+.table td.num,.table th.num{text-align:right;font-family:var(--mono)}
+footer{margin-top:18px;font-family:var(--mono);font-size:11px;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.hint{font-size:12px;color:var(--faint);margin-top:8px}
+.quality{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--paper);border-radius:16px;padding:14px;margin:16px 0 8px;box-shadow:0 1px 0 rgba(0,0,0,.02) inset}
+.quality.warn{border-left-color:var(--neg)}
+.quality-head{display:flex;justify-content:space-between;gap:14px;align-items:center;border-bottom:1px dashed var(--line);padding-bottom:10px;margin-bottom:10px}
+.quality-head h2{font-family:var(--serif);font-size:20px;font-weight:420;letter-spacing:-.02em}
+.quality-score{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;line-height:1.6}.quality-score b{display:block;color:var(--acc);font-size:13px}.quality.warn .quality-score b{color:var(--neg)}
+.quality-grid{display:flex;gap:8px;flex-wrap:wrap}.qs{border:1px solid var(--line2);border-radius:999px;padding:5px 9px;font-family:var(--mono);font-size:11px;color:var(--muted)}.qs b{color:var(--ink);font-weight:500}
+.quality-warnings{margin:11px 0 0;padding-left:18px;color:var(--neg);font-size:12px;line-height:1.75}.quality-ok{margin:11px 0 0;color:var(--acc);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">vizscape · heatmap-basic · DARK</div><h1>每日步数年历 <em>· 热力图</em></h1></div>
+  <div class="seg" id="themeSeg" role="group" aria-label="主题"><button type="button" data-theme="light" aria-pressed="false">☀ 浅色</button><button type="button" data-theme="dark" aria-pressed="false">☾ 深色</button></div>
+</header>
+
+<div class="deck">
+  <div class="trow">
+    <span class="label">色带</span>
+    <div class="seg" id="scaleSeg" role="group" aria-label="色带"><button type="button" data-scale="seq" class="on" aria-pressed="true">◧ 顺序</button><button type="button" data-scale="div" aria-pressed="false">◨ 发散</button></div>
+    <span class="label">密度</span>
+    <div class="seg" id="densitySeg" role="group" aria-label="密度"><button type="button" data-density="comfort" class="on" aria-pressed="true">舒适</button><button type="button" data-density="compact" aria-pressed="false">紧凑</button></div>
+    <span class="label" id="yearLabel" hidden>年份</span>
+    <div class="seg" id="yearSeg" role="group" aria-label="年份" hidden></div>
+    <span class="spacer"></span>
+    <button class="toggle" id="btnVal" type="button" aria-pressed="false"># 数值标注</button>
+    <button class="toggle" id="btnReplay" type="button">▶ 重播动画</button>
+  </div>
+  <div class="trow">
+    <span class="label">风格</span>
+    <div class="seg wrap" id="paletteSeg" role="group" aria-label="配色风格">
+      <button type="button" data-palette="signal" class="on" aria-pressed="true">Signal</button>
+      <button type="button" data-palette="cinnabar" aria-pressed="false">朱砂</button>
+      <button type="button" data-palette="patina" aria-pressed="false">铜绿</button>
+      <button type="button" data-palette="blueprint" aria-pressed="false">蓝图</button>
+      <button type="button" data-palette="inkwash" aria-pressed="false">水墨</button>
+      <button type="button" data-palette="mono" aria-pressed="false">单色</button>
+      <button type="button" data-palette="sundown" aria-pressed="false">落日</button>
+      <button type="button" data-palette="dunhuang" aria-pressed="false">敦煌</button>
+      <button type="button" data-palette="aurora" aria-pressed="false">极光</button>
+      <button type="button" data-palette="morandi" aria-pressed="false">莫兰迪</button>
+    </div>
+  </div>
+</div>
+
+<div class="summary" aria-label="摘要"><span class="sum-card"><b>365</b>天数</span><span class="sum-card"><b>2,536,604</b>总量</span><span class="sum-card"><b>6,949.6</b>日均</span><span class="sum-card"><b>2026-06-13</b>峰值</span><span class="sum-card"><b>1</b>年份</span></div>
+
+<div class="card">
+  <div id="scalebar"><span id="scaleMin"></span><span class="bar" id="scaleGradient"></span><span id="scaleMax"></span><span style="flex:1"></span><span id="scaleNote"></span></div>
+  <canvas id="chart" role="img" aria-label="每日步数年历 热力图，365 天，1 个年份；明细见下方表格"></canvas>
+  <div id="tooltip"></div>
+  <div id="detail"></div>
+  <div class="hint">读法：颜色越深值越大；发散色带以 0 为界负红正主色。矩阵模式悬停看行列合计占比；日历模式每格一天（周一起始列），月份标注在月初所在周。缺值格留空。</div>
+</div>
+
+<section class="quality ok" aria-label="数据识别报告"><div class="quality-head"><div><p class="eyebrow">data quality</p><h2>数据识别报告</h2></div><div class="quality-score"><b>高置信识别</b>heatmap · date → steps</div></div><div class="quality-grid"><span class="qs"><b>模式</b> calendar</span><span class="qs"><b>天数</b> 365</span><span class="qs"><b>年份</b> 1</span><span class="qs"><b>总量</b> 2,536,604</span><span class="qs"><b>日均</b> 6,949.6</span><span class="qs"><b>峰值</b> 2026-06-13 · 14,208</span><span class="qs"><b>日期列</b> date</span><span class="qs"><b>数值列</b> steps</span></div><p class="quality-ok">网格完整；数值与类目可直接引用。</p></section>
+
+<table class="table"><thead><tr><th>月份</th><th class="num">天数</th><th class="num">总量</th><th class="num">日均</th><th class="num">峰值日</th><th class="num">峰值</th></tr></thead><tbody><tr><td>2026-01</td><td class="num">31</td><td class="num">142,839</td><td class="num">4,607.7</td><td class="num">2026-01-18</td><td class="num">8,089</td></tr><tr><td>2026-02</td><td class="num">28</td><td class="num">148,931</td><td class="num">5,319.0</td><td class="num">2026-02-23</td><td class="num">8,578</td></tr><tr><td>2026-03</td><td class="num">31</td><td class="num">205,907</td><td class="num">6,642.2</td><td class="num">2026-03-28</td><td class="num">10,502</td></tr><tr><td>2026-04</td><td class="num">30</td><td class="num">246,360</td><td class="num">8,212</td><td class="num">2026-04-25</td><td class="num">12,460</td></tr><tr><td>2026-05</td><td class="num">31</td><td class="num">288,705</td><td class="num">9,313.1</td><td class="num">2026-05-24</td><td class="num">13,749</td></tr><tr><td>2026-06</td><td class="num">30</td><td class="num">292,032</td><td class="num">9,734.4</td><td class="num">2026-06-13</td><td class="num">14,208</td></tr><tr><td>2026-07</td><td class="num">31</td><td class="num">288,802</td><td class="num">9,316.2</td><td class="num">2026-07-18</td><td class="num">13,561</td></tr><tr><td>2026-08</td><td class="num">31</td><td class="num">255,190</td><td class="num">8,231.9</td><td class="num">2026-08-03</td><td class="num">12,844</td></tr><tr><td>2026-09</td><td class="num">30</td><td class="num">214,606</td><td class="num">7,153.5</td><td class="num">2026-09-12</td><td class="num">13,730</td></tr><tr><td>2026-10</td><td class="num">31</td><td class="num">175,624</td><td class="num">5,665.3</td><td class="num">2026-10-18</td><td class="num">9,750</td></tr><tr><td>2026-11</td><td class="num">30</td><td class="num">144,238</td><td class="num">4,807.9</td><td class="num">2026-11-21</td><td class="num">8,532</td></tr><tr><td>2026-12</td><td class="num">31</td><td class="num">133,370</td><td class="num">4,302.3</td><td class="num">2026-12-12</td><td class="num">8,466</td></tr></tbody></table>
+
+<footer><span>vizscape · heatmap-basic · 热力图 · 纯 Canvas 无 CDN</span><span>输入兼容：x+y+value（矩阵）· date+value（日历）· 日期多格式</span></footer>
+</div>
+
+<script>
+const RAW={"mode": "calendar", "years": {"2026": [[739617, 3441.0], [739618, 3407.0], [739619, 5710.0], [739620, 6942.0], [739621, 3509.0], [739622, 1467.0], [739623, 4225.0], [739624, 3340.0], [739625, 3430.0], [739626, 6145.0], [739627, 6336.0], [739628, 5550.0], [739629, 4808.0], [739630, 4007.0], [739631, 2753.0], [739632, 2358.0], [739633, 6470.0], [739634, 8089.0], [739635, 4007.0], [739636, 3807.0], [739637, 4788.0], [739638, 1834.0], [739639, 3570.0], [739640, 6999.0], [739641, 7600.0], [739642, 3755.0], [739643, 4708.0], [739644, 4543.0], [739645, 5373.0], [739646, 2558.0], [739647, 7310.0], [739648, 4216.0], [739649, 388.0], [739650, 3439.0], [739651, 3007.0], [739652, 5727.0], [739653, 5442.0], [739654, 4851.0], [739655, 7984.0], [739656, 3044.0], [739657, 4453.0], [739658, 4177.0], [739659, 4825.0], [739660, 5917.0], [739661, 7884.0], [739662, 7488.0], [739663, 5776.0], [739664, 5556.0], [739665, 3936.0], [739666, 3840.0], [739667, 4250.0], [739668, 7943.0], [739669, 6859.0], [739670, 8578.0], [739671, 3886.0], [739672, 3507.0], [739673, 6349.0], [739674, 7371.0], [739675, 8238.0], [739676, 8776.0], [739677, 7504.0], [739678, 5266.0], [739679, 3315.0], [739680, 4694.0], [739681, 6965.0], [739682, 5613.0], [739683, 7873.0], [739684, 6046.0], [739685, 5237.0], [739686, 6840.0], [739687, 6669.0], [739688, 9325.0], [739689, 9017.0], [739690, 7217.0], [739691, 5133.0], [739692, 4773.0], [739693, 7494.0], [739694, 5260.0], [739695, 6049.0], [739696, 9523.0], [739697, 7359.0], [739698, 5849.0], [739699, 3572.0], [739700, 4755.0], [739701, 5571.0], [739702, 7091.0], [739703, 10502.0], [739704, 8729.0], [739705, 6993.0], [739706, 6897.0], [739707, 8316.0], [739708, 8073.0], [739709, 7187.0], [739710, 7504.0], [739711, 10418.0], [739712, 7478.0], [739713, 8790.0], [739714, 6947.0], [739715, 9964.0], [739716, 6539.0], [739717, 11709.0], [739718, 9533.0], [739719, 6428.0], [739720, 5551.0], [739721, 7058.0], [739722, 9460.0], [739723, 8589.0], [739724, 10638.0], [739725, 6080.0], [739726, 8550.0], [739727, 8356.0], [739728, 6735.0], [739729, 6657.0], [739730, 7632.0], [739731, 12460.0], [739732, 8327.0], [739733, 7104.0], [739734, 9824.0], [739735, 7148.0], [739736, 7305.0], [739737, 8033.0], [739738, 8258.0], [739739, 10483.0], [739740, 6171.0], [739741, 9346.0], [739742, 8055.0], [739743, 11506.0], [739744, 8533.0], [739745, 12390.0], [739746, 8416.0], [739747, 8017.0], [739748, 8713.0], [739749, 10875.0], [739750, 5762.0], [739751, 9795.0], [739752, 11422.0], [739753, 12861.0], [739754, 9454.0], [739755, 8487.0], [739756, 7650.0], [739757, 6583.0], [739758, 8770.0], [739759, 10411.0], [739760, 13749.0], [739761, 7622.0], [739762, 9038.0], [739763, 6223.0], [739764, 8001.0], [739765, 9003.0], [739766, 12063.0], [739767, 13015.0], [739768, 8592.0], [739769, 6996.0], [739770, 9372.0], [739771, 9474.0], [739772, 9448.0], [739773, 9871.0], [739774, 12632.0], [739775, 8874.0], [739776, 9801.0], [739777, 10670.0], [739778, 9681.0], [739779, 9203.0], [739780, 14208.0], [739781, 11350.0], [739782, 8345.0], [739783, 8960.0], [739784, 11020.0], [739785, 8976.0], [739786, 9578.0], [739787, 12793.0], [739788, 10230.0], [739789, 6208.0], [739790, 9246.0], [739791, 9139.0], [739792, 7879.0], [739793, 10093.0], [739794, 11893.0], [739795, 9484.0], [739796, 9547.0], [739797, 8469.0], [739798, 6531.0], [739799, 9426.0], [739800, 8669.0], [739801, 9809.0], [739802, 11701.0], [739803, 9437.0], [739804, 7826.0], [739805, 9280.0], [739806, 10188.0], [739807, 7582.0], [739808, 11407.0], [739809, 10824.0], [739810, 12002.0], [739811, 5792.0], [739812, 9610.0], [739813, 8089.0], [739814, 8378.0], [739815, 13561.0], [739816, 10675.0], [739817, 11827.0], [739818, 7780.0], [739819, 8947.0], [739820, 7661.0], [739821, 7337.0], [739822, 10642.0], [739823, 10099.0], [739824, 8600.0], [739825, 5112.0], [739826, 11246.0], [739827, 7964.0], [739828, 10800.0], [739829, 8846.0], [739830, 10765.0], [739831, 12844.0], [739832, 6761.0], [739833, 5791.0], [739834, 7182.0], [739835, 8678.0], [739836, 11176.0], [739837, 12038.0], [739838, 7483.0], [739839, 5431.0], [739840, 7147.0], [739841, 9624.0], [739842, 8426.0], [739843, 6956.0], [739844, 9802.0], [739845, 9714.0], [739846, 10769.0], [739847, 8384.0], [739848, 7967.0], [739849, 5604.0], [739850, 8360.0], [739851, 9655.0], [739852, 8100.0], [739853, 8175.0], [739854, 6547.0], [739855, 5495.0], [739856, 6015.0], [739857, 7604.0], [739858, 10263.0], [739859, 3588.0], [739860, 6514.0], [739861, 7646.0], [739862, 9211.0], [739863, 6992.0], [739864, 10544.0], [739865, 8400.0], [739866, 5638.0], [739867, 5699.0], [739868, 8958.0], [739869, 8114.0], [739870, 7310.0], [739871, 13730.0], [739872, 8641.0], [739873, 7376.0], [739874, 6862.0], [739875, 6023.0], [739876, 9786.0], [739877, 8527.0], [739878, 6323.0], [739879, 7777.0], [739880, 6775.0], [739881, 7262.0], [739882, 4020.0], [739883, 2615.0], [739884, 3094.0], [739885, 8003.0], [739886, 7910.0], [739887, 6338.0], [739888, 4622.0], [739889, 3896.0], [739890, 2654.0], [739891, 6138.0], [739892, 8356.0], [739893, 9247.0], [739894, 6700.0], [739895, 5185.0], [739896, 7452.0], [739897, 5181.0], [739898, 4352.0], [739899, 6720.0], [739900, 6582.0], [739901, 1969.0], [739902, 5411.0], [739903, 5510.0], [739904, 4551.0], [739905, 3983.0], [739906, 7772.0], [739907, 9750.0], [739908, 4993.0], [739909, 4135.0], [739910, 3971.0], [739911, 4715.0], [739912, 2885.0], [739913, 6757.0], [739914, 6999.0], [739915, 7438.0], [739916, 6050.0], [739917, 6151.0], [739918, 3495.0], [739919, 5535.0], [739920, 4987.0], [739921, 7130.0], [739922, 5058.0], [739923, 3247.0], [739924, 7364.0], [739925, 5185.0], [739926, 1449.0], [739927, 7302.0], [739928, 5831.0], [739929, 4215.0], [739930, 4883.0], [739931, 4743.0], [739932, 1071.0], [739933, 2365.0], [739934, 7435.0], [739935, 8203.0], [739936, 6881.0], [739937, 6707.0], [739938, 895.0], [739939, 5110.0], [739940, 1059.0], [739941, 8532.0], [739942, 6471.0], [739943, 2159.0], [739944, 6866.0], [739945, 4798.0], [739946, 977.0], [739947, 4237.0], [739948, 4883.0], [739949, 6131.0], [739950, 3051.0], [739951, 5794.0], [739952, 1585.0], [739953, 4183.0], [739954, 6416.0], [739955, 4642.0], [739956, 6188.0], [739957, 3965.0], [739958, 2618.0], [739959, 4616.0], [739960, 3782.0], [739961, 2213.0], [739962, 8466.0], [739963, 7004.0], [739964, 3362.0], [739965, 2653.0], [739966, 2428.0], [739967, 5449.0], [739968, 3381.0], [739969, 6489.0], [739970, 5523.0], [739971, 4525.0], [739972, 3427.0], [739973, 4749.0], [739974, 3332.0], [739975, 4854.0], [739976, 6823.0], [739977, 5645.0], [739978, 2336.0], [739979, 2222.0], [739980, 2529.0], [739981, 2171.0]]}, "vmin": 388.0, "vmax": 14208.0, "counts": {"days": 365, "years": 1, "vmin": 388.0, "vmax": 14208.0, "total": 2536604.0, "avg": 6949.6, "peak": "2026-06-13", "peakv": 14208.0}, "quality": {"rows": 365, "kept": 365, "warnings": [], "confidence": "high", "mapping": {"date": "date", "value": "steps"}}};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let density='comfort', paletteKey='signal', scaleMode='seq', showVal=false;
+let curYear=RAW.mode==='calendar'?Object.keys(RAW.years).map(Number).sort((a,b)=>a-b).pop():null;
+let hover=null; // matrix: {x,y} | calendar: {ord}
+const zones=[];
+const PALETTES={
+  signal:{light:['#0f766e','#e85d3f','#d99a06','#2563eb','#7c3aed','#059669','#db2777','#0891b2'],dark:['#c6f13f','#ff6b4a','#ffb224','#4de3c2','#7dd3fc','#f472b6','#a78bfa','#facc15']},
+  cinnabar:{light:['#b5412f','#d36a2e','#8a3324','#c08a2d','#6b4f2c','#a16207','#0f766e','#3f3f46'],dark:['#ff8a5c','#ffd166','#ef4444','#fbbf24','#f97316','#fef08a','#5eead4','#fda4af']},
+  patina:{light:['#2f7f78','#386641','#588157','#a3b18a','#c69a4a','#344e41','#7f5539','#40916c'],dark:['#67a58d','#a7c957','#d2b46a','#8ecae6','#c9f2c7','#ffd166','#bde0fe','#80ed99']},
+  blueprint:{light:['#2f5fd0','#0b3b75','#3b82f6','#60a5fa','#1d4ed8','#0f766e','#475569','#93c5fd'],dark:['#7dd3fc','#38bdf8','#93c5fd','#a5f3fc','#60a5fa','#22d3ee','#e0f2fe','#67e8f9']},
+  inkwash:{light:['#171a1e','#3f4650','#69707d','#9299a5','#6b7280','#a3a3a3','#525252','#d4d4d4'],dark:['#ede9dc','#d6d3c8','#b8b4a8','#8f8b80','#6e6a61','#4b4841','#a8a29e','#f5f5f4']},
+  mono:{light:['#171a1e','#2f343c','#555d68','#7a828d','#a0a6af','#c5c8cd','#3f4650','#6b6f6a'],dark:['#ede9dc','#c9c6ba','#a5a296','#817e73','#5e5b52','#f5f5f4','#b9b5a8','#8f8b80']},
+  sundown:{light:['#c2410c','#ea580c','#f59e0b','#b91c1c','#db2777','#7c2d12','#f97316','#a16207'],dark:['#fb923c','#fbbf24','#f87171','#f472b6','#fdba74','#fde047','#fca5a5','#e879f9']},
+  dunhuang:{light:['#35618e','#4d8a6a','#b34a38','#c89b3c','#7a5c3e','#2f4f4f','#8e5a2b','#5b7a8c'],dark:['#7fb3d5','#7fc7a3','#e07a5f','#e5c07b','#b0927a','#81b29a','#d4a373','#a8c3cf']},
+  aurora:{light:['#0d9488','#0891b2','#7c3aed','#db2777','#059669','#2563eb','#c026d3','#0f766e'],dark:['#5eead4','#67e8f9','#a78bfa','#f0abfc','#6ee7b7','#93c5fd','#e879f9','#4ade80']},
+  morandi:{light:['#8b9dad','#c9a7a0','#a8b5a0','#b8b0a4','#9d8fa8','#c4b198','#8fa39e','#ad9b8f'],dark:['#b8c7d4','#dbc4be','#c3cfc0','#d0c9be','#c0b5c9','#d9cbb8','#b5c4bf','#c9bcb0']}
+};
+const cv=document.getElementById('chart'), tip=document.getElementById('tooltip'), detail=document.getElementById('detail');
+const FONT='12px "Noto Sans SC", sans-serif';
+function theme(){return document.documentElement.dataset.theme}
+function colors0(){const grp=PALETTES[paletteKey]||PALETTES.signal;return grp[theme()]||grp.light}
+function accColor(){return colors0()[0]}
+function hx(c){c=String(c).trim();if(c.startsWith('rgb')){const m=c.match(/\d+(\.\d+)?/g);return m.slice(0,3).map(Number)}c=c.replace('#','');return [parseInt(c.slice(0,2),16),parseInt(c.slice(2,4),16),parseInt(c.slice(4,6),16)]}
+function mix(c1,c2,t){const a=hx(c1),b=hx(c2);return '#'+((1<<24)+(Math.round(a[0]+(b[0]-a[0])*t)<<16)+(Math.round(a[1]+(b[1]-a[1])*t)<<8)+Math.round(a[2]+(b[2]-a[2])*t)).toString(16).slice(1)}
+function lum(c){const[r,g,b]=hx(c);return 0.299*r+0.587*g+0.114*b}
+const fmtV=v=>Math.abs(v)>=1000?Math.round(v).toLocaleString():(Math.round(v*10)/10).toLocaleString();
+function baseCellColor(){const cs=getComputedStyle(document.documentElement);return cs.getPropertyValue('--paper').trim()}
+function ramp(v){
+  const cs=getComputedStyle(document.documentElement);
+  const paper=cs.getPropertyValue('--paper').trim(), acc=cs.getPropertyValue('--acc').trim(), neg=cs.getPropertyValue('--neg').trim();
+  const lo=RAW.vmin, hi=RAW.vmax;
+  if(scaleMode==='div'&&lo<0&&hi>0){
+    if(v<0)return mix(paper,neg,Math.min(1,v/lo));
+    return mix(paper,acc,Math.min(1,v/hi));
+  }
+  const t=hi>lo?(v-lo)/(hi-lo):0.55;
+  return mix(paper,acc,0.06+0.94*t);
+}
+function ord2civil(z){
+  z+=305; // Python ordinal: 0001-01-01 = 1 → 转换为距 0000-03-01 的天数
+  const era=Math.floor((z>=0?z:z-146096)/146097);
+  const doe=z-era*146097;
+  const yoe=Math.floor((doe-Math.floor(doe/1460)+Math.floor(doe/36524)-Math.floor(doe/146096))/365);
+  const y=yoe+era*400, doy=doe-(365*yoe+Math.floor(yoe/4)-Math.floor(yoe/100));
+  const mp=Math.floor((5*doy+2)/153), d=doy-Math.floor((153*mp+2)/5)+1, m=mp+(mp<10?3:-9);
+  return {y:y+(m<=2?1:0), m, d};
+}
+let animStart=null;
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ease=t=>1-Math.pow(1-t,3);
+function draw(ts){
+  if(cv.getBoundingClientRect().width<40)return; // resize 中间态（如整页截图）保留 backing store
+  zones.length=0;
+  if(RAW.mode==='calendar')drawCalendar(ts);else drawMatrix(ts);
+}
+// —— 矩阵模式 ——
+function drawMatrix(ts){
+  const xs=RAW.xs, ys=RAW.ys, nx=xs.length, ny=ys.length;
+  const grid={}; RAW.cells.forEach(c=>grid[c.x+','+c.y]=c.v);
+  const rowSum=ys.map((_,j)=>RAW.cells.filter(c=>c.y===j).reduce((s,c)=>s+c.v,0));
+  const colSum=xs.map((_,i)=>RAW.cells.filter(c=>c.x===i).reduce((s,c)=>s+c.v,0));
+  const grand=rowSum.reduce((a,b)=>a+b,0)||1;
+  const dpr=window.devicePixelRatio||1, r=cv.getBoundingClientRect(), w=r.width;
+  const cs=getComputedStyle(document.documentElement);
+  const ink=cs.getPropertyValue('--ink').trim(), faint=cs.getPropertyValue('--faint').trim(), acc=cs.getPropertyValue('--acc').trim(), paper=cs.getPropertyValue('--paper').trim(), line=cs.getPropertyValue('--line').trim();
+  const g0=cv.getContext('2d'); g0.font=FONT;
+  const LBL_L=Math.min(140,Math.max(...ys.map(s=>g0.measureText(String(s)).width))+22);
+  const rotateX=nx>12;
+  const LBL_T=rotateX?Math.min(120,Math.max(...xs.map(s=>g0.measureText(String(s)).width))*0.72+16):30;
+  const gap=density==='comfort'?3:2;
+  const maxCell=density==='comfort'?46:30, minCell=14;
+  const cell=Math.max(minCell,Math.min(maxCell,(w-LBL_L-14-(nx-1)*gap)/nx,(520-(ny-1)*gap)/ny));
+  const H=LBL_T+ny*(cell+gap)+10;
+  cv.style.height=H+'px';
+  const r2=cv.getBoundingClientRect();
+  cv.width=r2.width*dpr; cv.height=r2.height*dpr;
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  g.clearRect(0,0,w,H); g.font=FONT;
+  const animP=(animStart===null||ts===undefined)?null:ts-animStart;
+  const colDelay=Math.min(26,600/Math.max(1,nx));
+  // x 标签
+  g.textBaseline='middle';
+  xs.forEach((xv,i)=>{
+    const cx=LBL_L+i*(cell+gap)+cell/2;
+    g.save();
+    g.fillStyle=(hover&&hover.x===i)?acc:faint;
+    g.font=(hover&&hover.x===i)?'bold 12px "Noto Sans SC", sans-serif':FONT;
+    if(rotateX){g.translate(cx,LBL_T-8);g.rotate(-Math.PI/5);g.textAlign='right';g.fillText(String(xv),0,0)}
+    else{g.textAlign='center';g.fillText(String(xv),cx,LBL_T-12)}
+    g.restore();
+  });
+  // y 标签 + 格子
+  ys.forEach((yv,j)=>{
+    const cy=LBL_T+j*(cell+gap)+cell/2;
+    g.fillStyle=(hover&&hover.y===j)?acc:faint;
+    g.font=(hover&&hover.y===j)?'bold 12px "Noto Sans SC", sans-serif':FONT;
+    g.textAlign='right'; g.fillText(String(yv),LBL_L-10,cy);
+    g.font=FONT;
+  });
+  for(let j=0;j<ny;j++){
+    for(let i=0;i<nx;i++){
+      const v=grid[i+','+j];
+      const x=LBL_L+i*(cell+gap), y=LBL_T+j*(cell+gap);
+      const p=(animP===null)?1:Math.min(1,Math.max(0,(animP-(i+j)*colDelay)/240));
+      if(p<=0)continue;
+      const hot=hover&&hover.x===i&&hover.y===j;
+      const dim=hover&&hover.x!==undefined&&!(hover.x===i&&hover.y===j)&&(hover.x===i||hover.y===j);
+      if(v===undefined){
+        g.globalAlpha=0.5*p; g.fillStyle=theme()==='dark'?'rgba(237,233,220,.04)':'rgba(23,26,30,.04)';
+        g.beginPath(); g.roundRect(x,y,cell,cell,3); g.fill();
+        g.globalAlpha=1;
+        continue;
+      }
+      g.globalAlpha=(0.25+0.75*ease(p));
+      g.fillStyle=ramp(v);
+      g.beginPath(); g.roundRect(x,y,cell,cell,3); g.fill();
+      if(hot){g.globalAlpha=1;g.strokeStyle=acc;g.lineWidth=2;g.beginPath();g.roundRect(x+1,y+1,cell-2,cell-2,3);g.stroke()}
+      g.globalAlpha=1;
+      if(showVal&&cell>=30){
+        const bc=ramp(v);
+        g.fillStyle=lum(bc)>150?'#171a1e':'#fffdf7';
+        g.font='10px JetBrains Mono, monospace'; g.textAlign='center'; g.textBaseline='middle';
+        g.fillText(fmtV(v),x+cell/2,y+cell/2+0.5);
+        g.font=FONT; g.textBaseline='middle';
+      }
+      zones.push({x0:x,y0:y,x1:x+cell,y1:y+cell,x:i,y:j,v});
+    }
+  }
+}
+// —— 日历模式：周列 × 7 行（周一在上）——
+function drawCalendar(ts){
+  const yearDays=RAW.years[String(curYear)]||[];
+  const dayMap={}; yearDays.forEach(([od,v])=>dayMap[od]=v);
+  const firstOd=yearDays.length?yearDays[0][0]:0;
+  const y0=curYear;
+  const jan1=(y=>{ // civil2ord
+    let yy=y-1, m=1, d=1;
+    const era=Math.floor((yy>=0?yy:yy-399)/400), yoe=yy-era*400;
+    const mp=m+9, doy=Math.floor((153*mp+2)/5)+d-1;
+    return era*146097+yoe*365+Math.floor(yoe/4)-Math.floor(yoe/100)+doy-305;
+  })(y0);
+  const isLeap=new Date(y0,1,29).getDate()===29;
+  const yearEnd=jan1+(isLeap?366:365)-1;
+  const firstCol=Math.floor((jan1-1-(jan1-1)%7)/7); // jan1 所在周的周一
+  const startOrd=(jan1-1)-((jan1-1)%7); // 周一=0 偏移：对齐到周一
+  const weeks=Math.ceil(((yearEnd-startOrd)+1)/7);
+  const cell=density==='comfort'?14:11, gap=density==='comfort'?3:2;
+  const LBL_L=34, LBL_T=26;
+  const H=LBL_T+7*(cell+gap)+8;
+  cv.style.height=H+'px';
+  const dpr=window.devicePixelRatio||1, r=cv.getBoundingClientRect();
+  cv.width=r.width*dpr; cv.height=r.height*dpr;
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  const w=r.width;
+  const cs=getComputedStyle(document.documentElement);
+  const ink=cs.getPropertyValue('--ink').trim(), faint=cs.getPropertyValue('--faint').trim(), acc=cs.getPropertyValue('--acc').trim(), line=cs.getPropertyValue('--line').trim();
+  g.clearRect(0,0,w,H); g.font='10px JetBrains Mono, monospace';
+  const animP=(animStart===null||ts===undefined)?null:ts-animStart;
+  // 星期标签（一/三/五/日）
+  g.fillStyle=faint; g.textAlign='right'; g.textBaseline='middle';
+  [0,2,4,6].forEach(d=>{g.fillText(['一','三','五','日'][[0,2,4,6].indexOf(d)],LBL_L-8,LBL_T+d*(cell+gap)+cell/2)});
+  // 月份标签：该周内含某月 1 号时，在该周列上方标注
+  let lastM=0;
+  for(let wi=0;wi<weeks;wi++){
+    const od=startOrd+wi*7;
+    if(od>yearEnd)break;
+    let labelM=0;
+    for(let d=0;d<7;d++){
+      const o2=od+d;
+      if(o2<jan1||o2>yearEnd)continue;
+      if(ord2civil(o2).d===1){labelM=ord2civil(o2).m;break}
+    }
+    if(labelM&&labelM!==lastM){
+      lastM=labelM;
+      g.fillStyle=faint; g.textAlign='left';
+      g.fillText(labelM+'月',LBL_L+wi*(cell+gap),12);
+    }
+  }
+  const todayOrd=null; // 日历年图不画今日线（甘特已承担今日语义）
+  for(let wi=0;wi<weeks;wi++){
+    const p=(animP===null)?1:Math.min(1,Math.max(0,(animP-wi*10)/200));
+    if(p<=0)continue;
+    for(let d=0;d<7;d++){
+      const od=startOrd+wi*7+d;
+      if(od<jan1||od>yearEnd)continue;
+      const x=LBL_L+wi*(cell+gap), y=LBL_T+d*(cell+gap);
+      const v=dayMap[od];
+      const hot=hover&&hover.ord===od;
+      if(v===undefined){
+        g.globalAlpha=0.6*p; g.fillStyle=theme()==='dark'?'rgba(237,233,220,.05)':'rgba(23,26,30,.05)';
+        g.beginPath(); g.roundRect(x,y,cell,cell,3); g.fill(); g.globalAlpha=1;
+      }else{
+        g.globalAlpha=0.25+0.75*p;
+        g.fillStyle=ramp(v);
+        g.beginPath(); g.roundRect(x,y,cell,cell,3); g.fill();
+        g.globalAlpha=1;
+        if(hot){g.strokeStyle=acc;g.lineWidth=2;g.beginPath();g.roundRect(x+1,y+1,cell-2,cell-2,3);g.stroke()}
+        if(showVal&&cell>=13){/* 日历格不写数值，太密 */}
+      }
+      zones.push({x0:x,y0:y,x1:x+cell,y1:y+cell,ord:od,v});
+    }
+  }
+  g.globalAlpha=1;
+}
+function replay(){if(reduced)return;animStart=performance.now();requestAnimationFrame(animLoop)}
+function animLoop(ts){
+  if(animStart===null)return;
+  draw(ts);
+  const dur=RAW.mode==='calendar'?54*10+400:(RAW.xs.length+RAW.ys.length)*26+400;
+  if(ts-animStart<dur)requestAnimationFrame(animLoop);else{animStart=null;draw()}
+}
+function zoneAt(mx,my){
+  for(let k=zones.length-1;k>=0;k--){const z=zones[k];if(mx>=z.x0&&mx<z.x1&&my>=z.y0&&my<z.y1)return z}
+  return null;
+}
+function showTip(z,mx,my){
+  if(RAW.mode==='calendar'){
+    const c=ord2civil(z.ord);
+    tip.innerHTML=z.v===undefined?`<b>${c.y}-${String(c.m).padStart(2,'0')}-${String(c.d).padStart(2,'0')}</b><br>无数据`
+      :`<b>${c.y}-${String(c.m).padStart(2,'0')}-${String(c.d).padStart(2,'0')}</b><br>值：<b>${fmtV(z.v)}</b>`;
+  }else{
+    tip.innerHTML=`<b>${esc(RAW.ys[z.y])} × ${esc(RAW.xs[z.x])}</b><br>${z.v===undefined?'无数据':'值：<b>'+fmtV(z.v)+'</b>'}`;
+  }
+  tip.style.display='block';
+  const r=cv.getBoundingClientRect();
+  const flip=mx>r.width*0.62;
+  tip.style.left=(cv.offsetLeft+(flip?mx-tip.offsetWidth-12:mx+14))+'px';
+  tip.style.top=(cv.offsetTop+Math.max(4,my-10))+'px';
+}
+function updateDetail(){
+  if(!hover){
+    detail.innerHTML=RAW.mode==='calendar'?'💡 悬停某天看数值 · 色带条标注值域':'💡 悬停格子看数值与行列占比 · 发散色带需数据含负值';
+    return;
+  }
+  if(RAW.mode==='calendar'){
+    const c=ord2civil(hover.ord);
+    detail.innerHTML=hover.v===undefined?`📅 <b>${c.y}-${String(c.m).padStart(2,'0')}-${String(c.d).padStart(2,'0')}</b> · 无数据`
+      :`📅 <b>${c.y}-${String(c.m).padStart(2,'0')}-${String(c.d).padStart(2,'0')}</b> · 值 <b>${fmtV(hover.v)}</b>`;
+    return;
+  }
+  const j=hover.y, i=hover.x;
+  const rowCells=RAW.cells.filter(c=>c.y===j), colCells=RAW.cells.filter(c=>c.x===i);
+  const rs=rowCells.reduce((s,c)=>s+c.v,0), cs=colCells.reduce((s,c)=>s+c.v,0);
+  const grand=RAW.cells.reduce((s,c)=>s+c.v,0)||1;
+  detail.innerHTML=`▦ <b>${esc(RAW.ys[j])} × ${esc(RAW.xs[i])}</b> · 值 <b>${hover.v===undefined?'—':fmtV(hover.v)}</b> · 行合计 ${fmtV(rs)}（${(rs/grand*100).toFixed(1)}%）· 列合计 ${fmtV(cs)}（${(cs/grand*100).toFixed(1)}%）`;
+}
+cv.addEventListener('mousemove',e=>{
+  const r=cv.getBoundingClientRect();
+  const z=zoneAt(e.clientX-r.left,e.clientY-r.top);
+  const key=z?(RAW.mode==='calendar'?'o'+z.ord:z.x+','+z.y):null;
+  const prevKey=hover?(RAW.mode==='calendar'?'o'+hover.ord:hover.x+','+hover.y):null;
+  if(key!==prevKey){
+    hover=z;
+    if(z)showTip(z,e.clientX-r.left,e.clientY-r.top);else tip.style.display='none';
+    draw(animStart!==null?performance.now():undefined);
+    updateDetail();
+  }
+});
+cv.addEventListener('mouseleave',()=>{hover=null;tip.style.display='none';draw();updateDetail()});
+function renderScalebar(){
+  const cs=getComputedStyle(document.documentElement);
+  const paper=cs.getPropertyValue('--paper').trim(), acc=cs.getPropertyValue('--acc').trim(), neg=cs.getPropertyValue('--neg').trim();
+  const bar=document.getElementById('scaleGradient');
+  if(scaleMode==='div'&&RAW.vmin<0&&RAW.vmax>0){
+    bar.style.background=`linear-gradient(90deg, ${neg}, ${paper} 50%, ${acc})`;
+    document.getElementById('scaleMin').textContent=fmtV(RAW.vmin);
+    document.getElementById('scaleMax').textContent=fmtV(RAW.vmax);
+    document.getElementById('scaleNote').textContent='发散 · 0 为界';
+  }else{
+    bar.style.background=`linear-gradient(90deg, ${mix(paper,acc,0.06)}, ${acc})`;
+    document.getElementById('scaleMin').textContent=fmtV(RAW.vmin);
+    document.getElementById('scaleMax').textContent=fmtV(RAW.vmax);
+    document.getElementById('scaleNote').textContent='顺序 · 越深越大';
+  }
+}
+function setOn(el,on){el.classList.toggle('on',on);el.setAttribute('aria-pressed',String(on))}
+document.getElementById('scaleSeg').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b||b.disabled)return;
+  scaleMode=b.dataset.scale;
+  document.querySelectorAll('#scaleSeg button').forEach(x=>setOn(x,x===b));
+  renderScalebar();draw();
+});
+document.getElementById('densitySeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;density=b.dataset.density;document.querySelectorAll('#densitySeg button').forEach(x=>setOn(x,x===b));draw();replay()});
+document.getElementById('paletteSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;paletteKey=b.dataset.palette;document.documentElement.dataset.palette=paletteKey;document.querySelectorAll('#paletteSeg button').forEach(x=>setOn(x,x===b));renderScalebar();draw()});
+document.getElementById('btnVal').onclick=e=>{showVal=!showVal;setOn(e.currentTarget,showVal);draw()};
+document.getElementById('btnReplay').onclick=replay;
+document.getElementById('themeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.dataset.theme=b.dataset.theme;document.querySelectorAll('#themeSeg button').forEach(x=>setOn(x,x===b));renderScalebar();draw()});
+// 发散色带可用性
+if(!(RAW.vmin<0&&RAW.vmax>0)){
+  const b=document.querySelector('#scaleSeg [data-scale="div"]');
+  b.disabled=true;b.title='数据不含负值，发散色带无意义';
+}
+// 年份 seg
+if(RAW.mode==='calendar'){
+  const ys=Object.keys(RAW.years).map(Number).sort((a,b)=>a-b);
+  if(ys.length>1){
+    const seg=document.getElementById('yearSeg'), lb=document.getElementById('yearLabel');
+    seg.hidden=false; lb.hidden=false;
+    seg.innerHTML=ys.map(y=>`<button type="button" data-year="${y}" aria-pressed="${y===curYear}" class="${y===curYear?'on':''}">${y}</button>`).join('');
+    seg.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;curYear=parseInt(b.dataset.year,10);seg.querySelectorAll('button').forEach(x=>setOn(x,x===b));draw();replay()});
+  }
+  document.getElementById('btnVal').disabled=true;
+  document.getElementById('btnVal').title='日历格过密，不写数值';
+}
+document.querySelectorAll('#themeSeg button').forEach(b=>setOn(b,theme()===b.dataset.theme));
+renderScalebar();draw();updateDetail();
+if(!reduced){animStart=performance.now();requestAnimationFrame(animLoop)}
+// 监听视口变化重绘会与截图工具的视口扩展死锁，故不做 resize 重绘（画布 width:100% 随容器缩放）
+// @@SCRIPT2@@
+</script>
+</body>
+</html>

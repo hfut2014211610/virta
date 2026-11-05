@@ -1,0 +1,20 @@
+{
+  "name": "funnel-basic",
+  "view": "funnel",
+  "title": "转化漏斗图",
+  "input_types": ["csv", "json", "xlsx"],
+  "required_columns": ["label", "value"],
+  "optional_columns": ["series"],
+  "options": {
+    "theme": ["light", "dark"],
+    "palette": ["signal", "cinnabar", "patina", "blueprint", "inkwash", "mono", "sundown", "dunhuang", "aurora", "morandi"],
+    "sort": "row-order",
+    "show_rate": true,
+    "show_drop": true,
+    "colormode": ["ramp", "cat"],
+    "align": ["center", "left"],
+    "finish": ["gradient", "flat", "glass", "metal", "outline", "papercut"],
+    "replay": true
+  },
+  "description": "转化漏斗图：看逐级递减与每一步流失。按行序作为阶段顺序（非时间序列），计算逐级转化率、累计留存率、绝对流失。圆角横条逐级收窄；色彩可选渐层（沿主色阶梯淡化，默认）或分类（调色板循环）；质感与柱状图同系列：渐变（默认）/ 纯色 / 玻璃 / 金属 / 描边 / 纸雕六种柱面；左标签栏 + 右转化率徽章的三栏垂直动线、居中/左对齐、10 种配色、错峰入场动画可重播、最大流失阶段红描边高亮。负值、0 值自动剔除并在数据识别报告警告；后一阶段大于前一阶段会提示确认顺序。双主题可切换；离线单文件。输入兼容：label+value / label+series+value / 宽表 / ECharts JSON。"
+}

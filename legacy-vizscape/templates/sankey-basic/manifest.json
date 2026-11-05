@@ -1,0 +1,18 @@
+{
+  "name": "sankey-basic",
+  "view": "sankey",
+  "title": "桑基图",
+  "input_types": ["csv", "json", "xlsx"],
+  "required_columns": ["source", "target", "value"],
+  "optional_columns": [],
+  "options": {
+    "theme": ["light", "dark"],
+    "palette": ["signal", "cinnabar", "patina", "blueprint", "inkwash", "mono", "sundown", "dunhuang", "aurora", "morandi"],
+    "label": ["both", "name", "none"],
+    "density": ["comfort", "compact"],
+    "flowgradient": true,
+    "dragnode": true,
+    "replay": true
+  },
+  "description": "桑基图：看流量与路径（漏斗的通用化多对多流动）。source/target/value 三列契约；重复边求和合并、自环剔除、成环边按最弱值剔除并警告（DAG 校验）。布局：最长路径分层 + 重心法 4 遍迭代排序减少交叉 + 贝塞尔流带（宽∝流量，源色→目标色渐变）。交互：悬停节点高亮整条上下游链路并列出流入流出明细、悬停流带看单条流量与占源流出比、节点可上下拖拽微调（流带自动跟随）、名称+值/仅名称/隐藏三种标签、流带渐变开关、舒适/紧凑密度、10 配色、按层错峰入场动画。双主题可切换；离线单文件。"
+}

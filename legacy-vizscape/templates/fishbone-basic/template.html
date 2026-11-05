@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="__THEME__">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>__TITLE__ · vizscape fishbone-basic</title>
+<style>
+:root{--sans:"Noto Sans SC",system-ui,sans-serif;--serif:"Fraunces",Georgia,serif;--mono:"JetBrains Mono",ui-monospace,monospace}
+html[data-theme="light"]{--bg:#f6f3ec;--paper:#fffdf7;--ink:#171a1e;--muted:#6b6f6a;--faint:#9a9d96;--line:#e2ded2;--line2:#d1ccc0;--acc:#0f766e;--neg:#b5412f;--shadow:0 10px 36px rgba(23,26,30,.08);--grid:rgba(23,26,30,.06);--tip:#171a1e;--tipink:#fffdf7}
+html[data-theme="dark"]{--bg:#0d0e0a;--paper:#131410;--ink:#ede9dc;--muted:#9aa08a;--faint:#5e6450;--line:#23261d;--line2:#2e3323;--acc:#c6f13f;--neg:#ff6b4a;--shadow:0 10px 36px rgba(0,0,0,.4);--grid:rgba(237,233,220,.05);--tip:#ede9dc;--tipink:#0d0e0a}
+html[data-palette="cinnabar"]{--acc:#b5412f}
+html[data-palette="patina"]{--acc:#2f7f78}
+html[data-palette="blueprint"]{--acc:#2f5fd0}
+html[data-palette="inkwash"]{--acc:#4b5563}
+html[data-palette="mono"]{--acc:#171a1e}
+html[data-palette="sundown"]{--acc:#c2410c}
+html[data-palette="dunhuang"]{--acc:#b34a38}
+html[data-palette="aurora"]{--acc:#0d9488}
+html[data-palette="morandi"]{--acc:#8b9dad}
+html[data-theme="dark"][data-palette="mono"]{--acc:#ede9dc}
+html[data-theme="dark"][data-palette="sundown"]{--acc:#fb923c}
+html[data-theme="dark"][data-palette="dunhuang"]{--acc:#e07a5f}
+html[data-theme="dark"][data-palette="aurora"]{--acc:#5eead4}
+html[data-theme="dark"][data-palette="morandi"]{--acc:#b8c7d4}
+*{box-sizing:border-box;margin:0;padding:0}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:4px}
+body{background:radial-gradient(circle at 12% 8%,color-mix(in srgb,var(--acc) 12%,transparent),transparent 28rem),radial-gradient(circle at 88% 4%,rgba(232,93,63,.08),transparent 30rem),var(--bg);color:var(--ink);font-family:var(--sans);padding:28px;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:56px 56px;opacity:.6}
+.wrap{max-width:1080px;margin:0 auto;position:relative}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1.5px solid var(--ink);padding-bottom:16px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--acc);text-transform:uppercase}
+h1{font-family:var(--serif);font-weight:300;font-size:clamp(32px,5vw,52px);letter-spacing:-.02em}
+h1 em{font-style:italic;color:var(--acc)}
+.seg{display:flex;background:var(--paper);border:1px solid var(--line2);border-radius:99px;padding:3px;box-shadow:var(--shadow)}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:13px;padding:8px 14px;border-radius:99px;cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.deck{display:flex;flex-direction:column;gap:10px;margin:16px 0}
+.trow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:9px 12px}
+.trow .label{min-width:34px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.trow .spacer{flex:1}
+.trow .seg{box-shadow:none}
+.seg.wrap{flex-wrap:wrap;border-radius:18px}
+.seg button[disabled],.toggle[disabled]{opacity:.35;pointer-events:none}
+.toggle{appearance:none;border:1px solid var(--line2);background:var(--paper);color:var(--muted);border-radius:99px;padding:8px 14px;font-size:13px;cursor:pointer}
+.toggle.on{background:var(--acc);border-color:var(--acc);color:var(--paper);font-weight:700}
+.summary{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 14px}
+.sum-card{display:inline-flex;align-items:baseline;gap:8px;border:1px solid var(--line2);border-radius:14px;padding:9px 12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sum-card b{color:var(--ink);font-size:19px;font-weight:500;letter-spacing:-.02em}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);position:relative}
+#legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:transparent;color:var(--ink);border-radius:99px;padding:6px 12px;font-size:12px;cursor:pointer;transition:.2s}
+.chip i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.chip.off{opacity:.38;text-decoration:line-through}
+canvas{width:100%;display:block;cursor:crosshair}
+.table tbody tr:hover td{background:color-mix(in srgb,var(--acc) 5%,transparent)}
+.table{font-variant-numeric:tabular-nums}
+#tooltip{position:absolute;pointer-events:none;background:var(--tip);color:var(--tipink);padding:10px 12px;border-radius:10px;font-family:var(--mono);font-size:12px;line-height:1.7;display:none;z-index:10;min-width:140px;box-shadow:0 10px 30px rgba(0,0,0,.25);white-space:nowrap}
+#tooltip b{color:var(--acc)}
+#detail{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;line-height:1.8;min-height:44px}
+#detail b{color:var(--ink)}
+.table{width:100%;border-collapse:collapse;font-size:13px;margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.table th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-align:left;color:var(--muted);border-bottom:1.5px solid var(--ink);padding:10px}
+.table td{border-bottom:1px solid var(--line);padding:9px 10px}
+.table td.num,.table th.num{text-align:right;font-family:var(--mono)}
+footer{margin-top:18px;font-family:var(--mono);font-size:11px;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.hint{font-size:12px;color:var(--faint);margin-top:8px}
+.quality{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--paper);border-radius:16px;padding:14px;margin:16px 0 8px;box-shadow:0 1px 0 rgba(0,0,0,.02) inset}
+.quality.warn{border-left-color:var(--neg)}
+.quality-head{display:flex;justify-content:space-between;gap:14px;align-items:center;border-bottom:1px dashed var(--line);padding-bottom:10px;margin-bottom:10px}
+.quality-head h2{font-family:var(--serif);font-size:20px;font-weight:420;letter-spacing:-.02em}
+.quality-score{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;line-height:1.6}.quality-score b{display:block;color:var(--acc);font-size:13px}.quality.warn .quality-score b{color:var(--neg)}
+.quality-grid{display:flex;gap:8px;flex-wrap:wrap}.qs{border:1px solid var(--line2);border-radius:999px;padding:5px 9px;font-family:var(--mono);font-size:11px;color:var(--muted)}.qs b{color:var(--ink);font-weight:500}
+.quality-warnings{margin:11px 0 0;padding-left:18px;color:var(--neg);font-size:12px;line-height:1.75}.quality-ok{margin:11px 0 0;color:var(--acc);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">vizscape · fishbone-basic · __THEME_UPPER__</div><h1>__TITLE__ <em>· 鱼骨图</em></h1></div>
+  <div class="seg" id="themeSeg" role="group" aria-label="主题"><button type="button" data-theme="light" aria-pressed="false">☀ 浅色</button><button type="button" data-theme="dark" aria-pressed="false">☾ 深色</button></div>
+</header>
+
+<div class="deck">
+  <div class="trow">
+    <span class="label">方向</span>
+    <div class="seg" id="dirSeg" role="group" aria-label="鱼头方向"><button type="button" data-dir="1" class="on" aria-pressed="true">鱼头向右 ▶</button><button type="button" data-dir="-1" aria-pressed="false">◀ 鱼头向左</button></div>
+    <span class="label">密度</span>
+    <div class="seg" id="densitySeg" role="group" aria-label="密度"><button type="button" data-density="comfort" class="on" aria-pressed="true">舒适</button><button type="button" data-density="compact" aria-pressed="false">紧凑</button></div>
+    <span class="spacer"></span>
+    <button class="toggle" id="btnReplay" type="button">▶ 重播动画</button>
+  </div>
+  <div class="trow">
+    <span class="label">风格</span>
+    <div class="seg wrap" id="paletteSeg" role="group" aria-label="配色风格">
+      <button type="button" data-palette="signal" class="on" aria-pressed="true">Signal</button>
+      <button type="button" data-palette="cinnabar" aria-pressed="false">朱砂</button>
+      <button type="button" data-palette="patina" aria-pressed="false">铜绿</button>
+      <button type="button" data-palette="blueprint" aria-pressed="false">蓝图</button>
+      <button type="button" data-palette="inkwash" aria-pressed="false">水墨</button>
+      <button type="button" data-palette="mono" aria-pressed="false">单色</button>
+      <button type="button" data-palette="sundown" aria-pressed="false">落日</button>
+      <button type="button" data-palette="dunhuang" aria-pressed="false">敦煌</button>
+      <button type="button" data-palette="aurora" aria-pressed="false">极光</button>
+      <button type="button" data-palette="morandi" aria-pressed="false">莫兰迪</button>
+    </div>
+  </div>
+</div>
+
+<div class="summary" aria-label="摘要">__SUMMARY_CARDS__</div>
+
+<div class="card">
+  <div id="legend"></div>
+  <canvas id="chart" role="img" aria-label="__TITLE__ 鱼骨图，共 __CATS_N__ 个类别、__CAUSES_N__ 条原因、__SUBS_N__ 条子原因；明细见下方表格"></canvas>
+  <div id="tooltip"></div>
+  <div id="detail"></div>
+  <div class="hint">读法：鱼头=待解问题（标题），主骨两侧斜刺=原因大类（上下来回交替），横枝=具体原因，45° 细刺=子原因。悬停高亮整条因果链，点击图例显隐类别。版面超宽时整体等比缩放；类别/原因按行序。</div>
+</div>
+
+__QUALITY_HTML__
+
+__TABLE_HTML__
+
+<footer><span>vizscape · fishbone-basic · 鱼骨图 · 纯 Canvas 无 CDN</span><span>输入兼容：category+cause（必需）· 可选 sub/owner · 鱼头=标题</span></footer>
+</div>
+
+<script>
+const RAW=__DATA_JSON__;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let hidden=new Set(), hover=null; // hover: {ci, ii|null}
+let density='comfort', paletteKey='signal', dir=1;
+const zones=[]; // {x0,y0,x1,y1,ci,ii}
+const PALETTES={
+  signal:{light:['#0f766e','#e85d3f','#d99a06','#2563eb','#7c3aed','#059669','#db2777','#0891b2'],dark:['#c6f13f','#ff6b4a','#ffb224','#4de3c2','#7dd3fc','#f472b6','#a78bfa','#facc15']},
+  cinnabar:{light:['#b5412f','#d36a2e','#8a3324','#c08a2d','#6b4f2c','#a16207','#0f766e','#3f3f46'],dark:['#ff8a5c','#ffd166','#ef4444','#fbbf24','#f97316','#fef08a','#5eead4','#fda4af']},
+  patina:{light:['#2f7f78','#386641','#588157','#a3b18a','#c69a4a','#344e41','#7f5539','#40916c'],dark:['#67a58d','#a7c957','#d2b46a','#8ecae6','#c9f2c7','#ffd166','#bde0fe','#80ed99']},
+  blueprint:{light:['#2f5fd0','#0b3b75','#3b82f6','#60a5fa','#1d4ed8','#0f766e','#475569','#93c5fd'],dark:['#7dd3fc','#38bdf8','#93c5fd','#a5f3fc','#60a5fa','#22d3ee','#e0f2fe','#67e8f9']},
+  inkwash:{light:['#171a1e','#3f4650','#69707d','#9299a5','#6b7280','#a3a3a3','#525252','#d4d4d4'],dark:['#ede9dc','#d6d3c8','#b8b4a8','#8f8b80','#6e6a61','#4b4841','#a8a29e','#f5f5f4']},
+  mono:{light:['#171a1e','#2f343c','#555d68','#7a828d','#a0a6af','#c5c8cd','#3f4650','#6b6f6a'],dark:['#ede9dc','#c9c6ba','#a5a296','#817e73','#5e5b52','#f5f5f4','#b9b5a8','#8f8b80']},
+  sundown:{light:['#c2410c','#ea580c','#f59e0b','#b91c1c','#db2777','#7c2d12','#f97316','#a16207'],dark:['#fb923c','#fbbf24','#f87171','#f472b6','#fdba74','#fde047','#fca5a5','#e879f9']},
+  dunhuang:{light:['#35618e','#4d8a6a','#b34a38','#c89b3c','#7a5c3e','#2f4f4f','#8e5a2b','#5b7a8c'],dark:['#7fb3d5','#7fc7a3','#e07a5f','#e5c07b','#b0927a','#81b29a','#d4a373','#a8c3cf']},
+  aurora:{light:['#0d9488','#0891b2','#7c3aed','#db2777','#059669','#2563eb','#c026d3','#0f766e'],dark:['#5eead4','#67e8f9','#a78bfa','#f0abfc','#6ee7b7','#93c5fd','#e879f9','#4ade80']},
+  morandi:{light:['#8b9dad','#c9a7a0','#a8b5a0','#b8b0a4','#9d8fa8','#c4b198','#8fa39e','#ad9b8f'],dark:['#b8c7d4','#dbc4be','#c3cfc0','#d0c9be','#c0b5c9','#d9cbb8','#b5c4bf','#c9bcb0']}
+};
+const cv=document.getElementById('chart'), tip=document.getElementById('tooltip'), detail=document.getElementById('detail'), legendEl=document.getElementById('legend');
+const FONT='12px "Noto Sans SC", sans-serif';
+const THETA=64*Math.PI/180, TAN=Math.tan(THETA);
+const LEFT=56; // 鱼尾区
+function theme(){return document.documentElement.dataset.theme}
+function colors0(){const grp=PALETTES[paletteKey]||PALETTES.signal;return grp[theme()]||grp.light}
+function catColor(ci){return colors0()[ci%8]}
+function hx(c){c=String(c).trim();if(c.startsWith('rgb')){const m=c.match(/\d+(\.\d+)?/g);return m.slice(0,3).map(Number)}c=c.replace('#','');return [parseInt(c.slice(0,2),16),parseInt(c.slice(2,4),16),parseInt(c.slice(4,6),16)]}
+function shade(c,amt){const[r,g,b]=hx(c);const cl=v=>Math.max(0,Math.min(255,v+amt));return '#'+((1<<24)+(cl(r)<<16)+(cl(g)<<8)+cl(b)).toString(16).slice(1)}
+let animStart=null;
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ease=t=>1-Math.pow(1-t,3);
+// —— 布局：量文本 → 定槽位 → 得画布 ——
+function computeLayout(g, availW){
+  const rowH=density==='comfort'?36:27;
+  const headPad=density==='comfort'?54:44;
+  const visCats=RAW.cats.map((c,ci)=>({c,ci})).filter(x=>!hidden.has(x.c.name));
+  // 鱼头尺寸
+  let effSize=16;
+  g.font=`700 ${effSize}px "Noto Sans SC", sans-serif`;
+  let effW=g.measureText(RAW.effect).width;
+  if(effW>190){effSize=13;g.font=`700 ${effSize}px "Noto Sans SC", sans-serif`;effW=g.measureText(RAW.effect).width}
+  const headW=Math.min(240,effW+40), headH=58;
+  // 逐类槽位（上下交替）
+  const slots=[];
+  let topCum=0, botCum=0, topH=0, botH=0;
+  g.font=FONT;
+  visCats.forEach((x,vi)=>{
+    const causes=x.c.causes;
+    const boneH=causes.length*rowH+headPad;
+    let maxTW=0;
+    causes.forEach(cs=>{
+      maxTW=Math.max(maxTW,g.measureText(cs.label).width+14);
+      if(cs.sub)maxTW=Math.max(maxTW,g.measureText(cs.sub).width+40);
+    });
+    const slotW=Math.max(boneH/TAN,maxTW+10)+26;
+    const top=vi%2===0;
+    const cum=top?topCum:botCum;
+    const bx=LEFT+cum+slotW-13;
+    slots.push({ci:x.ci,name:x.c.name,causes,boneH,slotW,bx,top});
+    if(top){topCum+=slotW;topH=Math.max(topH,boneH)}else{botCum+=slotW;botH=Math.max(botH,boneH)}
+  });
+  const spineLen=Math.max(topCum,botCum);
+  const W0=LEFT+spineLen+26+headW+34;
+  const H0=topH+botH+96, spineY=48+topH;
+  const scale=Math.min(1,availW/W0);
+  return {slots,spineLen,W0,H0,spineY,scale,headW,headH,effSize,rowH,empty:!visCats.length};
+}
+function draw(ts){
+  const r0=cv.getBoundingClientRect();
+  if(r0.width<40)return; // resize 中间态（如整页截图）保留 backing store
+  zones.length=0;
+  const dpr=window.devicePixelRatio||1;
+  const cs=getComputedStyle(document.documentElement);
+  const ink=cs.getPropertyValue('--ink').trim(), faint=cs.getPropertyValue('--faint').trim(), acc=cs.getPropertyValue('--acc').trim();
+  const paper=cs.getPropertyValue('--paper').trim();
+  // 先用临时 ctx 量布局
+  const g0=cv.getContext('2d');
+  const L=computeLayout(g0,r0.width);
+  cv.style.height=Math.max(120,L.H0*L.scale)+'px';
+  const r=cv.getBoundingClientRect();
+  cv.width=r.width*dpr; cv.height=r.height*dpr;
+  const g=cv.getContext('2d');
+  g.setTransform(dpr*L.scale,0,0,dpr*L.scale,0,0);
+  g.clearRect(0,0,L.W0,L.H0);
+  const X=x=>dir>0?x:L.W0-x;
+  const AL=a=>dir>0?a:(a==='left'?'right':a==='right'?'left':a);
+  const Z=(x0,y0,x1,y1,ci,ii)=>zones.push({x0:Math.min(X(x0),X(x1))*L.scale,y0:y0*L.scale,x1:Math.max(X(x0),X(x1))*L.scale,y1:y1*L.scale,ci,ii});
+  if(L.empty){
+    g.fillStyle=faint;g.font=FONT;g.textAlign='center';g.textBaseline='middle';
+    g.fillText('所有类别已隐藏 · 点击图例恢复',L.W0/2,L.H0/2);return;
+  }
+  const animP=(animStart===null||ts===undefined)?null:ts-animStart;
+  const sx0=LEFT-26, hx0=LEFT+L.spineLen+26, hx1=hx0+L.headW, spineY=L.spineY;
+  // —— 主骨（0–380ms 自尾向头生长）——
+  const pSpine=(animP===null)?1:Math.min(1,animP/380);
+  const spineEnd=sx0+(hx0-sx0)*ease(pSpine);
+  g.strokeStyle=ink; g.lineWidth=2.6; g.lineCap='round';
+  g.beginPath(); g.moveTo(X(sx0),spineY); g.lineTo(X(spineEnd),spineY); g.stroke();
+  // 鱼尾
+  if(pSpine>0.02){
+    g.lineWidth=2;
+    g.beginPath();g.moveTo(X(sx0),spineY);g.lineTo(X(sx0-16),spineY-16);g.stroke();
+    g.beginPath();g.moveTo(X(sx0),spineY);g.lineTo(X(sx0-16),spineY+16);g.stroke();
+  }
+  // 箭头 + 鱼头（120ms 起 pop）
+  const pHead=(animP===null)?1:Math.min(1,Math.max(0,(animP-120)/260));
+  if(pHead>0){
+    g.save();
+    const hcx=(X(hx0)+X(hx1))/2;
+    g.translate(hcx,spineY);g.scale(ease(pHead),ease(pHead));g.translate(-hcx,-spineY);
+    // 箭头
+    g.fillStyle=ink;
+    g.beginPath();
+    g.moveTo(X(hx0)+ (dir>0?2:-2),spineY);
+    g.lineTo(X(hx0)-(dir>0?12:-12),spineY-6);
+    g.lineTo(X(hx0)-(dir>0?12:-12),spineY+6);
+    g.closePath();g.fill();
+    // 头框
+    const bx0=Math.min(X(hx0),X(hx1));
+    g.beginPath();g.roundRect(bx0,spineY-L.headH/2,L.headW,L.headH,14);
+    g.fillStyle=acc;g.fill();
+    g.strokeStyle=shade(acc,-24);g.lineWidth=1.6;g.stroke();
+    g.fillStyle=paper;g.font=`700 ${L.effSize}px "Noto Sans SC", sans-serif`;g.textAlign='center';g.textBaseline='middle';
+    g.fillText(RAW.effect,hcx,spineY+1);
+    g.restore();
+  }
+  // —— 大骨 + 小骨 + 孙骨（逐类 100ms 错峰）——
+  L.slots.forEach((s,si)=>{
+    const col=catColor(s.ci);
+    const pBone=(animP===null)?1:Math.min(1,Math.max(0,(animP-300-si*100)/260));
+    if(pBone<=0)return;
+    const tipX=s.bx-s.boneH/TAN, tipY=spineY+(s.top?-1:1)*s.boneH;
+    const dx=tipX-s.bx, dy=tipY-spineY;
+    const cx=s.bx+dx*ease(pBone), cy=spineY+dy*ease(pBone);
+    const hotCat=hover&&hover.ci===s.ci;
+    // 大骨线
+    g.strokeStyle=hotCat?acc:col; g.lineWidth=hotCat?3.4:2.4; g.lineCap='round';
+    g.beginPath();g.moveTo(X(s.bx),spineY);g.lineTo(X(cx),cy);g.stroke();
+    // 类别 pill（骨生长完成后出现）
+    if(pBone>=0.98){
+      g.font='700 12px "Noto Sans SC", sans-serif';
+      const pw=g.measureText(s.name).width+24, ph=24;
+      const px=tipX-14, py=tipY+(s.top?-16:16);
+      g.beginPath();g.roundRect(Math.min(X(px-pw/2),X(px+pw/2)),py-ph/2,pw,ph,12);
+      g.fillStyle=hotCat?acc:col;g.fill();
+      g.fillStyle=paper;g.textAlign='center';g.textBaseline='middle';
+      g.fillText(s.name,X(px),py+0.5);
+      Z(px-pw/2,py-ph/2,px+pw/2,py+ph/2,s.ci,null);
+    }
+    // 小骨横枝（逐条 60ms）
+    g.font=FONT;
+    s.causes.forEach((cs,ii)=>{
+      const pTw=(animP===null)?1:Math.min(1,Math.max(0,(animP-340-si*100-ii*60)/200));
+      if(pTw<=0)return;
+      const h=(ii+1)*L.rowH;
+      const ax=s.bx-h/TAN, ay=spineY+(s.top?-1:1)*h;
+      const twLen=g.measureText(cs.label).width+14;
+      const hot=hotCat&&(hover.ii===null||hover.ii===ii);
+      const alpha=(0.25+0.75*pTw);
+      // 横枝
+      g.globalAlpha=alpha;
+      g.strokeStyle=hot?acc:shade(col,-10);g.lineWidth=hot?2.6:1.6;
+      g.beginPath();g.moveTo(X(ax-twLen*pTw),ay);g.lineTo(X(ax),ay);g.stroke();
+      // 标签
+      g.globalAlpha=Math.min(1,alpha*1.4);
+      g.fillStyle=hot?acc:ink;g.font=FONT;g.textAlign=AL('left');g.textBaseline=s.top?'alphabetic':'top';
+      g.fillText(cs.label,X(ax-twLen),ay+(s.top?-6:6));
+      // 孙骨 45° 细刺
+      if(cs.sub){
+        const px2=ax-twLen*0.55;
+        const ex=px2+20, ey=ay+(s.top?-20:20);
+        g.globalAlpha=alpha*0.9;
+        g.strokeStyle=hot?acc:faint;g.lineWidth=1.1;
+        g.beginPath();g.moveTo(X(px2),ay);g.lineTo(X(px2+(20)*pTw),ay+(s.top?-20:20)*pTw);g.stroke();
+        g.globalAlpha=alpha*0.85;
+        g.fillStyle=hot?acc:faint;g.font='10px "Noto Sans SC", sans-serif';
+        g.textAlign=AL('left');g.textBaseline='middle';
+        g.fillText(cs.sub,X(ex+4),ey);
+        g.font=FONT;
+      }
+      g.globalAlpha=1;
+      Z(ax-twLen-4,ay-L.rowH*0.44,ax+4,ay+L.rowH*0.44,s.ci,ii);
+    });
+  });
+  g.globalAlpha=1;
+  if(L.scale<1){
+    // 缩放提示
+    g.setTransform(dpr,0,0,dpr,0,0);
+    g.fillStyle=faint;g.font='10px JetBrains Mono, monospace';g.textAlign='right';g.textBaseline='bottom';
+    g.fillText('版面超宽 · 已等比缩放至 '+Math.round(L.scale*100)+'%',r.width-6,r.height-4);
+  }
+}
+function replay(){if(reduced)return;animStart=performance.now();requestAnimationFrame(animLoop)}
+function animLoop(ts){
+  if(animStart===null)return;
+  draw(ts);
+  const maxK=Math.max(1,...RAW.cats.map(c=>c.causes.length));
+  const dur=340+RAW.cats.length*100+maxK*60+500;
+  if(ts-animStart<dur)requestAnimationFrame(animLoop);else{animStart=null;draw()}
+}
+function zoneAt(mx,my){
+  for(let k=zones.length-1;k>=0;k--){const z=zones[k];if(mx>=z.x0&&mx<z.x1&&my>=z.y0&&my<z.y1)return {ci:z.ci,ii:z.ii}}
+  return null;
+}
+function sameHov(a,b){return (a===null&&b===null)||(a&&b&&a.ci===b.ci&&a.ii===b.ii)}
+function showTip(h,mx,my){
+  const c=RAW.cats[h.ci];if(!c)return;
+  if(h.ii===null||h.ii===undefined){
+    const subs=c.causes.filter(x=>x.sub).length;
+    tip.innerHTML=`<b>${esc(c.name)}</b><br>${c.causes.length} 条原因${subs?` · ${subs} 条子原因`:''}`;
+  }else{
+    const cs=c.causes[h.ii];
+    tip.innerHTML=`<b>${esc(cs.label)}</b><br>${esc(c.name)}${cs.sub?` · 子原因：${esc(cs.sub)}`:''}${cs.owner?`<br>负责人：${esc(cs.owner)}`:''}`;
+  }
+  tip.style.display='block';
+  const r=cv.getBoundingClientRect();
+  const flip=mx>r.width*0.62;
+  tip.style.left=(cv.offsetLeft+(flip?mx-tip.offsetWidth-12:mx+14))+'px';
+  tip.style.top=(cv.offsetTop+Math.max(4,my-10))+'px';
+}
+function updateDetail(){
+  if(!hover){detail.innerHTML='💡 悬停类别骨或原因枝查看归属与负责人 · 点击图例显隐类别';return}
+  const c=RAW.cats[hover.ci];
+  if(hover.ii===null||hover.ii===undefined){
+    detail.innerHTML=`🦴 <b>${esc(c.name)}</b> · ${c.causes.length} 条原因：${c.causes.map(x=>esc(x.label)).slice(0,5).join('、')}${c.causes.length>5?' …':''}`;
+  }else{
+    const cs=c.causes[hover.ii];
+    detail.innerHTML=`📌 <b>${esc(cs.label)}</b> · ${esc(c.name)}${cs.sub?` · 子原因 <b>${esc(cs.sub)}</b>`:''}${cs.owner?` · 负责人 <b>${esc(cs.owner)}</b>`:''}`;
+  }
+}
+cv.addEventListener('mousemove',e=>{
+  const r=cv.getBoundingClientRect();
+  const h=zoneAt(e.clientX-r.left,e.clientY-r.top);
+  if(!sameHov(h,hover)){
+    hover=h;
+    if(h)showTip(h,e.clientX-r.left,e.clientY-r.top);else tip.style.display='none';
+    draw(animStart!==null?performance.now():undefined);
+    updateDetail();
+  }
+});
+cv.addEventListener('mouseleave',()=>{hover=null;tip.style.display='none';draw();updateDetail()});
+function renderLegend(){
+  legendEl.innerHTML=RAW.cats.map((c,ci)=>{
+    return `<button type="button" class="chip ${hidden.has(c.name)?'off':''}" data-l="${esc(c.name)}" aria-pressed="${!hidden.has(c.name)}"><i style="background:${catColor(ci)}"></i>${esc(c.name)} · ${c.causes.length}</button>`;
+  }).join('')+'<span style="font-family:var(--mono);font-size:11px;color:var(--faint);margin-left:6px">点击显隐类别</span>';
+}
+legendEl.addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const l=b.dataset.l;hidden.has(l)?hidden.delete(l):hidden.add(l);renderLegend();draw();updateDetail()});
+function setOn(el,on){el.classList.toggle('on',on);el.setAttribute('aria-pressed',String(on))}
+document.getElementById('dirSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;dir=parseInt(b.dataset.dir,10);document.querySelectorAll('#dirSeg button').forEach(x=>setOn(x,x===b));draw();replay()});
+document.getElementById('densitySeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;density=b.dataset.density;document.querySelectorAll('#densitySeg button').forEach(x=>setOn(x,x===b));draw();replay()});
+document.getElementById('paletteSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;paletteKey=b.dataset.palette;document.documentElement.dataset.palette=paletteKey;document.querySelectorAll('#paletteSeg button').forEach(x=>setOn(x,x===b));renderLegend();draw()});
+document.getElementById('btnReplay').onclick=replay;
+document.getElementById('themeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.dataset.theme=b.dataset.theme;document.querySelectorAll('#themeSeg button').forEach(x=>setOn(x,x===b));renderLegend();draw()});
+document.querySelectorAll('#themeSeg button').forEach(b=>setOn(b,theme()===b.dataset.theme));
+renderLegend();draw();updateDetail();
+if(!reduced){animStart=performance.now();requestAnimationFrame(animLoop)}
+// 监听视口变化重绘会与截图工具的视口扩展死锁，故不做 resize 重绘（画布 width:100% 随容器缩放）
+// @@SCRIPT2@@
+</script>
+</body>
+</html>

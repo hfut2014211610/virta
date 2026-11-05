@@ -1,0 +1,18 @@
+{
+  "name": "boxplot-basic",
+  "view": "box",
+  "title": "箱线图",
+  "input_types": ["csv", "json", "xlsx"],
+  "required_columns": ["group", "value"],
+  "optional_columns": ["min", "q1", "median", "q3", "max"],
+  "options": {
+    "theme": ["light", "dark"],
+    "palette": ["signal", "cinnabar", "patina", "blueprint", "inkwash", "mono", "sundown", "dunhuang", "aurora", "morandi"],
+    "orient": ["vertical", "horizontal"],
+    "sort": ["none", "median-asc", "median-desc"],
+    "jitter": true,
+    "mean": true,
+    "replay": true
+  },
+  "description": "箱线图：五数概括看分布。双输入形态自动判定：group+value 原始观测（type-7 线性插值算 Q1/中位/Q3，须线延伸至 1.5×IQR 边界内最值，界外画离群空心圆）或 group+min/q1/median/q3/max 汇总直绘。交互：垂直/水平切换、按中位数排序、jitter 原始散点叠加（确定性伪随机，汇总模式禁用）、均值 ◆ 开关；悬停显示完整五数 + IQR + 离群明细，明细行给出偏态判断（均值 vs 中位）。样本量 n<5 警告；10 配色；箱体生长动画。双主题可切换；离线单文件。"
+}

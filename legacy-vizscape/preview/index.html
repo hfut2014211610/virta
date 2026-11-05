@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virta Gallery · vizscape</title>
+<style>
+:root{
+  --sans:"Noto Sans SC",system-ui,sans-serif;
+  --serif:"Fraunces",Georgia,serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+  --bg:#f6f3ec;--paper:#fffdf7;--panel:#efebe0;--ink:#171a1e;--muted:#6b6f6a;--faint:#9a9d96;
+  --line:#e2ded2;--line2:#d1ccc0;--acc:#0f766e;--acc2:#14b8a6;--warn:#e85d3f;--gold:#d99a06;
+  --shadow:0 24px 70px rgba(23,26,30,.14);--smallshadow:0 10px 30px rgba(23,26,30,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:radial-gradient(circle at 12% 10%,rgba(20,184,166,.18),transparent 28rem),radial-gradient(circle at 88% 0,rgba(232,93,63,.14),transparent 30rem),linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px),var(--bg);background-size:auto,auto,58px 58px,58px 58px,auto;color:var(--ink);font-family:var(--sans);min-height:100vh;padding:30px}
+body.modal-open{overflow:hidden}
+:focus-visible{outline:3px solid var(--acc);outline-offset:3px;border-radius:8px}
+.wrap{max-width:1180px;margin:0 auto;position:relative}
+.hero{position:relative;text-align:center;border-bottom:1.5px solid var(--ink);padding:40px 0 30px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--acc);text-transform:uppercase}
+h1.fancy{font-family:var(--serif);font-weight:300;font-size:clamp(56px,9vw,106px);line-height:1.15;letter-spacing:-.02em;margin:12px 0 2px}
+h1.fancy .script{font-family:"Segoe Script","Brush Script MT","Snell Roundhand",cursive;letter-spacing:0;padding:0 .08em;background:linear-gradient(115deg,var(--acc) 12%,var(--acc2) 58%,#3ec98f);-webkit-background-clip:text;background-clip:text;color:transparent}
+h1.fancy .serifit{font-style:italic;color:var(--ink)}
+.flourish{display:block;width:min(430px,74%);margin:0 auto}
+.sparkle{position:absolute;color:var(--acc2);opacity:.9;pointer-events:none;animation:float 5.2s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-9px) rotate(16deg)}}
+.meta-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;justify-content:center}
+.meta{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:rgba(255,253,247,.7);backdrop-filter:blur(6px);padding:7px 11px;border-radius:999px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.meta b{color:var(--ink)}
+.type-nav{display:flex;gap:8px 10px;flex-wrap:wrap;justify-content:center;margin:18px 0 8px;position:sticky;top:12px;z-index:5;backdrop-filter:blur(10px);padding:8px;background:rgba(246,243,236,.82);border:1px solid var(--line2);border-radius:22px;max-width:100%;box-shadow:0 10px 30px rgba(23,26,30,.08)}
+.type-nav a{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--ink);font-size:13px;font-weight:700;padding:8px 12px;border-radius:999px}
+.type-nav a:hover{background:rgba(15,118,110,.08);color:var(--acc)}
+.type-nav span{display:grid;place-items:center;min-width:22px;height:22px;border-radius:999px;background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:11px}
+.group-section{padding:28px 0 8px;border-top:1px solid var(--line)}
+.group-section:first-of-type{border-top:0}
+.group-head{display:flex;justify-content:space-between;align-items:end;gap:22px;margin-bottom:18px}
+.group-head h2{font-family:var(--serif);font-weight:350;font-size:clamp(30px,4.2vw,48px);letter-spacing:-.04em;margin-top:8px}
+.group-head p{color:var(--muted);max-width:62ch;line-height:1.72;font-size:13px}
+.count{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line2);border-radius:999px;padding:6px 10px;font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:10px;vertical-align:middle}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.card{background:rgba(255,253,247,.88);border:1px solid var(--line);border-radius:26px;padding:16px;box-shadow:var(--smallshadow);display:flex;flex-direction:column;min-height:390px;position:relative;overflow:hidden}
+.card::before{content:"";position:absolute;inset:0;background:linear-gradient(145deg,rgba(15,118,110,.08),transparent 38%);pointer-events:none}
+.thumb{height:138px;border-radius:18px;background:linear-gradient(135deg,#eef5ef 0%,#fffdf7 100%);border:1px solid var(--line);display:flex;align-items:flex-end;gap:8px;padding:18px;position:relative;overflow:hidden;margin-bottom:14px}
+.thumb::after{content:"";position:absolute;left:0;right:0;bottom:36px;border-top:1px dashed rgba(23,26,30,.18)}
+.thumb i{display:block;flex:1;background:linear-gradient(180deg,var(--acc2),var(--acc));border-radius:8px 8px 2px 2px;box-shadow:0 8px 18px rgba(15,118,110,.25);position:relative;z-index:1}
+.thumb.dark-thumb{background:radial-gradient(circle at 80% 20%,rgba(198,241,63,.22),transparent 44%),#10120d;border-color:#2e3323}.thumb.dark-thumb i{background:linear-gradient(180deg,#c6f13f,#6aa51b);box-shadow:0 0 24px rgba(198,241,63,.2)}
+.thumb.matrix-thumb{background:radial-gradient(circle at 70% 24%,rgba(47,111,235,.18),transparent 40%),#e9eef7}.thumb.matrix-thumb i{background:linear-gradient(180deg,#60a5fa,#1d4ed8);box-shadow:0 10px 22px rgba(47,111,235,.26)}
+.line-thumb{align-items:center;justify-content:center;background:radial-gradient(circle at 15% 80%,rgba(15,118,110,.16),transparent 32%),#fffdf7}.line-thumb svg{width:100%;height:100%;overflow:visible}.line-thumb .gridline{stroke:rgba(23,26,30,.12);stroke-width:1}.line-thumb .line-a{fill:none;stroke:var(--acc);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}.line-thumb .line-b{fill:none;stroke:var(--warn);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:10 8}.line-thumb .line-c{fill:none;stroke:var(--gold);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.bullet-thumb{flex-direction:column;justify-content:center;align-items:stretch;gap:14px;background:linear-gradient(135deg,#fdfaf0,#eef6f1)}.bullet-thumb::after{display:none}.mini-row{display:grid;grid-template-columns:74px 1fr;gap:8px;align-items:center}.mini-row span{font-family:var(--mono);font-size:10px;color:var(--muted)}.mini-track{position:relative;height:13px;border-radius:3px;background:linear-gradient(90deg,#d8d4ca 0 55%,#efebe0 55% 80%,#dff0e8 80%);border:1px solid rgba(23,26,30,.12);overflow:hidden}.mini-actual{position:absolute;left:0;top:0;bottom:0;background:var(--acc)}.mini-target{position:absolute;top:-4px;bottom:-4px;width:3px;background:var(--ink)}
+.report-thumb{flex-direction:column;justify-content:center;align-items:stretch;gap:9px;background:linear-gradient(135deg,#fffdf7,#f0f5f1)}
+.report-thumb::after{display:none}
+.report-thumb .r-row{display:flex;gap:8px;align-items:center}
+.report-thumb .r-h{width:38%;height:11px;border-radius:3px;background:var(--ink)}
+.report-thumb .r-l{height:6px;border-radius:3px;background:rgba(23,26,30,.16)}
+.report-thumb .r-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:3px}
+.report-thumb .r-kpi i{height:24px;border-radius:5px;background:linear-gradient(180deg,rgba(15,118,110,.22),rgba(15,118,110,.1));border:1px solid rgba(15,118,110,.3);border-top:3px solid var(--acc)}
+.scatter-thumb{align-items:center;justify-content:center;background:linear-gradient(135deg,#fffdf7,#f1f5f0)}
+.scatter-thumb::after{display:none}
+.mini-scatter{position:relative;width:100%;height:100%}
+.mini-scatter i{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--acc);opacity:.85}
+.mini-scatter i.out{background:var(--warn);width:11px;height:11px}
+.mini-scatter b{position:absolute;left:4%;bottom:6%;width:88%;height:2px;background:rgba(23,26,30,.28);transform:rotate(-18deg);transform-origin:left;bottom:10%}
+.mini-scatter3d{position:relative;width:100%;height:100%}
+.mini-scatter3d b{position:absolute;left:8%;bottom:14%;width:40%;height:1.5px;background:rgba(23,26,30,.22);transform:rotate(-10deg);transform-origin:left center}
+.mini-scatter3d b.b2{width:30%;transform:rotate(-42deg);background:rgba(23,26,30,.16)}
+.mini-scatter3d b.b3{width:18%;transform:rotate(-84deg);background:rgba(23,26,30,.16)}
+.mini-scatter3d i{position:absolute;border-radius:50%;background:var(--acc);opacity:.85}
+.mini-scatter3d i.g{background:#e85d3f}
+.mini-line3d{position:relative;width:100%;height:100%}
+.mini-line3d b{position:absolute;left:8%;bottom:14%;width:40%;height:1.5px;background:rgba(23,26,30,.22);transform:rotate(-10deg);transform-origin:left center}
+.mini-line3d b.b2{width:30%;transform:rotate(-42deg);background:rgba(23,26,30,.16)}
+.mini-line3d b.b3{width:18%;transform:rotate(-84deg);background:rgba(23,26,30,.16)}
+.mini-line3d svg{position:absolute;inset:8% 4% 12% 4%;width:92%;height:80%}
+.mini-line3d .g1{stroke:var(--acc);stroke-width:3;fill:none;opacity:.9}
+.mini-line3d .g2{stroke:#e85d3f;stroke-width:3;fill:none;opacity:.9}
+.mini-line3d .g3{stroke:#d99a06;stroke-width:3;fill:none;opacity:.9}
+.pie-thumb{align-items:center;justify-content:center;background:linear-gradient(135deg,#fffdf7,#f4f1e8)}
+.pie-thumb::after{display:none}
+.mini-pie{position:relative;width:96px;height:96px;border-radius:50%;overflow:hidden;box-shadow:0 2px 8px rgba(23,26,30,.12)}
+.mini-pie i{position:absolute;inset:0}
+.mini-pie b{position:absolute;inset:24px;border-radius:50%;background:var(--paper)}
+.pie3d-thumb{align-items:center;justify-content:center;background:linear-gradient(180deg,#fffdf7,#eef3ef)}
+.pie3d-thumb::after{display:none}
+.mini-pie3d{position:relative;width:100%;height:100%}
+.mini-pie3d i{position:absolute;left:50%;width:68px;height:24px;margin-left:-34px;border-radius:50%;border:1px solid rgba(23,26,30,.16)}
+.mini-pie3d i:nth-child(1){bottom:16%;background:#0f766e}
+.mini-pie3d i:nth-child(2){bottom:31%;background:#e85d3f}
+.mini-pie3d i:nth-child(3){bottom:46%;background:#d99a06}
+.mini-pie3d i:nth-child(4){bottom:61%;width:46px;margin-left:-23px;background:#2563eb}
+.funnel-thumb{align-items:center;justify-content:center;background:linear-gradient(135deg,#fffdf7,#f2f4ef)}
+.funnel-thumb::after{display:none}
+.mini-funnel{display:flex;flex-direction:column;align-items:center;gap:5px;width:150px}
+.thumb .mini-funnel i{flex:none;display:block;height:12px;border-radius:2px;background:var(--acc)}
+.mini-funnel i:nth-child(1){width:100%}
+.mini-funnel i:nth-child(2){width:78%;background:color-mix(in srgb,var(--acc) 70%,transparent)}
+.mini-funnel i:nth-child(3){width:54%;background:color-mix(in srgb,var(--acc) 45%,transparent)}
+.mini-funnel i:nth-child(4){width:32%;background:color-mix(in srgb,var(--acc) 25%,transparent)}
+.radar-thumb{align-items:center;justify-content:center;background:linear-gradient(135deg,#fffdf7,#eef5ef)}
+.radar-thumb::after{display:none}
+.gantt-thumb{align-items:center;justify-content:center;background:linear-gradient(135deg,#fffdf7,#edf3f0)}
+.gantt-thumb::after{display:none}
+.mini-gantt{display:flex;flex-direction:column;gap:7px;width:170px}
+.thumb .mini-gantt i{flex:none;display:block;height:10px;border-radius:5px;background:var(--acc);box-shadow:none}
+.thumb .mini-gantt i:nth-child(1){width:52%;margin-left:0}
+.thumb .mini-gantt i:nth-child(2){width:64%;margin-left:30%;background:color-mix(in srgb,var(--acc) 72%,transparent)}
+.thumb .mini-gantt i:nth-child(3){width:40%;margin-left:58%;background:color-mix(in srgb,var(--acc) 48%,transparent)}
+.thumb .mini-gantt i:nth-child(4){width:12px;height:12px;border-radius:3px;transform:rotate(45deg);margin-left:88%;background:var(--warn)}
+.fish-thumb{align-items:center;justify-content:center;background:linear-gradient(135deg,#fffdf7,#f2eee4)}
+.fish-thumb::after{display:none}
+.mini-fish{position:relative;width:180px;height:110px}
+.thumb .mini-fish i{flex:none;display:block;position:absolute;box-shadow:none}
+.thumb .mini-fish .spine{left:8%;right:20%;top:50%;height:2.5px;margin-top:-1px;background:var(--ink)}
+.thumb .mini-fish .head{right:4%;top:50%;width:30px;height:22px;margin-top:-11px;border-radius:9px;background:var(--acc)}
+.thumb .mini-fish .b1{left:34%;top:16%;width:2.2px;height:42%;background:var(--acc);transform:rotate(38deg);transform-origin:bottom center}
+.thumb .mini-fish .b2{left:64%;top:12%;width:2.2px;height:46%;background:color-mix(in srgb,var(--acc) 65%,transparent);transform:rotate(38deg);transform-origin:bottom center}
+.thumb .mini-fish .b3{left:48%;bottom:14%;width:2.2px;height:42%;background:var(--warn);transform:rotate(-38deg);transform-origin:top center}
+.mini-heat{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;width:132px}
+.thumb .mini-heat i{flex:none;display:block;height:12px;border-radius:2.5px;box-shadow:none;background:var(--acc)}
+.thumb .mini-heat i:nth-child(3n){background:color-mix(in srgb,var(--acc) 55%,#fffdf7)}
+.thumb .mini-heat i:nth-child(4n+1){background:color-mix(in srgb,var(--acc) 30%,#fffdf7)}
+.thumb .mini-heat i:nth-child(7n){background:color-mix(in srgb,var(--acc) 78%,#171a1e)}
+.mini-sankey{position:relative;width:150px;height:100px}
+.sun-thumb{align-items:center;justify-content:center}
+.sun-thumb::after{display:none}
+.mini-sun{position:relative;width:104px;height:104px;border-radius:50%;background:conic-gradient(var(--acc) 0 47%,#e85d3f 47% 73%,#d99a06 73% 89%,#2563eb 89% 100%);box-shadow:0 8px 18px rgba(15,118,110,.18)}
+.mini-sun i{display:none}
+.mini-sun::before{content:"";position:absolute;inset:25%;border-radius:50%;background:conic-gradient(#14b8a6 0 58%,#f1844f 58% 84%,#e5b84c 84% 100%)}
+.mini-sun::after{content:"";position:absolute;inset:44%;border-radius:50%;background:#fffdf7;box-shadow:inset 0 0 0 1px rgba(23,26,30,.12)}
+.grid-thumb{align-items:center;justify-content:center}
+.grid-thumb::after{display:none}
+.mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;width:150px}
+.mini-grid i{display:block;height:11px;border-radius:2.5px;background:var(--zebra,#eef0e8);border:1px solid rgba(23,26,30,.08)}
+.mini-grid i:nth-child(-n+3){background:var(--acc);border-color:var(--acc)}
+.mini-grid i:nth-child(3n+1){background:color-mix(in srgb,var(--acc) 30%,transparent)}
+.thumb .mini-sankey i{flex:none;display:block;position:absolute;box-shadow:none;border-radius:2px}
+.thumb .mini-sankey .n1{left:0;top:8%;width:8px;height:34%;background:var(--acc)}
+.thumb .mini-sankey .n2{left:0;top:52%;width:8px;height:26%;background:var(--warn)}
+.thumb .mini-sankey .n3{left:47%;top:18%;width:8px;height:44%;background:#d99a06}
+.thumb .mini-sankey .n4{right:0;top:30%;width:8px;height:36%;background:#2563eb}
+.thumb .mini-sankey .f1{left:8px;top:14%;width:39%;height:16%;background:linear-gradient(90deg,rgba(15,118,110,.4),rgba(217,154,6,.4));border-radius:0;clip-path:polygon(0 0,100% 18%,100% 82%,0 100%)}
+.thumb .mini-sankey .f2{left:8px;top:56%;width:39%;height:12%;background:linear-gradient(90deg,rgba(232,93,63,.4),rgba(217,154,6,.35));border-radius:0;clip-path:polygon(0 15%,100% 0,100% 70%,0 100%)}
+.thumb .mini-sankey .f3{left:calc(47% + 8px);top:32%;width:calc(53% - 16px);height:14%;background:linear-gradient(90deg,rgba(217,154,6,.4),rgba(37,99,235,.4));border-radius:0;clip-path:polygon(0 12%,100% 0,100% 88%,0 100%)}
+.mini-box{display:flex;align-items:center;gap:22px}
+.thumb .mini-box i{flex:none;display:block;position:relative;width:34px;height:26px;border:2px solid var(--acc);border-radius:3px;background:color-mix(in srgb,var(--acc) 16%,transparent);box-shadow:none}
+.thumb .mini-box i::before{content:"";position:absolute;left:-2px;right:-2px;top:30%;height:2.5px;background:var(--acc)}
+.thumb .mini-box i::after{content:"";position:absolute;left:50%;top:-9px;bottom:-9px;width:0;border-left:2px dashed color-mix(in srgb,var(--acc) 70%,transparent)}
+.thumb .mini-box i.b2{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+.thumb .mini-box i.b2::before{background:var(--warn)}
+.thumb .mini-box i.b2::after{border-color:color-mix(in srgb,var(--warn) 70%,transparent)}
+.thumb .mini-box i.b3{height:38px;border-color:#d99a06;background:color-mix(in srgb,#d99a06 14%,transparent)}
+.thumb .mini-box i.b3::before{background:#d99a06;top:58%}
+.thumb .mini-box i.b3::after{border-color:color-mix(in srgb,#d99a06 70%,transparent)}
+.mini-radar{position:relative;width:120px;height:120px;display:flex;align-items:center;justify-content:center}
+.mini-radar i{display:block;width:96px;height:96px;border-radius:10px;clip-path:polygon(50% 2%,98% 38%,80% 98%,20% 98%,2% 38%);background:var(--acc);position:relative}
+.mini-radar b{position:absolute;left:50%;top:50%;width:96px;height:96px;margin:-48px 0 0 -48px;clip-path:polygon(50% 2%,98% 38%,80% 98%,20% 98%,2% 38%);background:linear-gradient(135deg,transparent 46%,#e85d3f 46% 72%,transparent 72%)}
+.treemap-thumb{align-items:center;justify-content:center;background:linear-gradient(135deg,#fffdf7,#f2f4ef)}
+.treemap-thumb::after{display:none}
+.mini-treemap{display:grid;grid-template-columns:1.6fr 1fr 1fr;grid-template-rows:1.4fr 1fr;gap:3px;width:120px;height:90px}
+.mini-treemap i{display:block;border-radius:3px;background:var(--acc)}
+.mini-treemap i:nth-child(1){grid-row:1/3;background:var(--acc)}
+.mini-treemap i:nth-child(2){background:color-mix(in srgb,#e85d3f 80%,transparent)}
+.mini-treemap i:nth-child(3){background:color-mix(in srgb,var(--acc) 55%,transparent)}
+.mini-treemap i:nth-child(4){background:color-mix(in srgb,#d99a06 70%,transparent)}
+.mini-treemap i:nth-child(5){background:color-mix(in srgb,var(--acc) 35%,transparent)}
+.card h3{font-family:var(--serif);font-size:23px;font-weight:420;margin:2px 0 3px;letter-spacing:-.02em;position:relative}
+.card .meta{background:transparent;border:0;padding:0;margin:0;color:var(--faint)}
+.desc{font-size:13px;color:var(--muted);line-height:1.72;margin:12px 0 12px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
+.tag{font-family:var(--mono);font-size:10px;border:1px solid var(--line2);border-radius:6px;padding:4px 7px;color:var(--muted);background:rgba(23,26,30,.03)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.btn{appearance:none;border:0;cursor:pointer;background:var(--ink);color:#fffdf7;text-decoration:none;font-size:13px;font-weight:750;padding:10px 14px;border-radius:999px;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{transform:translateY(-1px);box-shadow:0 12px 24px rgba(23,26,30,.18)}
+.btn.primary{background:var(--acc);color:#fffdf7}.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line2)}
+.footer-note{display:flex;justify-content:space-between;gap:16px;align-items:center;margin:28px 0 0;color:var(--muted);font-size:12px;line-height:1.7}.footer-note a{color:var(--acc);font-weight:750;text-decoration:none}
+pre{background:#171a1e;color:#d6f3ea;padding:18px 20px;border-radius:20px;font-family:var(--mono);font-size:12px;overflow:auto;margin-top:22px;line-height:1.9;box-shadow:var(--smallshadow)}
+.cmd-drawer{margin:22px 0 8px;border:1px solid var(--line2);border-radius:20px;background:var(--paper);box-shadow:var(--smallshadow);overflow:hidden}
+.cmd-drawer summary{display:flex;align-items:center;gap:12px;cursor:pointer;padding:14px 18px;font-weight:750;font-size:14px;list-style:none;user-select:none}
+.cmd-drawer summary::-webkit-details-marker{display:none}
+.cmd-drawer summary .cmd-hint{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--faint);font-weight:400}
+.cmd-drawer summary::after{content:"›";font-size:18px;color:var(--acc);transition:transform .2s}
+.cmd-drawer[open] summary::after{transform:rotate(90deg)}
+.cmd-drawer pre{margin:0;border-radius:0;border-top:1px dashed var(--line)}
+pre b{color:#c6f13f}
+
+.preview-modal{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:22px;opacity:0;pointer-events:none;transition:opacity .22s ease}
+.preview-modal.open{opacity:1;pointer-events:auto}
+.modal-backdrop{position:absolute;inset:0;background:rgba(9,10,8,.62);backdrop-filter:blur(12px)}
+.modal-shell{position:relative;width:min(1440px,96vw);height:min(900px,92vh);background:var(--paper);border-radius:28px;box-shadow:0 40px 120px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.7) inset;overflow:hidden;display:grid;grid-template-rows:auto 1fr;transform:translateY(18px) scale(.97);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+.preview-modal.open .modal-shell{transform:translateY(0) scale(1)}
+.modal-topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px 18px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,#fffdf7,#f6f3ec)}
+.modal-topbar .eyebrow{font-size:10px;margin-bottom:4px}.modal-topbar h2{font-family:var(--serif);font-size:26px;font-weight:420;letter-spacing:-.02em}.modal-path{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:2px;max-width:72ch;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.modal-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.open-external{font-family:var(--mono);font-size:11px;color:var(--acc);text-decoration:none;border:1px solid rgba(15,118,110,.3);border-radius:999px;padding:9px 12px}.open-external:hover{background:rgba(15,118,110,.08)}
+.close-btn{width:42px;height:42px;border-radius:13px;border:1px solid var(--line2);background:#fff;color:var(--ink);font-size:25px;line-height:1;cursor:pointer}.close-btn:hover{background:var(--ink);color:var(--paper)}
+.frame-wrap{position:relative;background:#10120d}
+#previewFrame{width:100%;height:100%;border:0;background:#f6f3ec}
+.modal-loading{position:absolute;inset:0;display:grid;place-items:center;background:rgba(16,18,13,.35);color:#fffdf7;font-family:var(--mono);letter-spacing:.16em;text-transform:uppercase;font-size:12px;pointer-events:none;transition:opacity .2s}.modal-loading.hide{opacity:0}
+
+@media(max-width:980px){body{padding:18px}.group-head{display:block}.grid{grid-template-columns:1fr}.type-nav{position:static;width:auto;border-radius:18px}}
+@media(max-width:680px){body{padding:12px}.modal-topbar{align-items:flex-start}.modal-path{display:none}.open-external{display:none}.preview-modal{padding:10px}.modal-shell{width:100%;height:94vh;border-radius:20px}.type-nav a{font-size:12px}.footer-note{display:block}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <span class="sparkle" style="left:13%;top:22%;font-size:17px">✦</span>
+    <span class="sparkle" style="right:15%;top:30%;font-size:13px;animation-delay:-1.6s;color:var(--gold)">✧</span>
+    <span class="sparkle" style="left:23%;bottom:16%;font-size:11px;animation-delay:-2.8s;color:var(--warn)">✦</span>
+    <span class="sparkle" style="right:25%;bottom:22%;font-size:15px;animation-delay:-.9s">✧</span>
+    <div class="eyebrow">vizscape · preview gallery</div>
+    <h1 class="fancy"><span class="script">Virta</span> <span class="serifit">Gallery</span></h1>
+    <svg class="flourish" viewBox="0 0 430 26" aria-hidden="true"><defs><linearGradient id="fg" x1="0" x2="1"><stop offset="0" stop-color="#0f766e"/><stop offset=".55" stop-color="#14b8a6"/><stop offset="1" stop-color="#d99a06"/></linearGradient></defs><path d="M6 15 C 110 4, 205 24, 275 12 S 380 6, 424 14" fill="none" stroke="url(#fg)" stroke-width="2.4" stroke-linecap="round"/><path d="M215 9 l6.5 6.5 -6.5 6.5 -6.5-6.5z" fill="#0f766e"/></svg>
+    <div class="meta-row" aria-label="能力速览">
+      <span class="meta"><b>20</b> templates</span>
+      <span class="meta"><b>16</b> chart families</span>
+      <span class="meta"><b>csv/json/xlsx/md</b> inputs</span>
+      <span class="meta"><b>offline</b> single-file</span>
+    </div>
+  </header>
+
+  <nav class="type-nav" aria-label="图表类型导航">
+    <a href="#group-bar">柱状图 <span>2</span></a>
+    <a href="#group-line">折线图 <span>2</span></a>
+    <a href="#group-bullet">KPI 子弹图 <span>1</span></a>
+    <a href="#group-scatter">散点图 <span>1</span></a>
+    <a href="#group-pie">占比图 <span>2</span></a>
+    <a href="#group-funnel">漏斗图 <span>1</span></a>
+    <a href="#group-radar">雷达图 <span>1</span></a>
+    <a href="#group-treemap">树状图 <span>1</span></a>
+    <a href="#group-gantt">甘特图 <span>1</span></a>
+    <a href="#group-fish">鱼骨图 <span>1</span></a>
+    <a href="#group-heat">热力图 <span>1</span></a>
+    <a href="#group-sankey">桑基图 <span>1</span></a>
+    <a href="#group-box">箱线图 <span>1</span></a>
+    <a href="#group-sunburst">旭日图 <span>1</span></a>
+    <a href="#group-grid">动态表 <span>1</span></a>
+    <a href="#group-doc">文档报告 <span>1</span></a>
+  </nav>
+
+  <section class="group-section" id="group-bar" aria-labelledby="group-bar-title">
+    <div class="group-head"><div><p class="eyebrow">bar chart</p><h2 id="group-bar-title">柱状图 <span class="count">2 templates</span></h2></div><p>看构成、排行与差距。</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="thumb" aria-hidden="true"><i style="height:42%"></i><i style="height:72%"></i><i style="height:56%"></i><i style="height:96%"></i><i style="height:66%"></i></div>
+        <h3>多分类交互柱状图</h3>
+        <div class="meta">bar-basic · multi series</div>
+        <p class="desc">分组 / 堆叠 / 100% / Pareto / 瀑布 · 10 配色 × 11 表面 × 9 形状。</p>
+        <div class="tags"><span class="tag">grouped</span><span class="tag">stacked</span><span class="tag">pct</span><span class="tag">pareto</span><span class="tag">waterfall</span><span class="tag">diverging</span><span class="tag">10-palettes</span><span class="tag">11-textures</span><span class="tag">9-shapes</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/multi-light.html" data-title="bar-basic · 多分类 · 浅色">浅色浮窗</button><button class="btn ghost" type="button" data-preview="../out/multi-dark.html" data-title="bar-basic · 多分类 · 深色">深色浮窗</button></div>
+      </article>
+      <article class="card">
+        <div class="thumb matrix-thumb" aria-hidden="true"><i style="height:82%"></i><i style="height:58%"></i><i style="height:92%"></i><i style="height:44%"></i><i style="height:70%"></i></div>
+        <h3>3D 透视柱状矩阵</h3>
+        <div class="meta">bar-matrix · overall scene</div>
+        <p class="desc">3D 场景：3 截面 × 3 棱边 × 4 顶帽 · 浓淡 / 雾化 / 软阴影。</p>
+        <div class="tags"><span class="tag">3d-scene</span><span class="tag">10-palettes</span><span class="tag">3-sections</span><span class="tag">4-caps</span><span class="tag">value-ramp</span><span class="tag">depth-fog</span><span class="tag">quality-report</span><span class="tag">negative-guard</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/matrix-3d-light.html" data-title="bar-matrix · 3D 透视 · 浅色">浅色浮窗</button><button class="btn ghost" type="button" data-preview="../out/matrix-3d-dark.html" data-title="bar-matrix · 3D 透视 · 深色">深色浮窗</button></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="group-section" id="group-line" aria-labelledby="group-line-title">
+    <div class="group-head"><div><p class="eyebrow">line chart</p><h2 id="group-line-title">折线图 <span class="count">2 templates</span></h2></div><p>看趋势与拐点。</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="thumb line-thumb" aria-hidden="true"><svg viewBox="0 0 260 120" role="presentation"><path class="gridline" d="M12 96H248M12 64H248M12 32H248"/><polyline class="line-a" points="14,88 54,70 88,78 128,44 164,52 204,24 246,34"/><polyline class="line-b" points="14,100 54,92 88,84 128,78 164,62 204,70 246,48"/><polyline class="line-c" points="14,112 54,102 88,96 128,90 164,88 204,80 246,72"/></svg></div>
+        <h3>多系列折线图</h3>
+        <div class="meta">line-basic · time / sequence</div>
+        <p class="desc">3 线形 × 3 填充 × 4 标记 × 3 线宽 · 纹理线 · 框选缩放。</p>
+        <div class="tags"><span class="tag">time-series</span><span class="tag">step</span><span class="tag">stacked-area</span><span class="tag">dash-texture</span><span class="tag">10-palettes</span><span class="tag">zoom</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/line-multi-light.html" data-title="line-basic · 多系列 · 浅色">浅色浮窗</button><button class="btn ghost" type="button" data-preview="../out/line-multi-dark.html" data-title="line-basic · 多系列 · 深色">深色浮窗</button></div>
+      </article>
+      <article class="card">
+        <div class="thumb line-thumb" aria-hidden="true"><div class="mini-line3d"><b></b><b class="b2"></b><b class="b3"></b><svg viewBox="0 0 100 60"><polyline class="g1" points="4,44 18,40 30,46 44,30 58,34 72,18 96,22"/><polyline class="g2" points="4,52 18,50 30,48 44,46 58,40 72,42 96,33"/><polyline class="g3" points="4,57 18,55 30,54 44,53 58,52 72,50 96,46"/></svg></div></div>
+        <h3>3D 折线图</h3>
+        <div class="meta">line3d-basic · category / series depth</div>
+        <p class="desc">真三维投影：X=分类/时间、Y=系列深度、Z=数值高度，带状飘带折线 · 拖拽旋转 + 滚轮缩放 + 倾角 · 参考墙读数 · 飘带填充/数据点开关 · 图例显隐系列。</p>
+        <div class="tags"><span class="tag">3d</span><span class="tag">drag-rotate</span><span class="tag">wheel-zoom</span><span class="tag">ribbon-fill</span><span class="tag">reference-wall</span><span class="tag">multi-series</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/line3d-light.html" data-title="line3d-basic · 3D 折线 · 浅色">浅色浮窗</button><button class="btn ghost" type="button" data-preview="../out/line3d-dark.html" data-title="line3d-basic · 3D 折线 · 深色">深色浮窗</button></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="group-section" id="group-bullet" aria-labelledby="group-bullet-title">
+    <div class="group-head"><div><p class="eyebrow">bullet chart</p><h2 id="group-bullet-title">KPI 子弹图 <span class="count">1 templates</span></h2></div><p>看目标差。</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="thumb bullet-thumb" aria-hidden="true"><div class="mini-row"><span>满意度</span><div class="mini-track"><div class="mini-actual" style="width:86%"></div><div class="mini-target" style="left:90%"></div></div></div><div class="mini-row"><span>续约率</span><div class="mini-track"><div class="mini-actual" style="width:74%"></div><div class="mini-target" style="left:85%"></div></div></div><div class="mini-row"><span>支付准时</span><div class="mini-track"><div class="mini-actual" style="width:92%"></div><div class="mini-target" style="left:80%"></div></div></div></div>
+        <h3>子弹图 KPI 面板</h3>
+        <div class="meta">bullet · actual / target</div>
+        <p class="desc">actual vs target + 三档定性背景 · 卡片/紧凑双布局 · 只看落后。</p>
+        <div class="tags"><span class="tag">actual-vs-target</span><span class="tag">qualitative-ranges</span><span class="tag">compact</span><span class="tag">only-miss</span><span class="tag">10-palettes</span><span class="tag">kpi</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/sample-bullet-light.html" data-title="bullet · KPI · 浅色">浅色浮窗</button><button class="btn ghost" type="button" data-preview="../out/sample-bullet-dark.html" data-title="bullet · KPI · 深色">深色浮窗</button></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="group-section" id="group-scatter" aria-labelledby="group-scatter-title">
+    <div class="group-head"><div><p class="eyebrow">scatter chart</p><h2 id="group-scatter-title">散点图 <span class="count">2 templates</span></h2></div><p>看相关与离群。</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="thumb scatter-thumb" aria-hidden="true"><div class="mini-scatter"><i style="left:8%;bottom:14%"></i><i style="left:20%;bottom:22%"></i><i style="left:31%;bottom:18%"></i><i style="left:42%;bottom:36%"></i><i style="left:54%;bottom:44%"></i><i style="left:63%;bottom:40%"></i><i style="left:74%;bottom:58%"></i><i style="left:86%;bottom:66%"></i><i class="out" style="left:47%;bottom:84%"></i><b></b></div></div>
+        <h3>散点 / 相关性气泡图</h3>
+        <div class="meta">scatter-basic · x / y / size</div>
+        <p class="desc">Pearson r + 拟合线 · 均值象限 · 1σ 置信椭圆 · 5 点形 · 离群标注。</p>
+        <div class="tags"><span class="tag">correlation</span><span class="tag">fit-line</span><span class="tag">mean-lines</span><span class="tag">ellipse</span><span class="tag">10-palettes</span><span class="tag">brush</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/scatter-light.html" data-title="scatter-basic · 散点 · 浅色">浅色浮窗</button><button class="btn ghost" type="button" data-preview="../out/scatter-dark.html" data-title="scatter-basic · 散点 · 深色">深色浮窗</button></div>
+      </article>
+      <article class="card">
+        <div class="thumb scatter-thumb" aria-hidden="true"><div class="mini-scatter3d"><b></b><b class="b2"></b><b class="b3"></b><i style="left:14%;bottom:34%;width:10px;height:10px"></i><i style="left:26%;bottom:46%;width:13px;height:13px"></i><i class="g" style="left:42%;bottom:30%;width:9px;height:9px"></i><i style="left:52%;bottom:58%;width:11px;height:11px"></i><i class="g" style="left:66%;bottom:42%;width:14px;height:14px"></i><i style="left:74%;bottom:70%;width:9px;height:9px"></i></div></div>
+        <h3>3D 散点图</h3>
+        <div class="meta">scatter3d-basic · x / y / z / size</div>
+        <p class="desc">真三维投影：X/Y/Z 定位、颜色=分组、气泡=第 4 维 · 拖拽旋转 + 滚轮缩放 + 倾角 · 地面网格 + 三轴线框 · r(x,y)/r(y,z)。</p>
+        <div class="tags"><span class="tag">3d</span><span class="tag">drag-rotate</span><span class="tag">wheel-zoom</span><span class="tag">bubble4th</span><span class="tag">floor-grid</span><span class="tag">group-color</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/scatter3d-light.html" data-title="scatter3d-basic · 3D 散点 · 浅色">浅色浮窗</button><button class="btn ghost" type="button" data-preview="../out/scatter3d-dark.html" data-title="scatter3d-basic · 3D 散点 · 深色">深色浮窗</button></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="group-section" id="group-pie" aria-labelledby="group-pie-title">
+    <div class="group-head"><div><p class="eyebrow">pie chart</p><h2 id="group-pie-title">占比图 <span class="count">2 templates</span></h2></div><p>看份额构成。</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="thumb pie-thumb" aria-hidden="true"><div class="mini-pie"><i style="background:conic-gradient(#0f766e 0 42%,#e85d3f 0 68%,#d99a06 0 85%,#2563eb 0 100%)"></i><b></b></div></div>
+        <h3>占比环形图</h3>
+        <div class="meta">pie-basic · label / value</div>
+        <p class="desc">份额降序 · 小项并入「其他」 · 引导线标注 · 3 档环宽。</p>
+        <div class="tags"><span class="tag">share</span><span class="tag">donut</span><span class="tag">leader-labels</span><span class="tag">10-palettes</span><span class="tag">small-merge</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/pie-light.html" data-title="pie-basic · 占比 · 浅色">浅色浮窗</button><button class="btn ghost" type="button" data-preview="../out/pie-dark.html" data-title="pie-basic · 占比 · 深色">深色浮窗</button></div>
+      </article>
+      <article class="card">
+        <div class="thumb pie3d-thumb" aria-hidden="true"><div class="mini-pie3d"><i></i><i></i><i></i><i></i></div></div>
+        <h3>3D 分层饼图</h3>
+        <div class="meta">pie3d-basic · [group] label / value</div>
+        <p class="desc">真三维投影、扇区角度一致不扭曲占比 · 两层数据（group+label+value）= 多层环（层按总值降序，最大层在底层）· 一维=单层厚环 · 拖拽旋转 + 滚轮缩放 · 层标签与扇区标签 · 图例显隐 · 双主题。</p>
+        <div class="tags"><span class="tag">3d</span><span class="tag">stacked-rings</span><span class="tag">layer-labels</span><span class="tag">slice-labels</span><span class="tag">drag-rotate</span><span class="tag">no-distortion</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/pie3d-light.html" data-title="pie3d-basic · 3D 分层饼 · 浅色">浅色浮窗</button><button class="btn ghost" type="button" data-preview="../out/pie3d-dark.html" data-title="pie3d-basic · 3D 分层饼 · 深色">深色浮窗</button><button class="btn ghost" type="button" data-preview="../out/pie3d-1d-light.html" data-title="pie3d-basic · 3D 单层 · 浅色">单层浮窗</button></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="group-section" id="group-funnel" aria-labelledby="group-funnel-title">
+    <div class="group-head"><div><p class="eyebrow">funnel chart</p><h2 id="group-funnel-title">漏斗图 <span class="count">1 templates</span></h2></div><p>看转化：一条流程逐级递减，哪一步掉得最狠。适合注册→激活→下单→复购、投递→面试→录用、线索→商机→成交。</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="thumb funnel-thumb" aria-hidden="true"><div class="mini-funnel"><i></i><i></i><i></i><i></i></div></div>
+        <h3>转化漏斗图</h3>
+        <div class="meta">funnel-basic · stage / value</div>
+        <p class="desc">圆角横条逐级收窄 · 渐层/分类色彩 · 6 种柱面质感 · 转化率徽章 · 10 配色 · 入场动画。</p>
+        <div class="tags"><span class="tag">conversion</span><span class="tag">step-rate</span><span class="tag">tonal-ramp</span><span class="tag">6-finishes</span><span class="tag">10-palettes</span><span class="tag">drop-highlight</span><span class="tag">row-order</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/funnel-light.html" data-title="funnel-basic · 漏斗 · 浅色">浅色浮窗</button><button class="btn ghost" type="button" data-preview="../out/funnel-dark.html" data-title="funnel-basic · 漏斗 · 深色">深色浮窗</button></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="group-section" id="group-radar" aria-labelledby="group-radar-title">
+    <div class="group-head"><div><p class="eyebrow">radar chart</p><h2 id="group-radar-title">雷达图 <span class="count">1 templates</span></h2></div><p>看多维强弱：每个方向一个维度，多边形越大越均衡占优，凹陷处是短板。适合能力雷达、竞品对比、多指标体检。</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="thumb radar-thumb" aria-hidden="true"><div class="mini-radar"><i></i><b></b></div></div>
+        <h3>雷达评分对比图</h3>
+        <div class="meta">radar-basic · axis / value</div>
+        <p class="desc">多轴 × 多对比项 · 各轴按该轴最大值归一化（解决量纲不同）· 覆盖面积与最弱/最强轴提示 · 填充/描边切换 · 网格与轴刻度环 · 顶点数值 · 悬浮命中 · 图例显隐。行=维度轴（≥3），每个数值列=一个对比项。</p>
+        <div class="tags"><span class="tag">multi-axis</span><span class="tag">per-axis-norm</span><span class="tag">coverage-area</span><span class="tag">vertex-values</span><span class="tag">leader-hint</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/radar-light.html" data-title="radar-basic · 雷达 · 浅色">浅色浮窗</button><button class="btn ghost" type="button" data-preview="../out/radar-dark.html" data-title="radar-basic · 雷达 · 深色">深色浮窗</button></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="group-section" id="group-treemap" aria-labelledby="group-treemap-title">
+    <div class="group-head"><div><p class="eyebrow">treemap chart</p><h2 id="group-treemap-title">树状图 <span class="count">1 templates</span></h2></div><p>看层级份额：矩形面积正比数值，一块块铺满。有分组列时按「分组 → 子类」两层铺（大区→城市、品类→子类），没有就一维平铺看类别份额。</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="thumb treemap-thumb" aria-hidden="true"><div class="mini-treemap"><i></i><i></i><i></i><i></i><i></i></div></div>
+        <h3>矩形树状图</h3>
+        <div class="meta">treemap-basic · [group] label / value</div>
+        <p class="desc">面积=数值的 squarify 平铺 · 自适应一层/两层（有分组列→按组分区+组内再铺，无分组→全部类别平铺）· 浮窗跟随光标不遮挡矩形（数值/占比/组内占比）· 点击下钻 + 面包屑返回 · 标签/数值/分组底色开关 · 图例显隐（顶层按整组显隐）· 10 套配色 · 块内文字亮度自适应 · 负值 0 值剔除并警告 · 主题切换。</p>
+        <div class="tags"><span class="tag">hierarchy</span><span class="tag">area=value</span><span class="tag">squarify</span><span class="tag">drill-down</span><span class="tag">group-tint</span><span class="tag">adaptive-level</span><span class="tag">cursor-tip</span><span class="tag">quality-report</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/treemap-2l-light.html" data-title="treemap-basic · 树状图(两层) · 浅色">两层浅色</button><button class="btn ghost" type="button" data-preview="../out/treemap-2l-dark.html" data-title="treemap-basic · 树状图(两层) · 深色">两层深色</button><button class="btn ghost" type="button" data-preview="../out/treemap-1d-light.html" data-title="treemap-basic · 树状图(一维) · 浅色">一维浅色</button></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="group-section" id="group-gantt" aria-labelledby="group-gantt-title">
+    <div class="group-head"><div><p class="eyebrow">gantt chart</p><h2 id="group-gantt-title">甘特图 <span class="count">1 templates</span></h2></div><p>看排期：任务谁在谁前面、谁卡着谁、进度到哪了。适合项目计划、版本排期、活动筹备。</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="thumb gantt-thumb" aria-hidden="true"><div class="mini-gantt"><i></i><i></i><i></i><i></i></div></div>
+        <h3>项目甘特图</h3>
+        <div class="meta">gantt-basic · task / start / end</div>
+        <p class="desc">时间轴 + 日历双视图 · 泳道/状态/负责人/平铺四种分组 · 里程碑◆ · 肘形依赖连线 · 进度内嵌 · 周末底纹 · 今日线 · 日期多格式 + 相对天数 · 10 配色。</p>
+        <div class="tags"><span class="tag">calendar-mode</span><span class="tag">4-groupings</span><span class="tag">swimlanes</span><span class="tag">milestones</span><span class="tag">dep-links</span><span class="tag">progress-fill</span><span class="tag">weekend-shade</span><span class="tag">today-line</span><span class="tag">quality-report</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/gantt-light.html" data-title="gantt-basic · 甘特图 · 浅色">浅色浮窗</button><button class="btn ghost" type="button" data-preview="../out/gantt-dark.html" data-title="gantt-basic · 甘特图 · 深色">深色浮窗</button></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="group-section" id="group-fish" aria-labelledby="group-fish-title">
+    <div class="group-head"><div><p class="eyebrow">fishbone chart</p><h2 id="group-fish-title">鱼骨图 <span class="count">1 templates</span></h2></div><p>看根因：一个问题拆成大骨（类别）→ 小骨（原因）→ 孙骨（子原因）。适合质量复盘、人机料法环测分析、头脑风暴结构化。</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="thumb fish-thumb" aria-hidden="true"><div class="mini-fish"><i class="spine"></i><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="head"></i></div></div>
+        <h3>因果鱼骨图</h3>
+        <div class="meta">fishbone-basic · category / cause</div>
+        <p class="desc">鱼头=问题（标题）· 64° 大骨上下交替 · 横枝防碰撞槽位 · 45° 孙骨 · 鱼头方向可翻转 · 悬停高亮因果链 · 图例显隐类别 · 失衡警告 · 10 配色。</p>
+        <div class="tags"><span class="tag">ishikawa</span><span class="tag">3-levels</span><span class="tag">head-flip</span><span class="tag">chain-highlight</span><span class="tag">anti-collision</span><span class="tag">quality-report</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/fishbone-light.html" data-title="fishbone-basic · 鱼骨图 · 浅色">浅色浮窗</button><button class="btn ghost" type="button" data-preview="../out/fishbone-dark.html" data-title="fishbone-basic · 鱼骨图 · 深色">深色浮窗</button></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="group-section" id="group-heat" aria-labelledby="group-heat-title">
+    <div class="group-head"><div><p class="eyebrow">heatmap</p><h2 id="group-heat-title">热力图 <span class="count">1 templates</span></h2></div><p>看密度与模式：颜色越深值越大。适合客流分时段、活跃周年历、指标矩阵体检。</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="thumb" aria-hidden="true"><div class="mini-heat"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+        <h3>双模式热力图</h3>
+        <div class="meta">heatmap-basic · x/y/value · date/value</div>
+        <p class="desc">矩阵（类目×类目）+ 日历（GitHub 风格年图）自动判定 · 顺序/发散双色带 · 行列合计占比 · 数值标注 · 年份切换 · 稀疏与重复格警告 · 10 配色。</p>
+        <div class="tags"><span class="tag">matrix</span><span class="tag">calendar-year</span><span class="tag">sequential</span><span class="tag">diverging</span><span class="tag">row/col-share</span><span class="tag">value-labels</span><span class="tag">quality-report</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/heatmap-light.html" data-title="heatmap-basic · 矩阵 · 浅色">矩阵浅色</button><button class="btn ghost" type="button" data-preview="../out/heatmap-dark.html" data-title="heatmap-basic · 矩阵 · 深色">矩阵深色</button><button class="btn ghost" type="button" data-preview="../out/heatmap-year-light.html" data-title="heatmap-basic · 日历年 · 浅色">日历浅色</button><button class="btn ghost" type="button" data-preview="../out/heatmap-year-dark.html" data-title="heatmap-basic · 日历年 · 深色">日历深色</button></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="group-section" id="group-sankey" aria-labelledby="group-sankey-title">
+    <div class="group-head"><div><p class="eyebrow">sankey diagram</p><h2 id="group-sankey-title">桑基图 <span class="count">1 templates</span></h2></div><p>看流量与路径：多对多流动，漏斗的通用化。适合转化路径、资金流转、能源流向。</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="thumb" aria-hidden="true"><div class="mini-sankey"><i class="n1"></i><i class="n2"></i><i class="n3"></i><i class="n4"></i><i class="f1"></i><i class="f2"></i><i class="f3"></i></div></div>
+        <h3>流量桑基图</h3>
+        <div class="meta">sankey-basic · source / target / value</div>
+        <p class="desc">最长路径分层 + 重心排序减交叉 · 贝塞尔流带（宽∝流量，源→目标渐变）· 悬停高亮上下游链路 · 节点可拖拽微调 · DAG 环校验剔除最弱边 · 10 配色。</p>
+        <div class="tags"><span class="tag">dag-check</span><span class="tag">barycenter-sort</span><span class="tag">flow-gradient</span><span class="tag">chain-highlight</span><span class="tag">drag-node</span><span class="tag">quality-report</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/sankey-light.html" data-title="sankey-basic · 桑基图 · 浅色">浅色浮窗</button><button class="btn ghost" type="button" data-preview="../out/sankey-dark.html" data-title="sankey-basic · 桑基图 · 深色">深色浮窗</button></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="group-section" id="group-box" aria-labelledby="group-box-title">
+    <div class="group-head"><div><p class="eyebrow">boxplot</p><h2 id="group-box-title">箱线图 <span class="count">1 templates</span></h2></div><p>看分布：中位数、四分位、离散度、离群点。适合质检对比、实验数据、成绩分布。</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="thumb" aria-hidden="true"><div class="mini-box"><i></i><i class="b2"></i><i class="b3"></i></div></div>
+        <h3>五数箱线图</h3>
+        <div class="meta">boxplot-basic · group / value · 或五数汇总列</div>
+        <p class="desc">观测聚合 + 汇总直绘双模式 · type-7 分位数 · 1.5×IQR 须线 · 离群空心圆 · 均值◆ · jitter 原始散点 · 垂直/水平 · 中位数排序 · 偏态判读。</p>
+        <div class="tags"><span class="tag">five-number</span><span class="tag">1.5x-iqr</span><span class="tag">outliers</span><span class="tag">jitter</span><span class="tag">mean-mark</span><span class="tag">h/v-orient</span><span class="tag">quality-report</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/boxplot-light.html" data-title="boxplot-basic · 箱线图 · 浅色">浅色浮窗</button><button class="btn ghost" type="button" data-preview="../out/boxplot-dark.html" data-title="boxplot-basic · 箱线图 · 深色">深色浮窗</button><button class="btn ghost" type="button" data-preview="../out/boxplot-sum-light.html" data-title="boxplot-basic · 汇总模式 · 浅色">汇总浅色</button></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="group-section" id="group-sunburst" aria-labelledby="group-sunburst-title">
+    <div class="group-head"><div><p class="eyebrow">sunburst</p><h2 id="group-sunburst-title">旭日图 <span class="count">1 templates</span></h2></div><p>看层级路径上的占比：内圈逐层向外展开，弧长正比数值。与树状图互补——树状图看面积，旭日图看路径。适合支出结构、组织构成、类目下钻。</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="thumb sun-thumb" aria-hidden="true"><div class="mini-sun"><i></i></div></div>
+        <h3>层级旭日图</h3>
+        <div class="meta">sunburst-basic · 层级列(≤4) / value</div>
+        <p class="desc">层级列自动成路径 · 父级=子树和 · 子色沿父色明度阶梯 · 点击扇区下钻 + 中心圆/面包屑返回 · 祖先链高亮 · 双占比 tooltip · 弧上标签。</p>
+        <div class="tags"><span class="tag">drill-down</span><span class="tag">breadcrumb</span><span class="tag">ancestor-chain</span><span class="tag">tint-ladder</span><span class="tag">arc-label</span><span class="tag">quality-report</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/sunburst-light.html" data-title="sunburst-basic · 旭日图 · 浅色">浅色浮窗</button><button class="btn ghost" type="button" data-preview="../out/sunburst-dark.html" data-title="sunburst-basic · 旭日图 · 深色">深色浮窗</button></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="group-section" id="group-grid" aria-labelledby="group-grid-title">
+    <div class="group-head"><div><p class="eyebrow">dynamic table / pivot</p><h2 id="group-grid-title">动态表 <span class="count">1 templates</span></h2></div><p>不一定要画图：排序、筛选、搜索、分页的明细表，或拖拽维度做行×列×值的多维透视（小计/合计自动）。适合明细交付、多维切片、Agent 直接取数。</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="thumb grid-thumb" aria-hidden="true"><div class="mini-grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+        <h3>动态表 / 多维透视</h3>
+        <div class="meta">grid-basic · 任意表格 · 列类型自动识别</div>
+        <p class="desc">明细：列头排序 · 全文搜索 · 列显隐 · 分页。透视：行维度≤2 级嵌套小计 × 列维度 × sum/count/avg/min/max · 合计行列。空值计数入报告 · 5000 行截断警告 · auto 对 ≥3 维度列自动推荐。</p>
+        <div class="tags"><span class="tag">sortable</span><span class="tag">search</span><span class="tag">pivot-2d</span><span class="tag">5-aggs</span><span class="tag">subtotal</span><span class="tag">pagination</span><span class="tag">quality-report</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/grid-light.html" data-title="grid-basic · 明细模式 · 浅色">明细浅色</button><button class="btn ghost" type="button" data-preview="../out/pivot-light.html" data-title="grid-basic · 透视模式 · 浅色">透视浅色</button><button class="btn ghost" type="button" data-preview="../out/pivot-dark.html" data-title="grid-basic · 透视模式 · 深色">透视深色</button></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="group-section" id="group-doc" aria-labelledby="group-doc-title">
+    <div class="group-head"><div><p class="eyebrow">document report</p><h2 id="group-doc-title">文档报告 <span class="count">1 templates</span></h2></div><p>看结构与要点。</p></div>
+    <div class="grid">
+      <article class="card">
+        <div class="thumb report-thumb" aria-hidden="true">
+          <div class="r-kpi"><i></i><i></i><i></i></div>
+          <div class="r-row"><span class="r-h"></span></div>
+          <div class="r-row"><span class="r-l" style="width:92%"></span></div>
+          <div class="r-row"><span class="r-l" style="width:78%"></span></div>
+          <div class="r-row"><span class="r-l" style="width:86%"></span></div>
+          <div class="r-row"><span class="r-l" style="width:54%"></span></div>
+        </div>
+        <h3>Markdown 报告页</h3>
+        <div class="meta">report-basic · md / txt</div>
+        <p class="desc">目录 + 正文 + 指标抽取（逐条标注来源）。</p>
+        <div class="tags"><span class="tag">toc</span><span class="tag">kpi-extract</span><span class="tag">source-sentence</span><span class="tag">doc-quality</span><span class="tag">offline</span></div>
+        <div class="actions"><button class="btn primary" type="button" data-preview="../out/report-light.html" data-title="report-basic · 报告页 · 浅色">浅色浮窗</button><button class="btn ghost" type="button" data-preview="../out/report-dark.html" data-title="report-basic · 报告页 · 深色">深色浮窗</button></div>
+      </article>
+    </div>
+  </section>
+
+  <div class="footer-note"><span>vizscape 预览画廊：模板视觉 / 浮窗预览 / 样式体系；解析与渲染管线见 vizlib/。</span><a href="../docs/BULLET_CHART.md">Bullet 输入契约 →</a></div>
+
+<details class="cmd-drawer">
+<summary>⌘ 命令速查<span class="cmd-hint">点击展开 · Agent 可用 vizscape schema &lt;view&gt; 直接取输入契约</span></summary>
+<pre><b># 输入契约（Agent 调用：先拿契约再造数）</b>
+vizscape schema                  # 全部图族必需列一览
+vizscape schema heat             # 单图族完整契约（JSON：列/别名/推断/示例/命令）
+vizscape schema --json           # 全部契约 JSON 数组
+
+<b># 柱状图</b>
+vizscape render examples/sample-multi.csv --template bar-basic --theme light --out out/multi-light.html
+vizscape render examples/sample-multi.csv --template bar-matrix --theme light --out out/matrix-3d-light.html
+
+<b># 折线图</b>
+vizscape render examples/sample-multi.csv --template line-basic --theme light --out out/line-multi-light.html
+
+<b># KPI 子弹图</b>
+vizscape render examples/sample-bullet.csv --template bullet --theme light --out out/sample-bullet-light.html
+
+<b># 散点 / 相关性气泡图</b>
+vizscape render examples/sample-scatter.csv --view scatter --theme light --out out/scatter-light.html
+vizscape inspect examples/sample-scatter.csv
+
+<b># 3D 散点（x/y/z + 分组 + 气泡）</b>
+vizscape render examples/sample-scatter3d.csv --view scatter3d --theme light --out out/scatter3d-light.html
+vizscape inspect examples/sample-scatter3d.csv
+
+<b># 3D 折线（X=分类/时间，Y=系列深度，Z=数值高度）</b>
+vizscape render examples/sample-line3d.csv --view line3d --theme light --out out/line3d-light.html
+vizscape inspect examples/sample-line3d.csv
+
+<b># 3D 分层饼（group+label+value 多层环，label+value 单层厚环）</b>
+vizscape render examples/sample-pie3d.csv --view pie3d --theme light --out out/pie3d-light.html
+vizscape inspect examples/sample-pie3d.csv
+vizscape render examples/sample-pie3d-1d.csv --view pie3d --theme light --out out/pie3d-1d-light.html
+
+<b># 占比图</b>
+vizscape render examples/sample.csv --view pie --theme light --out out/pie-light.html
+
+<b># 转化漏斗</b>
+vizscape render examples/sample-funnel.csv --view funnel --theme light --out out/funnel-light.html
+vizscape inspect examples/sample-funnel.csv
+
+<b># 雷达图</b>
+vizscape render examples/sample-radar.csv --view radar --theme light --out out/radar-light.html
+vizscape inspect examples/sample-radar.csv
+
+<b># 树状图</b>
+vizscape render examples/sample-treemap.csv --view treemap --theme light --out out/treemap-2l-light.html
+vizscape render examples/sample-treemap-1d.csv --view treemap --theme light --out out/treemap-1d-light.html
+vizscape inspect examples/sample-treemap.csv
+
+<b># 甘特图（时间轴 + 日历双视图）</b>
+vizscape render examples/sample-gantt.csv --view gantt --theme light --out out/gantt-light.html
+vizscape inspect examples/sample-gantt.csv
+
+<b># 鱼骨图（因果分析）</b>
+vizscape render examples/sample-fishbone.csv --view fish --theme light --out out/fishbone-light.html
+
+<b># 热力图（矩阵 / 日历年）</b>
+vizscape render examples/sample-heatmap.csv --view heat --theme light --out out/heatmap-light.html
+vizscape render examples/sample-heatmap-year.csv --view heat --theme light --out out/heatmap-year-light.html
+
+<b># 桑基图（流量路径 · DAG 校验）</b>
+vizscape render examples/sample-sankey.csv --view sankey --theme light --out out/sankey-light.html
+vizscape inspect examples/sample-sankey.csv
+
+<b># 箱线图（观测聚合 / 五数汇总）</b>
+vizscape render examples/sample-boxplot.csv --view box --theme light --out out/boxplot-light.html
+vizscape render examples/sample-boxplot-summary.csv --view box --theme light --out out/boxplot-sum-light.html
+
+<b># 旭日图（层级占比 · 点击下钻）</b>
+vizscape render examples/sample-sunburst.csv --view sunburst --theme light --out out/sunburst-light.html
+vizscape inspect examples/sample-sunburst.csv
+
+<b># 动态表 / 多维透视（明细 + 行×列×值聚合）</b>
+vizscape render examples/sample-grid.csv --view grid --theme light --out out/grid-light.html
+vizscape render examples/sample-grid.csv --view pivot --theme light --out out/pivot-light.html
+vizscape inspect examples/sample-grid.csv   # 多维数据会提示 ALSO --view grid
+
+<b># 文档报告</b>
+vizscape render examples/sample-report.md --view report --theme light --out out/report-light.html
+vizscape render examples/sample-report.md --view auto --json</pre>
+</details>
+</div>
+
+<div class="preview-modal" id="previewModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="previewTitle">
+  <div class="modal-backdrop" data-close></div>
+  <section class="modal-shell" aria-label="模板浮窗预览">
+    <div class="modal-topbar">
+      <div>
+        <div class="eyebrow">live preview</div>
+        <h2 id="previewTitle">模板预览</h2>
+        <div class="modal-path" id="previewPath">—</div>
+      </div>
+      <div class="modal-actions">
+        <a class="open-external" id="openExternal" href="#" target="_blank" rel="noreferrer">新窗口打开 ↗</a>
+        <button class="close-btn" id="closePreview" type="button" aria-label="关闭浮窗">×</button>
+      </div>
+    </div>
+    <div class="frame-wrap">
+      <iframe id="previewFrame" title="模板产物预览" src="about:blank"></iframe>
+      <div class="modal-loading" id="modalLoading">loading preview…</div>
+    </div>
+  </section>
+</div>
+
+<script>
+const modal = document.getElementById('previewModal');
+const frame = document.getElementById('previewFrame');
+const title = document.getElementById('previewTitle');
+const path = document.getElementById('previewPath');
+const external = document.getElementById('openExternal');
+const closeBtn = document.getElementById('closePreview');
+const loading = document.getElementById('modalLoading');
+let lastFocus = null;
+
+function openPreview(url, name) {
+  lastFocus = document.activeElement;
+  title.textContent = name || '模板预览';
+  path.textContent = url;
+  external.href = url;
+  loading.classList.remove('hide');
+  frame.src = url;
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('modal-open');
+  window.setTimeout(() => closeBtn.focus(), 0);
+}
+function closePreview() {
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('modal-open');
+  frame.src = 'about:blank';
+  if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+}
+
+document.addEventListener('click', (event) => {
+  const trigger = event.target.closest('[data-preview]');
+  if (trigger) {
+    event.preventDefault();
+    openPreview(trigger.dataset.preview, trigger.dataset.title);
+    return;
+  }
+  if (event.target.hasAttribute('data-close') || event.target === closeBtn) closePreview();
+});
+frame.addEventListener('load', () => loading.classList.add('hide'));
+document.addEventListener('keydown', (event) => {
+  if (!modal.classList.contains('open')) return;
+  if (event.key === 'Escape') closePreview();
+});
+</script>
+</body>
+</html>

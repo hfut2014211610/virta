@@ -1,0 +1,17 @@
+{
+  "name": "scatter3d-basic",
+  "view": "scatter3d",
+  "title": "三维散点图",
+  "input_types": ["csv", "json", "xlsx"],
+  "required_columns": ["x", "y", "z"],
+  "optional_columns": ["size", "group"],
+  "options": {
+    "theme": ["light", "dark"],
+    "projection": ["perspective"],
+    "drag_rotate": true,
+    "wheel_zoom": true,
+    "bubble": true,
+    "floor_grid": true
+  },
+  "description": "三维散点图（真三维投影）：X/Y/Z 三轴定位一个点，颜色=分组，气泡大小可编码第 4 维。支持拖拽旋转视角、滚轮缩放、倾角调节、地面网格、三轴线框、复位视角、悬浮命中（tooltip 显示三轴值+分组+气泡）、图例显隐分组、双主题切换。位置关系需旋转后判读，相关系数 r 仅供参考（旋转不改变 r）。纯 Canvas 无 CDN，离线单文件。输入需 ≥3 个数值列（x/y/z，size/group 可选）；若只有两维关系请用 --view scatter。"
+}

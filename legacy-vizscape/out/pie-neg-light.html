@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>hp-neg · vizscape pie-basic</title>
+<style>
+:root{--sans:"Noto Sans SC",system-ui,sans-serif;--serif:"Fraunces",Georgia,serif;--mono:"JetBrains Mono",ui-monospace,monospace}
+html[data-theme="light"]{--bg:#f6f3ec;--paper:#fffdf7;--ink:#171a1e;--muted:#6b6f6a;--faint:#9a9d96;--line:#e2ded2;--line2:#d1ccc0;--acc:#0f766e;--neg:#b5412f;--shadow:0 10px 36px rgba(23,26,30,.08);--grid:rgba(23,26,30,.06);--tip:#171a1e;--tipink:#fffdf7}
+html[data-theme="dark"]{--bg:#0d0e0a;--paper:#131410;--ink:#ede9dc;--muted:#9aa08a;--faint:#5e6450;--line:#23261d;--line2:#2e3323;--acc:#c6f13f;--neg:#ff6b4a;--shadow:0 10px 36px rgba(0,0,0,.4);--grid:rgba(237,233,220,.05);--tip:#ede9dc;--tipink:#0d0e0a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);padding:28px;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:56px 56px;opacity:.6}
+.wrap{max-width:1080px;margin:0 auto;position:relative}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1.5px solid var(--ink);padding-bottom:16px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--acc);text-transform:uppercase}
+h1{font-family:var(--serif);font-weight:300;font-size:clamp(32px,5vw,52px);letter-spacing:-.02em}
+h1 em{font-style:italic;color:var(--acc)}
+.seg{display:flex;background:var(--paper);border:1px solid var(--line2);border-radius:99px;padding:3px;box-shadow:var(--shadow)}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:13px;padding:8px 14px;border-radius:99px;cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.deck{display:flex;flex-direction:column;gap:10px;margin:16px 0}
+.trow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:9px 12px}
+.trow .label{min-width:34px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.trow .spacer{flex:1}
+.trow .seg{box-shadow:none}
+.toggle{appearance:none;border:1px solid var(--line2);background:var(--paper);color:var(--muted);border-radius:99px;padding:8px 14px;font-size:13px;cursor:pointer}
+.toggle.on{background:var(--acc);border-color:var(--acc);color:var(--paper);font-weight:700}
+.summary{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 14px}
+.sum-card{display:inline-flex;align-items:baseline;gap:8px;border:1px solid var(--line2);border-radius:14px;padding:9px 12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sum-card b{color:var(--ink);font-size:19px;font-weight:500;letter-spacing:-.02em}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);position:relative}
+#legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:transparent;color:var(--ink);border-radius:99px;padding:6px 12px;font-size:12px;cursor:pointer;transition:.2s}
+.chip i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.chip.off{opacity:.38;text-decoration:line-through}
+.chart-row{display:flex;align-items:center;gap:20px}
+canvas{width:420px;height:420px;display:block;cursor:pointer;flex:0 0 auto}
+#side{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+#detail{font-family:var(--mono);font-size:12.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:10px;line-height:1.8}
+#detail b{color:var(--ink)}
+#detail .big{font-family:var(--serif);font-size:40px;font-weight:350;color:var(--acc);letter-spacing:-.03em;line-height:1.1;display:block}
+#detail .name{font-size:13px;color:var(--ink);display:block;margin-bottom:4px}
+#tooltip{position:absolute;pointer-events:none;background:var(--tip);color:var(--tipink);padding:10px 12px;border-radius:10px;font-family:var(--mono);font-size:12px;line-height:1.7;display:none;z-index:10;min-width:150px;box-shadow:0 10px 30px rgba(0,0,0,.25);white-space:nowrap}
+#tooltip b{color:var(--acc)}
+.table{width:100%;border-collapse:collapse;font-size:13px;margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.table th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-align:left;color:var(--muted);border-bottom:1.5px solid var(--ink);padding:10px}
+.table td{border-bottom:1px solid var(--line);padding:9px 10px}
+.table td.num,.table th.num{text-align:right;font-family:var(--mono)}
+footer{margin-top:18px;font-family:var(--mono);font-size:11px;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.hint{font-size:12px;color:var(--faint);margin-top:8px}
+.quality{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--paper);border-radius:16px;padding:14px;margin:16px 0 8px;box-shadow:0 1px 0 rgba(0,0,0,.02) inset}
+.quality.warn{border-left-color:var(--neg)}
+.quality-head{display:flex;justify-content:space-between;gap:14px;align-items:center;border-bottom:1px dashed var(--line);padding-bottom:10px;margin-bottom:10px}
+.quality-head h2{font-family:var(--serif);font-size:20px;font-weight:420;letter-spacing:-.02em}
+.quality-score{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;line-height:1.6}.quality-score b{display:block;color:var(--acc);font-size:13px}.quality.warn .quality-score b{color:var(--neg)}
+.quality-grid{display:flex;gap:8px;flex-wrap:wrap}.qs{border:1px solid var(--line2);border-radius:999px;padding:5px 9px;font-family:var(--mono);font-size:11px;color:var(--muted)}.qs b{color:var(--ink);font-weight:500}
+.quality-warnings{margin:11px 0 0;padding-left:18px;color:var(--neg);font-size:12px;line-height:1.75}.quality-ok{margin:11px 0 0;color:var(--acc);font-size:12px}
+@media(max-width:820px){.chart-row{flex-direction:column}canvas{width:100%;height:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">vizscape · pie-basic · LIGHT</div><h1>hp-neg <em>· 占比图</em></h1></div>
+  <div class="seg" id="themeSeg" role="group" aria-label="主题"><button type="button" data-theme="light" aria-pressed="false">☀ 浅色</button><button type="button" data-theme="dark" aria-pressed="false">☾ 深色</button></div>
+</header>
+
+<div class="deck">
+  <div class="trow">
+    <span class="label">形态</span>
+    <div class="seg" id="modeSeg" role="group" aria-label="形态"><button type="button" data-mode="donut" class="on" aria-pressed="true">◍ 环形</button><button type="button" data-mode="pie" aria-pressed="false">● 实心</button></div>
+    <span class="spacer"></span>
+    <button class="toggle on" id="btnValue" type="button" aria-pressed="true">％ 扇区标注</button>
+  </div>
+</div>
+
+<div class="summary" aria-label="摘要"><span class="sum-card"><b>3</b>扇区</span><span class="sum-card"><b>9,200</b>总和</span><span class="sum-card"><b>54.3%</b>最大占比</span><span class="sum-card"><b>甲</b>领先项</span><span class="sum-card"><b>5</b>分类数</span></div>
+
+<div class="card">
+  <div id="legend"></div>
+  <div class="chart-row">
+    <canvas id="chart" role="img" aria-label="hp-neg 占比图，共 3 个扇区，最大占比 54.3%；明细见下方表格"></canvas>
+    <div id="tooltip"></div>
+    <div id="side"><div id="detail"></div></div>
+  </div>
+  <div class="hint">读法：扇区角度 = 占比份额，自 12 点顺时针；占比 < 3% 的尾部小扇区已并入「其他」。支持：环形/实心切换 · 悬浮命中 · 点击扇区/图例显隐 · 中心显示总计或悬停项 · 环上数值标注</div>
+</div>
+
+<section class="quality warn" aria-label="数据识别报告"><div class="quality-head"><div><p class="eyebrow">data quality</p><h2>数据识别报告</h2></div><div class="quality-score"><b>高置信识别</b>pie · 渠道 × 利润</div></div><div class="quality-grid"><span class="qs"><b>模式</b> pie</span><span class="qs"><b>扇区</b> 3</span><span class="qs"><b>系列</b> 5</span><span class="qs"><b>分类列</b> 渠道</span><span class="qs"><b>数值列</b> 利润</span><span class="qs"><b>总和</b> 9,200</span><span class="qs"><b>最大</b> 甲 54.3%</span></div><ul class="quality-warnings"><li>「利润」含 1 个负值；Pareto / 100%堆叠 / 3D 矩阵自动停用，分组/堆叠/瀑布保持可用</li><li>1 个分类为负值（丁），饼图无法表示，已剔除；请用柱状图看正负对比</li><li>1 个分类为 0，已剔除（占比不可见）</li></ul></section>
+
+<table class="table"><thead><tr><th>扇区</th><th class="num">数值</th><th class="num">占比</th></tr></thead><tbody><tr><td>甲</td><td class="num">5,000</td><td class="num">54.3%</td></tr><tr><td>乙</td><td class="num">3,000</td><td class="num">32.6%</td></tr><tr><td>戊</td><td class="num">1,200</td><td class="num">13.0%</td></tr></tbody></table>
+
+<footer><span>vizscape · pie-basic · 占比 · 纯 Canvas 无 CDN</span><span>输入兼容：label+value / label+series+value / 宽表 / ECharts JSON</span></footer>
+</div>
+
+<script>
+const RAW={"slices": [{"label": "甲", "value": 5000, "share": 0.5434782608695652}, {"label": "乙", "value": 3000, "share": 0.32608695652173914}, {"label": "戊", "value": 1200, "share": 0.13043478260869565}]};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let slices=RAW.slices.map((s,i)=>({...s,i}));
+let hidden=new Set(), hoverIdx=-1;
+let mode='donut', showValue=true;
+const PALETTE={light:['#0f766e','#e85d3f','#d99a06','#2563eb','#7c3aed','#059669','#db2777','#0891b2'],dark:['#c6f13f','#ff6b4a','#ffb224','#4de3c2','#7dd3fc','#f472b6','#a78bfa','#facc15']};
+const cv=document.getElementById('chart'), tip=document.getElementById('tooltip'), detail=document.getElementById('detail'), legendEl=document.getElementById('legend');
+const FONT='12px JetBrains Mono, monospace';
+const TAU=Math.PI*2;
+function theme(){return document.documentElement.dataset.theme}
+function colors(){return PALETTE[theme()]||PALETTE.light}
+function fmt(v){return Math.abs(v)>=10?Math.round(v).toLocaleString():(+v.toFixed(2)).toLocaleString()}
+function visSlices(){return slices.map(s=>s).filter(s=>!hidden.has(s.label))}
+function draw(){
+  const dpr=window.devicePixelRatio||1, r=cv.getBoundingClientRect();
+  const size=Math.min(r.width, r.height);
+  cv.style.width=size+'px'; cv.style.height=size+'px';
+  cv.width=size*dpr; cv.height=size*dpr;
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  const cs=getComputedStyle(document.documentElement);
+  const ink=cs.getPropertyValue('--ink').trim(), paper=cs.getPropertyValue('--paper').trim(), faint=cs.getPropertyValue('--faint').trim();
+  g.clearRect(0,0,size,size);
+  g.font=FONT;
+  const cx=size/2, cy=size/2, R=Math.min(size,size)/2-8, rIn=mode==='donut'?R*0.6:0;
+  const vis=visSlices();
+  const total=vis.reduce((a,s)=>a+s.value,0);
+  // 高亮：悬停项外扩，其他淡化
+  const isHL=i=>hoverIdx<0||hoverIdx===i;
+  let ang=-Math.PI/2;
+  vis.forEach(s=>{
+    const sw=total>0?(s.value/total)*TAU:0;
+    const col=colors()[s.i%8];
+    const mid=ang+sw/2;
+    const grow=hoverIdx===s.i?10:0;
+    g.save();
+    g.globalAlpha=isHL(s.i)?1:0.28;
+    g.translate(cx+Math.cos(mid)*grow, cy+Math.sin(mid)*grow);
+    g.beginPath();
+    if(rIn>0){g.arc(0,0,R,ang,ang+sw);g.arc(0,0,rIn,ang+sw,ang,true);g.closePath()}
+    else{g.moveTo(0,0);g.arc(0,0,R,ang,ang+sw);g.closePath()}
+    g.fillStyle=col; g.fill();
+    // 分隔线
+    if(sw>0.02){g.strokeStyle=paper;g.lineWidth=2;g.stroke()}
+    // 扇区标注
+    if(showValue&&sw>0.14){
+      const rr=(R+rIn)/2+grow, tx=Math.cos(mid)*rr, ty=Math.sin(mid)*rr;
+      const share=(s.value/total)*100;
+      const big=share>=12;
+      g.fillStyle=col===colors()[0]&&false?'#fff':paper;
+      g.textAlign='center'; g.textBaseline='middle';
+      g.globalAlpha=isHL(s.i)?1:0.4;
+      g.font=big?'bold 15px JetBrains Mono, monospace':'bold 11px JetBrains Mono, monospace';
+      g.fillText(share.toFixed(0)+'%',tx,ty);
+      g.font='9px JetBrains Mono, monospace';
+    }
+    g.restore();
+    ang+=sw;
+  });
+  // 中心
+  g.textAlign='center'; g.textBaseline='middle';
+  if(hoverIdx>=0&&hoverIdx<slices.length){
+    const s=slices[hoverIdx]; const vis2=visSlices(); const tot2=vis2.reduce((a,x)=>a+x.value,0);
+    g.fillStyle=ink; g.font='bold 26px Fraunces, Georgia, serif';
+    g.fillText((tot2>0?(s.value/tot2*100).toFixed(1):'0')+'%',cx,cy-10);
+    g.fillStyle=faint; g.font='11px JetBrains Mono, monospace';
+    const lbl=s.label.length>12?s.label.slice(0,11)+'…':s.label;
+    g.fillText(lbl,cx,cy+16);
+  }else{
+    g.fillStyle=ink; g.font='bold 26px Fraunces, Georgia, serif';
+    g.fillText(fmt(total),cx,cy-10);
+    g.fillStyle=faint; g.font='11px JetBrains Mono, monospace';
+    g.fillText('总计',cx,cy+16);
+  }
+  if(!vis.length){g.fillStyle=faint;g.fillText('所有扇区已隐藏 · 点击图例恢复',cx,cy+R*0.75)}
+}
+function showTip(i){
+  const s=slices[i]; if(!s) return;
+  const tot=visSlices().reduce((a,x)=>a+x.value,0);
+  const share=tot>0?(s.value/tot*100).toFixed(1):'0.0';
+  tip.innerHTML=`<b>${esc(s.label)}</b><br>${fmt(s.value)} · <b>${share}%</b>`;
+  tip.style.display='block';
+  const r=cv.getBoundingClientRect();
+  tip.style.left=(cv.offsetLeft+r.width/2+30)+'px';
+  tip.style.top=(cv.offsetTop+20)+'px';
+}
+function updateDetail(){
+  if(hoverIdx<0||hoverIdx>=slices.length){
+    const tot=visSlices().reduce((a,x)=>a+x.value,0);
+    const top=visSlices().sort((a,b)=>b.value-a.value)[0];
+    detail.innerHTML=top?`<span class="name">领先项</span><span class="big">${((top.value/tot)*100).toFixed(1)}%</span><b>${esc(top.label)}</b> · ${fmt(top.value)}<br><br>💡 悬停扇区查看占比 · 点击图例显隐`:'<b>所有扇区已隐藏</b> · 点击图例恢复';
+    return;
+  }
+  const s=slices[hoverIdx]; const tot=visSlices().reduce((a,x)=>a+x.value,0);
+  const share=tot>0?(s.value/tot*100).toFixed(1):'0.0';
+  detail.innerHTML=`<span class="name">${esc(s.label)}</span><span class="big">${share}%</span><b>${fmt(s.value)}</b> / ${fmt(tot)}<br>占比排名 第 ${slices.filter(x=>x.value>s.value).length+1} 位`;
+}
+function hitTest(mx,my){
+  const r=cv.getBoundingClientRect(), size=Math.min(r.width,r.height);
+  const cx=r.width/2, cy=r.height/2, R=size/2-8, rIn=mode==='donut'?R*0.6:0;
+  const dx=mx-cx, dy=my-cy, d=Math.hypot(dx,dy);
+  if(d>R||d<rIn) return -1;
+  let ang=Math.atan2(dy,dx); // -PI..PI
+  if(ang<-Math.PI/2) ang+=TAU;
+  let a0=-Math.PI/2;
+  const vis=visSlices(); const total=vis.reduce((a,s)=>a+s.value,0);
+  for(const s of vis){ const sw=total>0?(s.value/total)*TAU:0; if(ang>=a0&&ang<a0+sw) return s.i; a0+=sw; }
+  return -1;
+}
+cv.addEventListener('mousemove',e=>{const r=cv.getBoundingClientRect();const i=hitTest(e.clientX-r.left,e.clientY-r.top);if(i!==hoverIdx){hoverIdx=i;if(i>=0)showTip(i);else tip.style.display='none';draw();updateDetail()}});
+cv.addEventListener('mouseleave',()=>{hoverIdx=-1;tip.style.display='none';draw();updateDetail()});
+cv.addEventListener('click',e=>{const r=cv.getBoundingClientRect();const i=hitTest(e.clientX-r.left,e.clientY-r.top);if(i>=0){const lab=slices[i].label;hidden.has(lab)?hidden.delete(lab):hidden.add(lab);renderLegend();draw();updateDetail()}});
+function renderLegend(){
+  const cols=colors();
+  legendEl.innerHTML=slices.map(s=>`<button type="button" class="chip ${hidden.has(s.label)?'off':''}" data-l="${esc(s.label)}" aria-pressed="${!hidden.has(s.label)}"><i style="background:${cols[s.i%8]}"></i>${esc(s.label)} <span style="font-family:var(--mono);opacity:.7">${(s.share*100).toFixed(0)}%</span></button>`).join('')+'<span style="font-family:var(--mono);font-size:11px;color:var(--faint);margin-left:6px">点击显隐扇区</span>';
+}
+legendEl.addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const l=b.dataset.l;hidden.has(l)?hidden.delete(l):hidden.add(l);renderLegend();draw();updateDetail()});
+function setOn(el,on){el.classList.toggle('on',on);el.setAttribute('aria-pressed',String(on))}
+document.getElementById('modeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;mode=b.dataset.mode;document.querySelectorAll('#modeSeg button').forEach(x=>setOn(x,x===b));draw()});
+document.getElementById('btnValue').onclick=e=>{showValue=!showValue;setOn(e.currentTarget,showValue);draw()};
+document.getElementById('themeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.dataset.theme=b.dataset.theme;document.querySelectorAll('#themeSeg button').forEach(x=>setOn(x,x===b));renderLegend();draw()});
+document.querySelectorAll('#themeSeg button').forEach(b=>setOn(b,theme()===b.dataset.theme));
+renderLegend();hoverIdx=-1;draw();updateDetail();
+window.addEventListener('resize',draw);
+// @@SCRIPT2@@
+</script>
+</body>
+</html>

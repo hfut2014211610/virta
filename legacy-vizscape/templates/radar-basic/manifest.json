@@ -1,0 +1,16 @@
+{
+  "name": "radar-basic",
+  "view": "radar",
+  "title": "雷达评分对比图",
+  "input_types": ["csv", "json", "xlsx"],
+  "required_columns": ["label", "value"],
+  "optional_columns": [],
+  "options": {
+    "theme": ["light", "dark"],
+    "norm": ["per_axis_max"],
+    "mode": ["polygon", "fill"],
+    "show_axis_max": true,
+    "show_ticks": true
+  },
+  "description": "雷达图：多轴评分对比。行=维度轴（≥3），每个数值列=一个对比项，绘制叠加多边形看整体轮廓与强弱。各轴按该轴最大值归一化到 0..1，解决量纲不同无法同图对比的问题；含负值轴按该轴最小值平移。支持填充/描边切换、轴刻度环、悬浮命中（显示各轴原始值与归一值）、图例显隐、面积与最弱/最强轴提示。双主题可切换；离线单文件。输入兼容：宽表 / label+value / label+series+value / ECharts JSON。"
+}

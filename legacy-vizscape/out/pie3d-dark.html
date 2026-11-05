@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sample-pie3d · vizscape pie3d-basic</title>
+<style>
+:root{--sans:"Noto Sans SC",system-ui,sans-serif;--serif:"Fraunces",Georgia,serif;--mono:"JetBrains Mono",ui-monospace,monospace}
+html[data-theme="light"]{--bg:#f6f3ec;--paper:#fffdf7;--ink:#171a1e;--muted:#6b6f6a;--faint:#9a9d96;--line:#e2ded2;--line2:#d1ccc0;--acc:#0f766e;--neg:#b5412f;--shadow:0 10px 36px rgba(23,26,30,.08);--grid:rgba(23,26,30,.06);--tip:#171a1e;--tipink:#fffdf7;--floorline:rgba(23,26,30,.16)}
+html[data-theme="dark"]{--bg:#0d0e0a;--paper:#131410;--ink:#ede9dc;--muted:#9aa08a;--faint:#5e6450;--line:#23261d;--line2:#2e3323;--acc:#c6f13f;--neg:#ff6b4a;--shadow:0 10px 36px rgba(0,0,0,.4);--grid:rgba(237,233,220,.05);--tip:#ede9dc;--tipink:#0d0e0a;--floorline:rgba(237,233,220,.16)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);padding:28px;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:56px 56px;opacity:.6}
+.wrap{max-width:1080px;margin:0 auto;position:relative}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1.5px solid var(--ink);padding-bottom:16px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--acc);text-transform:uppercase}
+h1{font-family:var(--serif);font-weight:300;font-size:clamp(32px,5vw,52px);letter-spacing:-.02em}
+h1 em{font-style:italic;color:var(--acc)}
+.seg{display:flex;background:var(--paper);border:1px solid var(--line2);border-radius:99px;padding:3px;box-shadow:var(--shadow)}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:13px;padding:8px 14px;border-radius:99px;cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0}
+.toolbar .label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.toggle{appearance:none;border:1px solid var(--line2);background:var(--paper);color:var(--muted);border-radius:99px;padding:8px 14px;font-size:13px;cursor:pointer}
+.toggle.on{background:var(--acc);border-color:var(--acc);color:var(--paper);font-weight:700}
+.toolbar input[type=range]{accent-color:var(--acc);width:110px}
+.summary{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 14px}
+.sum-card{display:inline-flex;align-items:baseline;gap:8px;border:1px solid var(--line2);border-radius:14px;padding:9px 12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sum-card b{color:var(--ink);font-size:19px;font-weight:500;letter-spacing:-.02em}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);position:relative}
+#legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:transparent;color:var(--ink);border-radius:99px;padding:6px 12px;font-size:12px;cursor:pointer;transition:.2s}
+.chip i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.chip.off{opacity:.38;text-decoration:line-through}
+canvas{width:100%;max-width:800px;height:480px;display:block;cursor:grab;margin:0 auto}
+canvas.dragging{cursor:grabbing}
+#tooltip{position:absolute;pointer-events:none;background:var(--tip);color:var(--tipink);padding:10px 12px;border-radius:10px;font-family:var(--mono);font-size:12px;line-height:1.7;display:none;z-index:10;min-width:180px;max-width:280px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+#tooltip b{color:var(--acc)}
+#detail{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;line-height:1.8;min-height:44px}
+#detail b{color:var(--ink)}
+.table{width:100%;border-collapse:collapse;font-size:13px;margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.table th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-align:left;color:var(--muted);border-bottom:1.5px solid var(--ink);padding:10px}
+.table td{border-bottom:1px solid var(--line);padding:9px 10px}
+.table td.num,.table th.num{text-align:right;font-family:var(--mono)}
+.table tr.subtotal td{border-top:1.5px solid var(--line2);font-family:var(--mono);font-size:12px}
+footer{margin-top:18px;font-family:var(--mono);font-size:11px;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.hint{font-size:12px;color:var(--faint);margin-top:8px}
+.quality{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--paper);border-radius:16px;padding:14px;margin:16px 0 8px;box-shadow:0 1px 0 rgba(0,0,0,.02) inset}
+.quality.warn{border-left-color:var(--neg)}
+.quality-head{display:flex;justify-content:space-between;gap:14px;align-items:center;border-bottom:1px dashed var(--line);padding-bottom:10px;margin-bottom:10px}
+.quality-head h2{font-family:var(--serif);font-size:20px;font-weight:420;letter-spacing:-.02em}
+.quality-score{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;line-height:1.6}.quality-score b{display:block;color:var(--acc);font-size:13px}.quality.warn .quality-score b{color:var(--neg)}
+.quality-grid{display:flex;gap:8px;flex-wrap:wrap}.qs{border:1px solid var(--line2);border-radius:999px;padding:5px 9px;font-family:var(--mono);font-size:11px;color:var(--muted)}.qs b{color:var(--ink);font-weight:500}
+.quality-warnings{margin:11px 0 0;padding-left:18px;color:var(--neg);font-size:12px;line-height:1.75}.quality-ok{margin:11px 0 0;color:var(--acc);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">vizscape · pie3d-basic · DARK</div><h1>sample-pie3d <em>· 3D 分层饼</em></h1></div>
+  <div class="seg" id="themeSeg" role="group" aria-label="主题"><button type="button" data-theme="light" aria-pressed="false">☀ 浅色</button><button type="button" data-theme="dark" aria-pressed="false">☾ 深色</button></div>
+</header>
+
+<div class="toolbar">
+  <span class="label">视角</span>
+  <button class="toggle" id="btnReset" type="button">↺ 复位视角</button>
+  <button class="toggle on" id="btnFloor" type="button" aria-pressed="true">▤ 地面网格</button>
+  <button class="toggle on" id="btnLayerLab" type="button" aria-pressed="true">≡ 层标签</button>
+  <button class="toggle on" id="btnSliceLab" type="button" aria-pressed="true">％ 扇区标签</button>
+  <span class="label">深度</span>
+  <input type="range" id="tilt" min="15" max="85" value="55" aria-label="倾角">
+</div>
+
+<div class="summary" aria-label="摘要"><span class="sum-card"><b>4</b>层数</span><span class="sum-card"><b>5</b>类别</span><span class="sum-card"><b>3,033</b>总值</span><span class="sum-card"><b>47.7%</b>峰值</span></div>
+
+<div class="card">
+  <div id="legend"></div>
+  <canvas id="chart" role="img" aria-label="sample-pie3d 3D 分层饼图，4 层 × 5 类别；拖拽旋转，明细见下方表格"></canvas>
+  <div id="tooltip"></div>
+  <div id="detail"></div>
+  <div class="hint">读法：每层是一层饼，扇区角度 = 该层占比；同层颜色 = 同类别，跨层一致；层按总值降序（最大层在底层）。拖拽旋转、滚轮缩放；图例显隐类别。各层半径相同，面积判读不受透视影响。</div>
+</div>
+
+<section class="quality ok" aria-label="数据识别报告"><div class="quality-head"><div><p class="eyebrow">data quality</p><h2>数据识别报告</h2></div><div class="quality-score"><b>高置信识别</b>pie3d · 品类 × 季度</div></div><div class="quality-grid"><span class="qs"><b>模式</b> pie3d</span><span class="qs"><b>层数</b> 4</span><span class="qs"><b>类别</b> 5</span><span class="qs"><b>总值</b> 3,033</span><span class="qs"><b>层映射</b> group=季度 → label=品类 → value=营收</span><span class="qs"><b>并小份额</b> 占比&lt;3% 并入其他</span></div><p class="quality-ok">各层按同色分类对齐、角度一致，占比可直接比较。</p></section>
+
+<table class="table"><thead><tr><th>层</th><th>扇区</th><th class="num">数值</th><th class="num">层内占比</th></tr></thead><tbody><tr><td>Q4</td><td>手机</td><td class="num">420</td><td class="num">47.7%</td></tr><tr><td></td><td>笔记本</td><td class="num">260</td><td class="num">29.5%</td></tr><tr><td></td><td>平板</td><td class="num">95</td><td class="num">10.8%</td></tr><tr><td></td><td>耳机</td><td class="num">60</td><td class="num">6.8%</td></tr><tr><td></td><td>配件</td><td class="num">45</td><td class="num">5.1%</td></tr><tr class="subtotal"><td></td><td><b>Q4 小计</b></td><td class="num"><b>880</b></td><td class="num"><b>29.0%</b></td></tr><tr><td>Q3</td><td>手机</td><td class="num">380</td><td class="num">47.5%</td></tr><tr><td></td><td>笔记本</td><td class="num">240</td><td class="num">30.0%</td></tr><tr><td></td><td>平板</td><td class="num">85</td><td class="num">10.6%</td></tr><tr><td></td><td>耳机</td><td class="num">55</td><td class="num">6.9%</td></tr><tr><td></td><td>配件</td><td class="num">40</td><td class="num">5.0%</td></tr><tr class="subtotal"><td></td><td><b>Q3 小计</b></td><td class="num"><b>800</b></td><td class="num"><b>26.4%</b></td></tr><tr><td>Q2</td><td>手机</td><td class="num">340</td><td class="num">47.4%</td></tr><tr><td></td><td>笔记本</td><td class="num">220</td><td class="num">30.6%</td></tr><tr><td></td><td>平板</td><td class="num">75</td><td class="num">10.4%</td></tr><tr><td></td><td>耳机</td><td class="num">48</td><td class="num">6.7%</td></tr><tr><td></td><td>配件</td><td class="num">35</td><td class="num">4.9%</td></tr><tr class="subtotal"><td></td><td><b>Q2 小计</b></td><td class="num"><b>718</b></td><td class="num"><b>23.7%</b></td></tr><tr><td>Q1</td><td>手机</td><td class="num">300</td><td class="num">47.2%</td></tr><tr><td></td><td>笔记本</td><td class="num">200</td><td class="num">31.5%</td></tr><tr><td></td><td>平板</td><td class="num">65</td><td class="num">10.2%</td></tr><tr><td></td><td>耳机</td><td class="num">40</td><td class="num">6.3%</td></tr><tr><td></td><td>配件</td><td class="num">30</td><td class="num">4.7%</td></tr><tr class="subtotal"><td></td><td><b>Q1 小计</b></td><td class="num"><b>635</b></td><td class="num"><b>20.9%</b></td></tr></tbody></table>
+
+<footer><span>vizscape · pie3d-basic · 真三维分层环 · 纯 Canvas 无 CDN</span><span>输入兼容：group+label+value（多层）/ label+value（单层厚环）</span></footer>
+</div>
+
+<script>
+const RAW={"mode": "grouped", "layers": [{"name": "Q4", "value": 880.0, "share": 0.290141773821299, "slices": [{"label": "手机", "value": 420.0, "share": 0.4772727272727273}, {"label": "笔记本", "value": 260.0, "share": 0.29545454545454547}, {"label": "平板", "value": 95.0, "share": 0.10795454545454546}, {"label": "耳机", "value": 60.0, "share": 0.06818181818181818}, {"label": "配件", "value": 45.0, "share": 0.05113636363636364}]}, {"name": "Q3", "value": 800.0, "share": 0.26376524892845365, "slices": [{"label": "手机", "value": 380.0, "share": 0.475}, {"label": "笔记本", "value": 240.0, "share": 0.3}, {"label": "平板", "value": 85.0, "share": 0.10625}, {"label": "耳机", "value": 55.0, "share": 0.06875}, {"label": "配件", "value": 40.0, "share": 0.05}]}, {"name": "Q2", "value": 718.0, "share": 0.23672931091328717, "slices": [{"label": "手机", "value": 340.0, "share": 0.4735376044568245}, {"label": "笔记本", "value": 220.0, "share": 0.3064066852367688}, {"label": "平板", "value": 75.0, "share": 0.10445682451253482}, {"label": "耳机", "value": 48.0, "share": 0.06685236768802229}, {"label": "配件", "value": 35.0, "share": 0.04874651810584958}]}, {"name": "Q1", "value": 635.0, "share": 0.2093636663369601, "slices": [{"label": "手机", "value": 300.0, "share": 0.47244094488188976}, {"label": "笔记本", "value": 200.0, "share": 0.31496062992125984}, {"label": "平板", "value": 65.0, "share": 0.10236220472440945}, {"label": "耳机", "value": 40.0, "share": 0.06299212598425197}, {"label": "配件", "value": 30.0, "share": 0.047244094488188976}]}], "grand": 3033.0, "categories": ["手机", "笔记本", "平板", "耳机", "配件"], "peak": {"label": "手机", "value": 420.0, "share": 0.4772727272727273, "layer": "Q4"}, "x_title": "层 · 季度"};
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const cv=document.getElementById('chart'), tip=document.getElementById('tooltip'), detail=document.getElementById('detail'), legendEl=document.getElementById('legend');
+const FONT='12px "Noto Sans SC", system-ui, sans-serif', MONO='11px "JetBrains Mono", monospace';
+const PALETTE={light:['#0f766e','#e85d3f','#d99a06','#2563eb','#7c3aed','#059669','#db2777','#0891b2','#65a30d','#b5412f'],dark:['#c6f13f','#ff6b4a','#ffb224','#4de3c2','#7dd3fc','#f472b6','#a78bfa','#facc15','#34d399','#fb7185']};
+const OTHER_COLOR={light:'#a8a396',dark:'#5e6450'};
+const layers=RAW.layers, nL=layers.length, cats=RAW.categories||[], mode=RAW.mode||'flat';
+const LAYER_TITLE=RAW.x_title||'层';
+let hidden=new Set(), hover={l:-1,s:-1};
+let az=0.7, tilt=55, zoom=1.0;
+let showFloor=true, showLayerLab=true, showSliceLab=true;
+const TILT_MIN=15, TILT_MAX=85, ZOOM_MIN=0.5, ZOOM_MAX=2.4;
+const R=0.44, R0=0.19, MAX_LAYERS_H=0.66;
+function layerHeights(){
+  if(nL===1) return [{z0:0,z1:0.44,gap:0}];
+  const base=Math.min(MAX_LAYERS_H,0.34+0.1*nL);            // 总柱高
+  const gapEach=base*0.18/(nL-1);                           // 总高 18% 作为层间隙
+  const each=(base-gapEach*(nL-1))/nL;                      // 每层高度
+  const out=[]; let z=0;
+  for(let i=0;i<nL;i++){out.push({z0:z,z1:z+each,gap:i<nL-1?gapEach:0}); z+=each+gapEach}
+  return out;
+}
+function theme(){return document.documentElement.dataset.theme}
+function colors(){return PALETTE[theme()]||PALETTE.light}
+function otherColor(){return OTHER_COLOR[theme()]||OTHER_COLOR.light}
+function fmt(v){return Math.abs(v)>=10000?Math.round(v).toLocaleString():(+v.toFixed(2)).toLocaleString()}
+function rad(d){return d*Math.PI/180}
+function trunc(s,n){s=String(s);return s.length>n?s.slice(0,n-1)+'…':s}
+function isOther(lbl){return /^其他/.test(String(lbl))}
+function catColor(lbl,j){return isOther(lbl)?otherColor():colors()[(cats.indexOf(lbl)>=0?cats.indexOf(lbl):j)%(colors().length)]}
+// 三维→二维投影（单位立方体居中到原点，Z 为垂直）
+function raw(nx,ny,nz){
+  const c=Math.cos(az), s=Math.sin(az);
+  const X=nx-0.5, Y=ny-0.5, Z=nz-0.5;
+  const xr=X*c-Y*s, yr=X*s+Y*c;
+  const t=rad(tilt);
+  return {px:xr, py:yr*Math.sin(t)-Z*Math.cos(t), depth:yr*Math.cos(t)+Z*Math.sin(t)};
+}
+let FIT={s:1,cx:0,cy:0};
+function fitView(W,H){
+  const vs=[];
+  for(const nx of [0,1]) for(const ny of [0,1]) for(const nz of [0,1]) vs.push(raw(nx,ny,nz));
+  const xs=vs.map(q=>q.px), ys=vs.map(q=>q.py);
+  const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+  const pad=72;
+  FIT={s:Math.min((W-2*pad)/((maxX-minX)||1),(H-2*pad)/((maxY-minY)||1)), cx:(minX+maxX)/2, cy:(minY+maxY)/2};
+}
+function proj(nx,ny,nz,W,H){
+  const q=raw(nx,ny,nz), k=FIT.s*zoom;
+  return {x:W/2+(q.px-FIT.cx)*k, y:H/2+(q.py-FIT.cy)*k, depth:q.depth, scale:k};
+}
+function shade(hex,factor){
+  const m=String(hex).match(/^#([0-9a-f]{6})$/i);
+  if(!m) return hex;
+  const n=parseInt(m[1],16);
+  let r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  r=Math.max(0,Math.min(255,Math.round(r*factor)));
+  g=Math.max(0,Math.min(255,Math.round(g*factor)));
+  b=Math.max(0,Math.min(255,Math.round(b*factor)));
+  return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+function drawLayerChips(chips,g,W,H){
+  if(!chips.length) return;
+  const cs=getComputedStyle(document.documentElement);
+  const ink=cs.getPropertyValue('--ink').trim(), paper=cs.getPropertyValue('--paper').trim(), faint=cs.getPropertyValue('--faint').trim();
+  const th=22, step=28, x=8;
+  const items=chips.slice().sort((a,b)=>a.y-b.y);
+  let y=Math.max(14, Math.min(H-th-10, items[0].y-th/2));
+  for(const c of items){
+    c.th=th; g.font=MONO; c.w=g.measureText(c.label).width+16;
+    c.y=Math.max(y, Math.min(H-th-10, c.y-th/2));
+    y=c.y+step;
+  }
+  // 末尾越界 → 整体上移；顶部越界 → 整体下移
+  const over=items[items.length-1].y+th+10-H;
+  if(over>0) for(const c of items) c.y-=over;
+  const under=14-items[0].y;
+  if(under>0) for(const c of items) c.y+=under;
+  for(const c of items){
+    const by=c.y;
+    g.save();
+    g.globalAlpha=0.9; g.fillStyle=paper;
+    g.beginPath(); if(g.roundRect) g.roundRect(x,by,c.w,th,11); else g.rect(x,by,c.w,th); g.fill();
+    g.globalAlpha=1; g.strokeStyle=faint; g.lineWidth=1; g.stroke();
+    g.fillStyle=ink; g.font=MONO; g.textAlign='left'; g.textBaseline='middle';
+    g.fillText(c.label,x+8,by+th/2+0.5);
+    g.restore();
+  }
+}
+const hitPolys=[];
+function draw(){
+  const dpr=window.devicePixelRatio||1, r=cv.getBoundingClientRect();
+  cv.width=r.width*dpr; cv.height=r.height*dpr;
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  const W=r.width, H=r.height;
+  const cs=getComputedStyle(document.documentElement);
+  const ink=cs.getPropertyValue('--ink').trim(), faint=cs.getPropertyValue('--faint').trim(),
+        floorline=cs.getPropertyValue('--floorline').trim(), paper=cs.getPropertyValue('--paper').trim(),
+        gridp=cs.getPropertyValue('--grid').trim();
+  g.clearRect(0,0,W,H); g.font=FONT;
+  fitView(W,H);
+  const P=(nx,ny,nz)=>proj(nx,ny,nz,W,H);
+  const CX=0.5, CY=0.5;
+  const ptOn=(a,r0,z)=>P(CX+Math.cos(a)*r0, CY+Math.sin(a)*r0, z);
+  const flatLine=(a,b,stroke,w,alpha)=>{g.strokeStyle=stroke;g.lineWidth=w;g.globalAlpha=alpha;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();g.globalAlpha=1};
+  // 地面网格（nz=0 平面，3×3 分区）
+  if(showFloor){
+    for(const t of [0.2,0.4,0.6,0.8]){
+      flatLine(P(t,0,0),P(t,1,0),floorline,1,0.3);
+      flatLine(P(0,t,0),P(1,t,0),floorline,1,0.3);
+    }
+    const ring=(r0,a0,a1)=>{const steps=Math.max(8,Math.ceil((a1-a0)/0.15));for(let i=0;i<steps;i++){const t0=a0+(a1-a0)*i/steps,t1=a0+(a1-a0)*(i+1)/steps;g.beginPath();g.moveTo(ptOn(t0,r0,0).x,ptOn(t0,r0,0).y);g.lineTo(ptOn(t1,r0,0).x,ptOn(t1,r0,0).y);g.stroke()}};
+    g.strokeStyle=floorline;g.globalAlpha=0.35;g.lineWidth=1;ring(R,0,Math.PI*2);g.globalAlpha=1;
+  }
+  hitPolys.length=0;
+  const heights=layerHeights();
+  const layerChips=[];
+  for(let li=0;li<nL;li++){
+    const layer=layers[li], {z0,z1}=heights[li];
+    const slices=layer.slices.filter(s=>!hidden.has(s.label));
+    // —— 墙体（先外后内，按 slice 大→小逐片）
+    let acc=0;
+    for(const s of slices){
+      const a0=acc, a1=acc+s.share*Math.PI*2; acc=a1;
+      const base=catColor(s.label,0);
+      const seg=Math.max(4,Math.ceil((a1-a0)/0.12));
+      // 外墙
+      g.fillStyle=shade(base,0.62);
+      for(let k=0;k<seg;k++){
+        const t0=a0+(a1-a0)*k/seg, t1=a0+(a1-a0)*(k+1)/seg;
+        const pB0=ptOn(t0,R,z0), pB1=ptOn(t1,R,z0), pT0=ptOn(t0,R,z1), pT1=ptOn(t1,R,z1);
+        g.beginPath();g.moveTo(pB0.x,pB0.y);g.lineTo(pB1.x,pB1.y);g.lineTo(pT1.x,pT1.y);g.lineTo(pT0.x,pT0.y);g.closePath();g.fill();
+        hitPolys.push({pts:[pB0,pB1,pT1,pT0],l:li,s,base});
+      }
+      // 内墙（稍深）
+      g.fillStyle=shade(base,0.5);
+      for(let k=0;k<seg;k++){
+        const t0=a0+(a1-a0)*k/seg, t1=a0+(a1-a0)*(k+1)/seg;
+        const pB0=ptOn(t0,R0,z0), pB1=ptOn(t1,R0,z0), pT0=ptOn(t0,R0,z1), pT1=ptOn(t1,R0,z1);
+        g.beginPath();g.moveTo(pB0.x,pB0.y);g.lineTo(pB1.x,pB1.y);g.lineTo(pT1.x,pT1.y);g.lineTo(pT0.x,pT0.y);g.closePath();g.fill();
+      }
+      // 径向切面（首尾两个切面，交替明暗）
+      const cuts=[[a0,shade(base,0.78)],[a1,shade(base,0.56)]];
+      for(const [cutA,cutF] of cuts){
+        const p0=ptOn(cutA,R0,z0), p1=ptOn(cutA,R,z0), p2=ptOn(cutA,R,z1), p3=ptOn(cutA,R0,z1);
+        g.fillStyle=cutF;g.beginPath();g.moveTo(p0.x,p0.y);g.lineTo(p1.x,p1.y);g.lineTo(p2.x,p2.y);g.lineTo(p3.x,p3.y);g.closePath();g.fill();
+      }
+    }
+    // —— 顶面（环扇区；各片互不重叠，无需排序）
+    let accT=0;
+    const tops=[];
+    for(const s of slices){
+      const a0=accT, a1=accT+s.share*Math.PI*2; accT=a1;
+      const base=catColor(s.label,0);
+      tops.push({s,a0,a1,base});
+    }
+    for(const {s,a0,a1,base} of tops){
+      const seg=Math.max(6,Math.ceil((a1-a0)/0.1));
+      g.beginPath();
+      for(let k=0;k<=seg;k++){const t=a0+(a1-a0)*k/seg;const p=ptOn(t,R,z1);k?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)}
+      for(let k=seg;k>=0;k--){const t=a0+(a1-a0)*k/seg;const p=ptOn(t,R0,z1);g.lineTo(p.x,p.y)}
+      g.closePath();
+      const grd=g.createRadialGradient(P(CX,CY,z1).x,P(CX,CY,z1).y,4,P(CX,CY,z1).x,P(CX,CY,z1).y,R*Math.max(W,H));
+      grd.addColorStop(0,shade(base,1.08));grd.addColorStop(1,shade(base,0.9));
+      g.fillStyle=grd;g.globalAlpha=0.96;g.fill();g.globalAlpha=1;
+      g.strokeStyle=paper;g.lineWidth=1.4;g.stroke();
+      // 顶点 → 记录顶面多边形供命中
+      const poly=[];
+      for(let k=0;k<=seg;k++){const t=a0+(a1-a0)*k/seg;poly.push(ptOn(t,R,z1))}
+      for(let k=seg;k>=0;k--){const t=a0+(a1-a0)*k/seg;poly.push(ptOn(t,R0,z1))}
+      hitPolys.push({pts:poly,l:li,s,base,top:true});
+      if(hover.l===li&&hover.s===s){
+        g.strokeStyle=ink;g.lineWidth=2.6;g.beginPath();
+        for(let k=0;k<=seg;k++){const t=a0+(a1-a0)*k/seg;const p=ptOn(t,R,z1);k?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)}
+        for(let k=seg;k>=0;k--){const t=a0+(a1-a0)*k/seg;const p=ptOn(t,R0,z1);g.lineTo(p.x,p.y)}
+        g.closePath();g.stroke();
+      }
+    }
+    // —— 层标签（左缘固定列）
+    if(showLayerLab){
+      const zMid=(z0+z1)/2, eL=P(CX-(R+0.06),CY,zMid), eR=P(CX+(R+0.06),CY,zMid);
+      layerChips.push({y:(eL.y+eR.y)/2, label:(layer.name||'全部')+' · '+fmt(layer.value)});
+    }
+    if(showSliceLab&&li===nL-1){
+      let accL=0;
+      const cy1=P(CX,CY,z1).y;
+      const fontSet=(sz)=>{g.font='bold '+sz+'px "Noto Sans SC", system-ui, sans-serif'};
+      for(const s of slices){
+        const a0=accL, a1=accL+s.share*Math.PI*2; accL=a1;
+        if(s.share<0.055) continue;
+        const mid=(a0+a1)/2, p1=ptOn(mid,R*0.82,z1), p2=ptOn(mid,R+0.07,z1);
+        // 只标注背向视角一侧——正面扇区的外引标签会压在柱面上
+        if(p2.y>=cy1) continue;
+        g.strokeStyle=faint;g.lineWidth=1.2;g.globalAlpha=0.8;g.beginPath();g.moveTo(p1.x,p1.y);g.lineTo(p2.x,p2.y);g.stroke();g.globalAlpha=1;
+        g.fillStyle=cs.getPropertyValue('--ink').trim();
+        fontSet(Math.min(13, 15-s.share*4));
+        const rightSide=p2.x>=P(CX,CY,z1).x;
+        g.textAlign=rightSide?'left':'right';g.textBaseline='middle';
+        g.fillText(trunc(s.label,8)+' '+(s.share*100).toFixed(0)+'%', p2.x+(rightSide?6:-6), p2.y-4);
+      }
+    }
+  }
+  if(showLayerLab) drawLayerChips(layerChips,g,W,H);
+  if(!layers.some(l=>l.slices.some(s=>!hidden.has(s.label)))){g.fillStyle=faint;g.textAlign='center';g.textBaseline='middle';g.fillText('没有可见类别（全部图例已隐藏）',W/2,H/2)}
+  updateDetail();
+}
+// —— 命中测试（按最顶层倾斜面优先命中）
+function pointInPoly(pt,poly){
+  let inside=false;
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const xi=poly[i].x, yi=poly[i].y, xj=poly[j].x, yj=poly[j].y;
+    const hit=((yi>pt.y)!==(yj>pt.y))&&(pt.x<(xj-xi)*(pt.y-yi)/(yj-yi)+xi);
+    if(hit) inside=!inside;
+  }
+  return inside;
+}
+function hitTest(mx,my){
+  for(let k=hitPolys.length-1;k>=0;k--){
+    if(pointInPoly({x:mx,y:my},hitPolys[k].pts)) return hitPolys[k];
+  }
+  return null;
+}
+function showTip(hp){
+  const s=hp.s, layer=layers[hp.l], col=catColor(s.label,0);
+  let html='<b>'+esc(s.label)+'</b><br><span style="color:'+col+'">●</span> '+esc((layer&&layer.name)||'全部')+'<br>';
+  html+='数值 <b>'+fmt(s.value)+'</b> · 层内占比 <b>'+(s.share*100).toFixed(1)+'%</b><br>';
+  html+='整体占比 <b>'+(s.share*((layer&&layer.share)||1)*100).toFixed(1)+'%</b>';
+  tip.innerHTML=html; tip.style.display='block';
+  const W=cv.getBoundingClientRect().width, H=cv.getBoundingClientRect().height;
+  const ox=cv.offsetLeft, oy=cv.offsetTop;
+  tip.style.left=Math.min(Math.max(ox+8,ox+mxOf(hp)+14),ox+cv.clientWidth-tip.offsetWidth-8)+'px';
+  tip.style.top=Math.max(oy+4,oy+myOf(hp)-tip.offsetHeight/2)+'px';
+}
+function mxOf(hp){return hp.pts[0].x}
+function myOf(hp){return hp.pts[0].y}
+function updateDetail(){
+  if(hover.l<0||hover.s===null){
+    detail.innerHTML='🏆 拖拽旋转 · 悬停看扇区数值与层内占比 · 💡 点图例显隐类别；层按总值降序、最大层在底层';
+    return;
+  }
+  const layer=layers[hover.l], s=hover.s;
+  detail.innerHTML='📌 <b>'+esc(s.label)+'</b> · '+(layer.name?esc(layer.name):'全部')+' · 数值 <b>'+fmt(s.value)+'</b> · 层内占比 <b>'+(s.share*100).toFixed(1)+'%</b>';
+}
+// 拖拽旋转 / 滚轮缩放 / 倾角
+let dragging=false, lx=0, ly=0;
+cv.addEventListener('mousedown',e=>{dragging=true;lx=e.clientX;ly=e.clientY;cv.classList.add('dragging');hover={l:-1,s:null};tip.style.display='none';draw()});
+window.addEventListener('mouseup',()=>{dragging=false;cv.classList.remove('dragging')});
+window.addEventListener('mousemove',e=>{
+  if(dragging){
+    const dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
+    az+=dx*0.008; tilt=Math.max(TILT_MIN,Math.min(TILT_MAX,tilt+dy*0.3));
+    document.getElementById('tilt').value=Math.round(tilt);
+    draw(); return;
+  }
+  const r=cv.getBoundingClientRect();
+  const hp=hitTest(e.clientX-r.left,e.clientY-r.top);
+  const hitL=hp?hp.l:-1, hitS=hp?hp.s:null;
+  if(hitL!==hover.l||hitS!==hover.s){ hover={l:hitL,s:hitS}; if(hp)showTip(hp); else tip.style.display='none'; draw(); updateDetail() }
+});
+cv.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(ZOOM_MIN,Math.min(ZOOM_MAX,zoom*(e.deltaY<0?1.1:0.9)));draw()},{passive:false});
+function renderLegend(){
+  const cols=colors(), maxChips=14;
+  const counts={}; layers.forEach(l=>l.slices.forEach(s=>{counts[s.label]=(counts[s.label]||0)+1}));
+  const shown=(cats.length?cats:Object.keys(counts));
+  legendEl.innerHTML=shown.map((c,i)=>{
+    const off=hidden.has(c);
+    const op=counts[c]||0;
+    return '<button type="button" class="chip '+(off?'off':'')+'" data-c="'+esc(c)+'" aria-pressed="'+(!off)+'"><i style="background:'+catColor(c,i)+'"></i>'+esc(c)+' <span style="font-family:var(--mono);opacity:.7">'+op+'层</span></button>';
+  }).join('')+'<span style="font-family:var(--mono);font-size:11px;color:var(--faint);margin-left:6px">点击显隐类别</span>';
+}
+legendEl.addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const c=b.dataset.c;hidden.has(c)?hidden.delete(c):hidden.add(c);hover={l:-1,s:null};tip.style.display='none';renderLegend();draw();updateDetail()});
+function setOn(el,on){el.classList.toggle('on',on);el.setAttribute('aria-pressed',String(on))}
+document.getElementById('btnReset').onclick=()=>{az=0.7;tilt=55;zoom=1.0;document.getElementById('tilt').value=55;draw()};
+document.getElementById('btnFloor').onclick=e=>{showFloor=!showFloor;setOn(e.currentTarget,showFloor);draw()};
+document.getElementById('btnLayerLab').onclick=e=>{showLayerLab=!showLayerLab;setOn(e.currentTarget,showLayerLab);draw()};
+document.getElementById('btnSliceLab').onclick=e=>{showSliceLab=!showSliceLab;setOn(e.currentTarget,showSliceLab);draw()};
+document.getElementById('tilt').addEventListener('input',e=>{tilt=+e.target.value;draw()});
+document.getElementById('themeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.dataset.theme=b.dataset.theme;document.querySelectorAll('#themeSeg button').forEach(x=>setOn(x,x===b));renderLegend();draw()});
+document.querySelectorAll('#themeSeg button').forEach(b=>setOn(b,theme()===b.dataset.theme));
+renderLegend();draw();
+window.addEventListener('resize',draw);
+</script>
+</body>
+</html>

@@ -1,0 +1,985 @@
+{
+  "count": 19,
+  "templates": [
+    {
+      "name": "bar-basic",
+      "title": "多分类交互柱状图",
+      "input_types": [
+        "csv",
+        "json",
+        "xlsx"
+      ],
+      "required_columns": [
+        "label",
+        "value"
+      ],
+      "optional_columns": [
+        "series"
+      ],
+      "options": {
+        "theme": [
+          "light",
+          "dark"
+        ],
+        "mode": [
+          "grouped",
+          "stacked",
+          "pct",
+          "pareto",
+          "waterfall"
+        ],
+        "palette": [
+          "signal",
+          "cinnabar",
+          "patina",
+          "blueprint",
+          "inkwash",
+          "mono",
+          "sundown",
+          "dunhuang",
+          "aurora",
+          "morandi"
+        ],
+        "shape": [
+          "round",
+          "rect",
+          "pill",
+          "dome",
+          "taper",
+          "skew",
+          "crystal",
+          "barrel",
+          "notch"
+        ],
+        "finish": [
+          "gradient",
+          "flat",
+          "outline",
+          "hatch",
+          "glass",
+          "papercut",
+          "ribbed",
+          "dotted",
+          "metal",
+          "neon",
+          "carve"
+        ],
+        "is3d": true,
+        "sort_by_total": true,
+        "show_value": true,
+        "style_switch": true
+      },
+      "description": "多分类可交互柱状图：分组/堆叠/100%归一化堆叠/Pareto 累计线/瀑布图桥接、伪3D、悬浮提示、图例显隐、点击钉选。支持单系列、label+series+value、宽表多列、ECharts JSON。瀑布图支持多系列贡献分量；可选 `type=absolute|delta` 标记；页面内可切换 10 种配色风格（Signal/朱砂/铜绿/蓝图/水墨/单色/落日/敦煌/极光/莫兰迪）、11 种柱体表面（渐变/纯色/描边/斜纹/玻璃/纸雕/竖纹/点阵/金属/霓虹/浮雕）和 9 种柱体形状（圆角/直角/胶囊/穹顶/梯形/斜切/尖顶/收腰/缺口）。"
+    },
+    {
+      "name": "bar-matrix",
+      "title": "3D 透视柱状矩阵图（整体视角）",
+      "input_types": [
+        "csv",
+        "json",
+        "xlsx"
+      ],
+      "required_columns": [
+        "label",
+        "value"
+      ],
+      "optional_columns": [
+        "series"
+      ],
+      "options": {
+        "theme": [
+          "light",
+          "dark"
+        ],
+        "palette": [
+          "signal",
+          "cinnabar",
+          "patina",
+          "blueprint",
+          "inkwash",
+          "mono",
+          "sundown",
+          "dunhuang",
+          "aurora",
+          "morandi"
+        ],
+        "section": [
+          "square",
+          "circle",
+          "octagon"
+        ],
+        "edge": [
+          "sharp",
+          "round",
+          "chamfer"
+        ],
+        "cap": [
+          "flat",
+          "dome",
+          "spire",
+          "notch"
+        ],
+        "value_ramp": false,
+        "normalize": [
+          "global",
+          "per_column"
+        ],
+        "sort": [
+          "value",
+          "label",
+          "none"
+        ],
+        "height": 260,
+        "show_axis": true,
+        "quality_report": true
+      },
+      "description": "整体 3D 透视矩阵：X=分类，Y=系列，Z=数值高度，共处带底板网格的三维场景，非每根柱单独加阴影。支持 10 种配色风格、3 种柱体截面（方柱/圆柱/八棱）、3 种棱边（锐边/圆棱/切棱，仅方柱）、4 种顶帽（平顶/穹顶/尖顶/凹槽）、数值浓淡编码、景深雾化、柔和接触阴影、质量报告、拖拽旋转/滚轮缩放/自动旋转/图例隐藏系列/悬浮命中整根柱。负值数据自动停用 3D 矩阵并给出替代建议。"
+    },
+    {
+      "name": "boxplot-basic",
+      "view": "box",
+      "title": "箱线图",
+      "input_types": [
+        "csv",
+        "json",
+        "xlsx"
+      ],
+      "required_columns": [
+        "group",
+        "value"
+      ],
+      "optional_columns": [
+        "min",
+        "q1",
+        "median",
+        "q3",
+        "max"
+      ],
+      "options": {
+        "theme": [
+          "light",
+          "dark"
+        ],
+        "palette": [
+          "signal",
+          "cinnabar",
+          "patina",
+          "blueprint",
+          "inkwash",
+          "mono",
+          "sundown",
+          "dunhuang",
+          "aurora",
+          "morandi"
+        ],
+        "orient": [
+          "vertical",
+          "horizontal"
+        ],
+        "sort": [
+          "none",
+          "median-asc",
+          "median-desc"
+        ],
+        "jitter": true,
+        "mean": true,
+        "replay": true
+      },
+      "description": "箱线图：五数概括看分布。双输入形态自动判定：group+value 原始观测（type-7 线性插值算 Q1/中位/Q3，须线延伸至 1.5×IQR 边界内最值，界外画离群空心圆）或 group+min/q1/median/q3/max 汇总直绘。交互：垂直/水平切换、按中位数排序、jitter 原始散点叠加（确定性伪随机，汇总模式禁用）、均值 ◆ 开关；悬停显示完整五数 + IQR + 离群明细，明细行给出偏态判断（均值 vs 中位）。样本量 n<5 警告；10 配色；箱体生长动画。双主题可切换；离线单文件。"
+    },
+    {
+      "name": "bullet",
+      "view": "bullet",
+      "title": "子弹图 KPI 评估面板",
+      "category": "bullet",
+      "input_types": [
+        "csv",
+        "json",
+        "xlsx"
+      ],
+      "required_columns": [
+        "label",
+        "actual",
+        "target"
+      ],
+      "optional_columns": [
+        "poor",
+        "good",
+        "max"
+      ],
+      "options": {
+        "theme": [
+          "light",
+          "dark"
+        ],
+        "palette": [
+          "signal",
+          "cinnabar",
+          "patina",
+          "blueprint",
+          "inkwash",
+          "mono",
+          "sundown",
+          "dunhuang",
+          "aurora",
+          "morandi"
+        ],
+        "sort": [
+          "original",
+          "ratio_asc",
+          "gap_asc"
+        ],
+        "layout": [
+          "card",
+          "compact"
+        ],
+        "only_miss": false,
+        "gap_chips": false,
+        "quarter_ticks": false,
+        "scale": "global"
+      },
+      "description": "面向 KPI / 目标达成的子弹图：actual 横条、target 竖线、poor/ok/good 定性区间。三种排序、⚠ 只看落后筛选、± 差距 chip、25/50/75 刻度线、入场动画重播、10 种主色（语义色 达标/接近/偏离 不随动）。适合越高越好的指标，输入 label + actual + target，可选 poor/good/max 阈值。",
+      "schema": {
+        "label": [
+          "label",
+          "name",
+          "category",
+          "x",
+          "分类",
+          "类别",
+          "标签",
+          "名称",
+          "指标"
+        ],
+        "actual": [
+          "actual",
+          "value",
+          "实际",
+          "实际值",
+          "本期值",
+          "完成值"
+        ],
+        "target": [
+          "target",
+          "goal",
+          "目标",
+          "目标值",
+          "计划值",
+          "plan",
+          "指标目标"
+        ],
+        "poor": [
+          "poor",
+          "low",
+          "bad",
+          "bad_max",
+          "差",
+          "较差线",
+          "较差上限",
+          "差阈值"
+        ],
+        "good": [
+          "good",
+          "high",
+          "ok",
+          "good_min",
+          "好",
+          "良好线",
+          "良好下限",
+          "好阈值"
+        ],
+        "max": [
+          "max",
+          "scale",
+          "upper",
+          "上限",
+          "量程"
+        ]
+      }
+    },
+    {
+      "name": "fishbone-basic",
+      "view": "fish",
+      "title": "鱼骨图（因果图）",
+      "input_types": [
+        "csv",
+        "json",
+        "xlsx"
+      ],
+      "required_columns": [
+        "category",
+        "cause"
+      ],
+      "optional_columns": [
+        "sub",
+        "owner"
+      ],
+      "options": {
+        "theme": [
+          "light",
+          "dark"
+        ],
+        "palette": [
+          "signal",
+          "cinnabar",
+          "patina",
+          "blueprint",
+          "inkwash",
+          "mono",
+          "sundown",
+          "dunhuang",
+          "aurora",
+          "morandi"
+        ],
+        "density": [
+          "comfort",
+          "compact"
+        ],
+        "direction": [
+          "head-right",
+          "head-left"
+        ],
+        "replay": true
+      },
+      "description": "鱼骨图（石川图/因果图）：把一个问题的原因按大类拆解成鱼刺结构。category + cause 必需；可选 sub（子原因，45° 细刺）/ owner（负责人）；鱼头（问题）= 标题（--title 或文件名）。大类骨 64° 斜刺上下交替，小骨横枝贴骨（文字宽度参与槽位计算防止碰撞），重复原因合并、缺原因跳过、类目失衡警告全部计入数据识别报告。鱼头方向可翻转，悬停高亮因果链 + tooltip + 明细行，图例显隐类别，舒适/紧凑密度，10 配色，错峰入场动画（主骨生长→大骨→小骨），版面超宽自动等比缩放。双主题可切换；离线单文件。"
+    },
+    {
+      "name": "funnel-basic",
+      "view": "funnel",
+      "title": "转化漏斗图",
+      "input_types": [
+        "csv",
+        "json",
+        "xlsx"
+      ],
+      "required_columns": [
+        "label",
+        "value"
+      ],
+      "optional_columns": [
+        "series"
+      ],
+      "options": {
+        "theme": [
+          "light",
+          "dark"
+        ],
+        "palette": [
+          "signal",
+          "cinnabar",
+          "patina",
+          "blueprint",
+          "inkwash",
+          "mono",
+          "sundown",
+          "dunhuang",
+          "aurora",
+          "morandi"
+        ],
+        "sort": "row-order",
+        "show_rate": true,
+        "show_drop": true,
+        "colormode": [
+          "ramp",
+          "cat"
+        ],
+        "align": [
+          "center",
+          "left"
+        ],
+        "finish": [
+          "gradient",
+          "flat",
+          "glass",
+          "metal",
+          "outline",
+          "papercut"
+        ],
+        "replay": true
+      },
+      "description": "转化漏斗图：看逐级递减与每一步流失。按行序作为阶段顺序（非时间序列），计算逐级转化率、累计留存率、绝对流失。圆角横条逐级收窄；色彩可选渐层（沿主色阶梯淡化，默认）或分类（调色板循环）；质感与柱状图同系列：渐变（默认）/ 纯色 / 玻璃 / 金属 / 描边 / 纸雕六种柱面；左标签栏 + 右转化率徽章的三栏垂直动线、居中/左对齐、10 种配色、错峰入场动画可重播、最大流失阶段红描边高亮。负值、0 值自动剔除并在数据识别报告警告；后一阶段大于前一阶段会提示确认顺序。双主题可切换；离线单文件。输入兼容：label+value / label+series+value / 宽表 / ECharts JSON。"
+    },
+    {
+      "name": "gantt-basic",
+      "view": "gantt",
+      "title": "甘特图",
+      "input_types": [
+        "csv",
+        "json",
+        "xlsx"
+      ],
+      "required_columns": [
+        "task",
+        "start"
+      ],
+      "optional_columns": [
+        "end",
+        "duration",
+        "group",
+        "progress",
+        "status",
+        "owner",
+        "deps",
+        "type"
+      ],
+      "options": {
+        "theme": [
+          "light",
+          "dark"
+        ],
+        "palette": [
+          "signal",
+          "cinnabar",
+          "patina",
+          "blueprint",
+          "inkwash",
+          "mono",
+          "sundown",
+          "dunhuang",
+          "aurora",
+          "morandi"
+        ],
+        "density": [
+          "comfort",
+          "compact"
+        ],
+        "colormode": [
+          "group",
+          "status"
+        ],
+        "viewmode": [
+          "timeline",
+          "calendar"
+        ],
+        "groupby": [
+          "lane",
+          "status",
+          "owner",
+          "flat"
+        ],
+        "weekend": true,
+        "deps": true,
+        "today": true,
+        "progress": true,
+        "replay": true
+      },
+      "description": "甘特图：看项目排期、进度与依赖。task + start 必需；end 或 duration 二选一，二者都缺按里程碑 ◆ 处理；可选 group（泳道）/ progress（进度内嵌）/ status（完成·进行中·延期·未开始）/ owner / deps（肘形依赖连线，悬停高亮链路）/ type=milestone。日期兼容 YYYY-MM-DD、Y/M/D、YYYY.MM.DD、YYYY年M月D日、YYYYMMDD、YYYY-MM（月初）、datetime 单元格、epoch 时间戳、纯数字相对天数（有真实日期时按最早日期+N天对齐）。双视图：时间轴 + 日历（月历网格铺排，月份导航，周一起始，溢出 +N 折叠）；四种行分组：泳道/状态/负责人/平铺；自适应时间轴（日/周/月/季）、周末底纹、今日线、舒适/紧凑密度、按泳道/按状态两种着色、10 种配色、错峰入场动画。结束早于开始自动对调、日期解析失败跳过、悬空依赖忽略，全部计入数据识别报告。双主题可切换；离线单文件。"
+    },
+    {
+      "name": "grid-basic",
+      "view": "grid",
+      "title": "动态表 / 多维透视表",
+      "input_types": [
+        "csv",
+        "json",
+        "xlsx"
+      ],
+      "required_columns": [],
+      "optional_columns": [
+        "任意维度列",
+        "任意数值列"
+      ],
+      "options": {
+        "theme": [
+          "light",
+          "dark"
+        ],
+        "palette": [
+          "signal",
+          "cinnabar",
+          "patina",
+          "blueprint",
+          "inkwash",
+          "mono",
+          "sundown",
+          "dunhuang",
+          "aurora",
+          "morandi"
+        ],
+        "modes": [
+          "detail",
+          "pivot"
+        ],
+        "aggregation": [
+          "sum",
+          "count",
+          "avg",
+          "min",
+          "max"
+        ]
+      },
+      "description": "动态表/多维透视表：任意表格的直接交付。明细模式：列头点击排序（升/降/原序）、全文搜索、列显隐、分页（50 行/页）。透视模式：行维度≤2 级（嵌套小计）× 列维度≤1 级 × 值列 × 五种聚合（sum/count/avg/min/max），合计行/列自动。列类型自动识别（解析率≥80% 为数值列），≥2 维度列时默认进入透视模式；空值显示 — 并计入识别报告；行数 >5000 截断警告。双主题 + 10 配色；冻结表头、斑马纹、行 hover。--view grid 明细 / --view pivot 透视；auto 对 ≥3 维度列的多维数据自动推荐。离线单文件。"
+    },
+    {
+      "name": "heatmap-basic",
+      "view": "heat",
+      "title": "热力图",
+      "input_types": [
+        "csv",
+        "json",
+        "xlsx"
+      ],
+      "required_columns": [
+        "x",
+        "y",
+        "value"
+      ],
+      "optional_columns": [
+        "date"
+      ],
+      "options": {
+        "theme": [
+          "light",
+          "dark"
+        ],
+        "palette": [
+          "signal",
+          "cinnabar",
+          "patina",
+          "blueprint",
+          "inkwash",
+          "mono",
+          "sundown",
+          "dunhuang",
+          "aurora",
+          "morandi"
+        ],
+        "density": [
+          "comfort",
+          "compact"
+        ],
+        "scale": [
+          "sequential",
+          "diverging"
+        ],
+        "valuelabel": true,
+        "yearnav": true,
+        "replay": true
+      },
+      "description": "热力图：看密度与模式。双模式自动判定：有 date+value 列 → 日历模式（GitHub 风格周×星期年图，多年数据年份切换，复用甘特日期解析）；否则 x+y+value → 矩阵模式（类目×类目，全数字轴自动数值排序）。色带：顺序（纸面→主色单色 ramp）/ 发散（负红正主色以 0 为界，仅数据跨 0 可用）；缺值格留空；重复 (x,y) 求和合并、非数值剔除、稀疏网格警告全部计入数据识别报告。矩阵悬停显示行列合计占比；日历模式月份标注在月初所在周。数值标注开关、舒适/紧凑密度、10 配色、错峰入场动画。双主题可切换；离线单文件。"
+    },
+    {
+      "name": "line-basic",
+      "view": "line",
+      "title": "多系列折线图",
+      "input_types": [
+        "csv",
+        "json",
+        "xlsx"
+      ],
+      "required_columns": [
+        "label",
+        "value"
+      ],
+      "optional_columns": [
+        "series"
+      ],
+      "options": {
+        "theme": [
+          "light",
+          "dark"
+        ],
+        "palette": [
+          "signal",
+          "cinnabar",
+          "patina",
+          "blueprint",
+          "inkwash",
+          "mono",
+          "sundown",
+          "dunhuang",
+          "aurora",
+          "morandi"
+        ],
+        "line": [
+          "smooth",
+          "straight",
+          "step"
+        ],
+        "fill": [
+          "none",
+          "area",
+          "stack"
+        ],
+        "marker": [
+          "circle",
+          "square",
+          "diamond",
+          "none"
+        ],
+        "width": [
+          1.6,
+          2.4,
+          3.4
+        ],
+        "dash_texture": false,
+        "end_labels": false,
+        "zoom": true
+      },
+      "description": "时间序列 / 顺序数据的折线图：多系列、3 种线形（平滑/直线/阶梯）、3 种填充（无/面积/堆叠面积）、4 种数据点标记（圆点/方块/菱形/无）、3 档线宽、虚线纹理编码系列、端点数值、10 种配色、框选缩放、悬浮多系列 tooltip、图例显隐、负值自动下探。双主题可切换。"
+    },
+    {
+      "name": "line3d-basic",
+      "view": "line3d",
+      "title": "3D 折线图",
+      "input_types": [
+        "csv",
+        "json",
+        "xlsx"
+      ],
+      "required_columns": [
+        "label",
+        "value"
+      ],
+      "optional_columns": [
+        "series"
+      ],
+      "options": {
+        "theme": [
+          "light",
+          "dark"
+        ],
+        "projection": [
+          "perspective"
+        ],
+        "drag_rotate": true,
+        "wheel_zoom": true,
+        "ribbon_fill": true,
+        "reference_wall": true,
+        "floor_grid": true
+      },
+      "description": "三维折线图（真三维投影）：X=分类/时间轴，Y=系列深度轴，Z=数值高度轴，每条系列沿深度轴排列成一条带状折线。所有系列共用同一 Z 刻度可直接比较。支持拖拽旋转、滚轮缩放、倾角调节、参考墙（最远景高程网格，直接读数）、地面网格、三轴线框、飘带填充到底面、顶点数值、悬浮命中（tooltip 显示数值/较前期/占系列峰值）、图例显隐系列、主题切换。输入兼容：宽表（每个数值列=一条系列）/ label+series+value / ECharts JSON；auto 推荐不纳入（需显式 --view line3d）。"
+    },
+    {
+      "name": "pie-basic",
+      "view": "pie",
+      "title": "占比环形图",
+      "input_types": [
+        "csv",
+        "json",
+        "xlsx"
+      ],
+      "required_columns": [
+        "label",
+        "value"
+      ],
+      "optional_columns": [
+        "series"
+      ],
+      "options": {
+        "theme": [
+          "light",
+          "dark"
+        ],
+        "palette": [
+          "signal",
+          "cinnabar",
+          "patina",
+          "blueprint",
+          "inkwash",
+          "mono",
+          "sundown",
+          "dunhuang",
+          "aurora",
+          "morandi"
+        ],
+        "mode": [
+          "pie",
+          "donut"
+        ],
+        "ring_width": [
+          0.72,
+          0.6,
+          0.45
+        ],
+        "labels": [
+          "none",
+          "inside",
+          "leader"
+        ],
+        "sort_by_total": true,
+        "legend_toggle": true
+      },
+      "description": "占比环形图 / 饼图：看一个分类维度占整体的份额。按占比降序，占比 < 3% 的尾部扇区自动并入「其他」；负值、0 值自动剔除并在数据识别报告中警告。环形 / 实心切换、3 档环宽（实心自动禁用）、标注三模式（无 / 扇内 / 外侧引导线，带防重叠）、10 种配色、悬浮命中（数值 + 占比）、图例显隐、中心显示总计或悬停项。双主题可切换；离线单文件。输入兼容：label+value / label+series+value / 宽表 / ECharts JSON。"
+    },
+    {
+      "name": "radar-basic",
+      "view": "radar",
+      "title": "雷达评分对比图",
+      "input_types": [
+        "csv",
+        "json",
+        "xlsx"
+      ],
+      "required_columns": [
+        "label",
+        "value"
+      ],
+      "optional_columns": [],
+      "options": {
+        "theme": [
+          "light",
+          "dark"
+        ],
+        "norm": [
+          "per_axis_max"
+        ],
+        "mode": [
+          "polygon",
+          "fill"
+        ],
+        "show_axis_max": true,
+        "show_ticks": true
+      },
+      "description": "雷达图：多轴评分对比。行=维度轴（≥3），每个数值列=一个对比项，绘制叠加多边形看整体轮廓与强弱。各轴按该轴最大值归一化到 0..1，解决量纲不同无法同图对比的问题；含负值轴按该轴最小值平移。支持填充/描边切换、轴刻度环、悬浮命中（显示各轴原始值与归一值）、图例显隐、面积与最弱/最强轴提示。双主题可切换；离线单文件。输入兼容：宽表 / label+value / label+series+value / ECharts JSON。"
+    },
+    {
+      "name": "report-basic",
+      "view": "report",
+      "kind": "doc",
+      "title": "Markdown 报告页",
+      "input_types": [
+        "md",
+        "txt"
+      ],
+      "required_columns": [],
+      "optional_columns": [],
+      "options": {
+        "theme": [
+          "light",
+          "dark"
+        ],
+        "toc": true,
+        "kpi_max": 8,
+        "images": "placeholder"
+      },
+      "description": "Markdown / 文本报告：目录 + 正文 + 关键指标抽取（显式标签 / 推断 / 表格，逐条标注来源句）+ 章节篇幅 + 文档识别报告。双主题可切换；离线单文件，图片不加载。"
+    },
+    {
+      "name": "sankey-basic",
+      "view": "sankey",
+      "title": "桑基图",
+      "input_types": [
+        "csv",
+        "json",
+        "xlsx"
+      ],
+      "required_columns": [
+        "source",
+        "target",
+        "value"
+      ],
+      "optional_columns": [],
+      "options": {
+        "theme": [
+          "light",
+          "dark"
+        ],
+        "palette": [
+          "signal",
+          "cinnabar",
+          "patina",
+          "blueprint",
+          "inkwash",
+          "mono",
+          "sundown",
+          "dunhuang",
+          "aurora",
+          "morandi"
+        ],
+        "label": [
+          "both",
+          "name",
+          "none"
+        ],
+        "density": [
+          "comfort",
+          "compact"
+        ],
+        "flowgradient": true,
+        "dragnode": true,
+        "replay": true
+      },
+      "description": "桑基图：看流量与路径（漏斗的通用化多对多流动）。source/target/value 三列契约；重复边求和合并、自环剔除、成环边按最弱值剔除并警告（DAG 校验）。布局：最长路径分层 + 重心法 4 遍迭代排序减少交叉 + 贝塞尔流带（宽∝流量，源色→目标色渐变）。交互：悬停节点高亮整条上下游链路并列出流入流出明细、悬停流带看单条流量与占源流出比、节点可上下拖拽微调（流带自动跟随）、名称+值/仅名称/隐藏三种标签、流带渐变开关、舒适/紧凑密度、10 配色、按层错峰入场动画。双主题可切换；离线单文件。"
+    },
+    {
+      "name": "scatter-basic",
+      "view": "scatter",
+      "title": "散点 / 相关性气泡图",
+      "input_types": [
+        "csv",
+        "json",
+        "xlsx"
+      ],
+      "required_columns": [
+        "x",
+        "y"
+      ],
+      "optional_columns": [
+        "label",
+        "series",
+        "size"
+      ],
+      "options": {
+        "theme": [
+          "light",
+          "dark"
+        ],
+        "palette": [
+          "signal",
+          "cinnabar",
+          "patina",
+          "blueprint",
+          "inkwash",
+          "mono",
+          "sundown",
+          "dunhuang",
+          "aurora",
+          "morandi"
+        ],
+        "fit_line": true,
+        "log_axis": true,
+        "mean_lines": false,
+        "confidence_ellipse": false,
+        "marker": [
+          "circle",
+          "square",
+          "diamond",
+          "triangle",
+          "mixed"
+        ],
+        "dot_scale": [
+          0.72,
+          1,
+          1.45
+        ],
+        "point_labels": [
+          "none",
+          "outlier",
+          "all"
+        ],
+        "brush": true,
+        "legend_toggle": true,
+        "bubble_size": "auto"
+      },
+      "description": "散点图：X/Y 双数值列揭示相关性、分布与离群点。Pearson r 与线性拟合线、均值参考线（象限 Ⅰ~Ⅳ）、分组 1σ 置信椭圆（协方差旋转）、5 种点形（可按分组编码）、3 档点径、离群/全量点标注、10 种配色、hover 命中、拖拽框选刷选、双对数轴、气泡尺寸、图例显隐。双主题可切换；离线单文件。输入兼容：x/y 列（别名 成本/转化/投入/收益/自变量/因变量）、宽表前两数值列、ECharts [x,y] 或 [x,y,size]。"
+    },
+    {
+      "name": "scatter3d-basic",
+      "view": "scatter3d",
+      "title": "三维散点图",
+      "input_types": [
+        "csv",
+        "json",
+        "xlsx"
+      ],
+      "required_columns": [
+        "x",
+        "y",
+        "z"
+      ],
+      "optional_columns": [
+        "size",
+        "group"
+      ],
+      "options": {
+        "theme": [
+          "light",
+          "dark"
+        ],
+        "projection": [
+          "perspective"
+        ],
+        "drag_rotate": true,
+        "wheel_zoom": true,
+        "bubble": true,
+        "floor_grid": true
+      },
+      "description": "三维散点图（真三维投影）：X/Y/Z 三轴定位一个点，颜色=分组，气泡大小可编码第 4 维。支持拖拽旋转视角、滚轮缩放、倾角调节、地面网格、三轴线框、复位视角、悬浮命中（tooltip 显示三轴值+分组+气泡）、图例显隐分组、双主题切换。位置关系需旋转后判读，相关系数 r 仅供参考（旋转不改变 r）。纯 Canvas 无 CDN，离线单文件。输入需 ≥3 个数值列（x/y/z，size/group 可选）；若只有两维关系请用 --view scatter。"
+    },
+    {
+      "name": "sunburst-basic",
+      "view": "sunburst",
+      "title": "旭日图",
+      "input_types": [
+        "csv",
+        "json",
+        "xlsx"
+      ],
+      "required_columns": [
+        "level1",
+        "value"
+      ],
+      "optional_columns": [
+        "level2",
+        "level3",
+        "level4"
+      ],
+      "options": {
+        "theme": [
+          "light",
+          "dark"
+        ],
+        "palette": [
+          "signal",
+          "cinnabar",
+          "patina",
+          "blueprint",
+          "inkwash",
+          "mono",
+          "sundown",
+          "dunhuang",
+          "aurora",
+          "morandi"
+        ],
+        "arclabel": true,
+        "drilldown": true,
+        "replay": true
+      },
+      "description": "旭日图：层级占比的径向表达，与 treemap 互补（treemap 看面积，sunburst 看层级路径）。非数值列按列顺序自动作为层级路径（≤4 层），value 列聚合；父级值为子树和。内圈=第一层逐层向外，弧长∝数值；子节点继承父色做明度阶梯。交互：点击扇区下钻子树 + 面包屑返回 + 中心圆返回上级、悬停高亮祖先链并显示占当前视图/全局双占比、弧上标签开关（过小扇区自动省略）、径向扫入动画。占比 <0.5% 的不可读扇区计入识别报告。双主题可切换；离线单文件。"
+    },
+    {
+      "name": "treemap-basic",
+      "view": "treemap",
+      "title": "矩形树状图",
+      "input_types": [
+        "csv",
+        "json",
+        "xlsx"
+      ],
+      "required_columns": [
+        "label",
+        "value"
+      ],
+      "optional_columns": [
+        "group"
+      ],
+      "options": {
+        "theme": [
+          "light",
+          "dark"
+        ],
+        "palette": [
+          "signal",
+          "cinnabar",
+          "patina",
+          "blueprint",
+          "inkwash",
+          "mono",
+          "sundown",
+          "dunhuang",
+          "aurora",
+          "morandi"
+        ],
+        "layout": [
+          "squarify"
+        ],
+        "grouped": true,
+        "flat": true,
+        "show_labels": true,
+        "show_values": true
+      },
+      "description": "矩形树状图（treemap）：面积正比数值，看份额构成与层级，与 sunburst 互补（treemap 看面积，sunburst 看层级路径）。自适应：有 (分组, 子类, 数值) 走两层——按组分区、组内 squarify 平铺；只有 (标签, 数值) 走一维平铺。负值/0 值剔除并警告。悬浮浮窗跟随光标并触边翻转（不遮挡命中矩形），悬停显示数值/占比/组内占比；点击下钻到子类，面包屑或返回按钮回顶层；图例显隐；10 套配色风格；双主题。squarify 布局近似保持方块比例，可读性优于普通 slice-dice。输入兼容：group+label+value / label+value。"
+    }
+  ]
+}

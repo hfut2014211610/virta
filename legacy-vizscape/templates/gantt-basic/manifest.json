@@ -1,0 +1,22 @@
+{
+  "name": "gantt-basic",
+  "view": "gantt",
+  "title": "甘特图",
+  "input_types": ["csv", "json", "xlsx"],
+  "required_columns": ["task", "start"],
+  "optional_columns": ["end", "duration", "group", "progress", "status", "owner", "deps", "type"],
+  "options": {
+    "theme": ["light", "dark"],
+    "palette": ["signal", "cinnabar", "patina", "blueprint", "inkwash", "mono", "sundown", "dunhuang", "aurora", "morandi"],
+    "density": ["comfort", "compact"],
+    "colormode": ["group", "status"],
+    "viewmode": ["timeline", "calendar"],
+    "groupby": ["lane", "status", "owner", "flat"],
+    "weekend": true,
+    "deps": true,
+    "today": true,
+    "progress": true,
+    "replay": true
+  },
+  "description": "甘特图：看项目排期、进度与依赖。task + start 必需；end 或 duration 二选一，二者都缺按里程碑 ◆ 处理；可选 group（泳道）/ progress（进度内嵌）/ status（完成·进行中·延期·未开始）/ owner / deps（肘形依赖连线，悬停高亮链路）/ type=milestone。日期兼容 YYYY-MM-DD、Y/M/D、YYYY.MM.DD、YYYY年M月D日、YYYYMMDD、YYYY-MM（月初）、datetime 单元格、epoch 时间戳、纯数字相对天数（有真实日期时按最早日期+N天对齐）。双视图：时间轴 + 日历（月历网格铺排，月份导航，周一起始，溢出 +N 折叠）；四种行分组：泳道/状态/负责人/平铺；自适应时间轴（日/周/月/季）、周末底纹、今日线、舒适/紧凑密度、按泳道/按状态两种着色、10 种配色、错峰入场动画。结束早于开始自动对调、日期解析失败跳过、悬空依赖忽略，全部计入数据识别报告。双主题可切换；离线单文件。"
+}

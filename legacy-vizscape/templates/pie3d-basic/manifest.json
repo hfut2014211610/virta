@@ -1,0 +1,18 @@
+{
+  "name": "pie3d-basic",
+  "view": "pie3d",
+  "title": "3D 分层饼图",
+  "input_types": ["csv", "json", "xlsx"],
+  "required_columns": ["label", "value"],
+  "optional_columns": ["group"],
+  "options": {
+    "theme": ["light", "dark"],
+    "projection": ["perspective"],
+    "drag_rotate": true,
+    "wheel_zoom": true,
+    "layer_labels": true,
+    "slice_labels": true,
+    "floor_grid": true
+  },
+  "description": "3D 分层饼图（真三维投影）：每一层是一层饼——该层各分类的占比；同一类别跨层同色、同角度，面积判读不受透视影响（区别于传统透视挤压 3D 饼）。两层输入（group+label+value）= 分层按 Z 轴排布，层按总值降序最大在底层；一维输入（label+value）= 单层厚环。支持拖拽旋转、滚轮缩放、倾角滑块、地面网格、悬浮命中（显示数值/层内占比/整体占比）、图例显隐类别、层标签与扇区标签开关、双主题切换。每层占比 <3% 的扇区并入「其他」。纯 Canvas 无 CDN，离线单文件。"
+}

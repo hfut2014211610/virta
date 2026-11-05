@@ -1,0 +1,19 @@
+{
+  "name": "bar-basic",
+  "title": "多分类交互柱状图",
+  "input_types": ["csv", "json", "xlsx"],
+  "required_columns": ["label", "value"],
+  "optional_columns": ["series"],
+  "options": {
+    "theme": ["light", "dark"],
+    "mode": ["grouped", "stacked", "pct", "pareto", "waterfall"],
+    "palette": ["signal", "cinnabar", "patina", "blueprint", "inkwash", "mono", "sundown", "dunhuang", "aurora", "morandi"],
+    "shape": ["round", "rect", "pill", "dome", "taper", "skew", "crystal", "barrel", "notch"],
+    "finish": ["gradient", "flat", "outline", "hatch", "glass", "papercut", "ribbed", "dotted", "metal", "neon", "carve"],
+    "is3d": true,
+    "sort_by_total": true,
+    "show_value": true,
+    "style_switch": true
+  },
+  "description": "多分类可交互柱状图：分组/堆叠/100%归一化堆叠/Pareto 累计线/瀑布图桥接、伪3D、悬浮提示、图例显隐、点击钉选。支持单系列、label+series+value、宽表多列、ECharts JSON。瀑布图支持多系列贡献分量；可选 `type=absolute|delta` 标记；页面内可切换 10 种配色风格（Signal/朱砂/铜绿/蓝图/水墨/单色/落日/敦煌/极光/莫兰迪）、11 种柱体表面（渐变/纯色/描边/斜纹/玻璃/纸雕/竖纹/点阵/金属/霓虹/浮雕）和 9 种柱体形状（圆角/直角/胶囊/穹顶/梯形/斜切/尖顶/收腰/缺口）。"
+}

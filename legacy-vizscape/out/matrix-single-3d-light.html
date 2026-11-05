@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sample · vizscape bar-matrix 3D Perspective</title>
+<style>
+:root{--sans:"Noto Sans SC",system-ui,sans-serif;--serif:"Fraunces",Georgia,serif;--mono:"JetBrains Mono",ui-monospace,monospace}
+html[data-theme="light"]{--bg:#f6f3ec;--paper:#fffdf7;--ink:#171a1e;--muted:#6b6f6a;--faint:#9a9d96;--line:#e2ded2;--line2:#d1ccc0;--acc:#0f766e;--shadow:0 10px 36px rgba(23,26,30,.08);--grid:rgba(23,26,30,.06);--tip:#171a1e;--tipink:#fffdf7;--floor:rgba(15,118,110,.06);--floorline:rgba(23,26,30,.14)}
+html[data-theme="dark"]{--bg:#0d0e0a;--paper:#131410;--ink:#ede9dc;--muted:#9aa08a;--faint:#5e6450;--line:#23261d;--line2:#2e3323;--acc:#c6f13f;--shadow:0 10px 36px rgba(0,0,0,.4);--grid:rgba(237,233,220,.05);--tip:#ede9dc;--tipink:#0d0e0a;--floor:rgba(198,241,63,.05);--floorline:rgba(237,233,220,.16)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);padding:28px;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:56px 56px;opacity:.6}
+.wrap{max-width:1120px;margin:0 auto;position:relative}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1.5px solid var(--ink);padding-bottom:16px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--acc);text-transform:uppercase}
+h1{font-family:var(--serif);font-weight:300;font-size:clamp(32px,5vw,52px);letter-spacing:-.02em}
+h1 em{font-style:italic;color:var(--acc)}
+.seg{display:flex;background:var(--paper);border:1px solid var(--line2);border-radius:99px;padding:3px;box-shadow:var(--shadow)}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:13px;padding:8px 14px;border-radius:99px;cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0}
+.toolbar .label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.toggle{appearance:none;border:1px solid var(--line2);background:var(--paper);color:var(--muted);border-radius:99px;padding:8px 14px;font-size:13px;cursor:pointer}
+.toggle.on{background:var(--acc);border-color:var(--acc);color:var(--paper);font-weight:700}
+input[type=range]{accent-color:var(--acc);width:120px;cursor:pointer}
+.meta{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--muted);margin:4px 0 14px}
+.meta b{color:var(--ink)}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);position:relative}
+canvas.scene{width:100%;height:540px;display:block;cursor:grab;border-radius:12px;background:var(--paper);touch-action:none}
+canvas.scene:active{cursor:grabbing}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:transparent;color:var(--ink);border-radius:99px;padding:6px 12px;font-size:12px;cursor:pointer;transition:.2s}
+.chip i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.chip.off{opacity:.38;text-decoration:line-through}
+#tooltip{position:absolute;pointer-events:none;background:var(--tip);color:var(--tipink);padding:10px 12px;border-radius:10px;font-family:var(--mono);font-size:12px;line-height:1.7;display:none;z-index:10;min-width:170px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+#tooltip b{color:var(--acc)}
+#detail{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;min-height:22px}
+#detail b{color:var(--ink)}
+.table{width:100%;border-collapse:collapse;font-size:13px;margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.table th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-align:left;color:var(--muted);border-bottom:1.5px solid var(--ink);padding:10px}
+.table td{border-bottom:1px solid var(--line);padding:9px 10px}
+.table td.num,.table th.num{text-align:right;font-family:var(--mono)}
+.bar-cell{height:8px;border-radius:99px;background:var(--acc)}
+footer{margin-top:18px;font-family:var(--mono);font-size:11px;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.hint{font-size:12px;color:var(--faint);margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">vizscape · bar-matrix · 3D PERSPECTIVE · LIGHT</div><h1>sample <em>· 3D 透视矩阵</em></h1></div>
+  <div class="seg" id="themeSeg"><button data-theme="light">☀ 浅色</button><button data-theme="dark">☾ 深色</button></div>
+</header>
+
+<div class="toolbar">
+  <span class="label">归一</span>
+  <div class="seg" id="normSeg"><button data-norm="global" class="on">全局</button><button data-norm="per_column">按列</button></div>
+  <span class="label">排序</span>
+  <div class="seg" id="sortSeg"><button data-sort="value" class="on">按值</button><button data-sort="label">按标签</button><button data-sort="none">原始</button></div>
+  <span class="label">高度</span>
+  <input type="range" id="heightRange" min="150" max="400" value="260"><span style="font-family:var(--mono);font-size:12px;color:var(--acc)" id="heightVal">260</span>
+  <button class="toggle on" id="btnVal">顶面数值</button>
+  <button class="toggle on" id="btnAxis">📐 坐标轴</button>
+  <button class="toggle" id="btnSpin">⟳ 自动旋转</button>
+  <button class="toggle" id="btnReset">⌂ 重置视角</button>
+</div>
+
+<div class="meta">
+  <span>来源 <b>sample.csv</b></span><span>行 <b>8</b></span><span>列 <b>1</b></span><span>总和 <b>2,496</b></span><span>峰值 <b>北京 · 数值 = 482</b></span><span>模式 <b>整体透视 · X=分类 Y=系列 Z=数值</b></span>
+</div>
+
+<div class="card">
+  <div class="legend" id="legend"></div>
+  <canvas class="scene" id="chart"></canvas>
+  <div id="tooltip"></div>
+  <div id="detail">💡 拖拽旋转视角 · 滚轮缩放 · 悬浮命中整根柱 · 点击钉选 · 点图例隐藏系列 · 📐 开关坐标轴</div>
+  <div class="hint">整体 3D 透视：X 轴=分类、Y 轴=系列、Z 轴=数值高度。📐 坐标轴默认开：显示 X/Y/Z 三轴、Z 刻度与轴名；拖拽旋转时轴线随视角一同投影。可随时关闭坐标轴只留柱体。</div>
+</div>
+
+<table class="table"><thead><tr><th>分类</th><th class="num">数值</th><th class="num">小计</th><th>相对占比</th><th class="num">占总</th></tr></thead><tbody><tr><td>北京</td><td class="num">482</td><td class="num">482</td><td><div class="bar-cell" style="width:100%"></div></td><td class="num">19.3%</td></tr><tr><td>上海</td><td class="num">468</td><td class="num">468</td><td><div class="bar-cell" style="width:97%"></div></td><td class="num">18.8%</td></tr><tr><td>广州</td><td class="num">312</td><td class="num">312</td><td><div class="bar-cell" style="width:65%"></div></td><td class="num">12.5%</td></tr><tr><td>深圳</td><td class="num">298</td><td class="num">298</td><td><div class="bar-cell" style="width:62%"></div></td><td class="num">11.9%</td></tr><tr><td>成都</td><td class="num">276</td><td class="num">276</td><td><div class="bar-cell" style="width:57%"></div></td><td class="num">11.1%</td></tr><tr><td>杭州</td><td class="num">258</td><td class="num">258</td><td><div class="bar-cell" style="width:54%"></div></td><td class="num">10.3%</td></tr><tr><td>武汉</td><td class="num">214</td><td class="num">214</td><td><div class="bar-cell" style="width:44%"></div></td><td class="num">8.6%</td></tr><tr><td>西安</td><td class="num">188</td><td class="num">188</td><td><div class="bar-cell" style="width:39%"></div></td><td class="num">7.5%</td></tr></tbody></table>
+
+<footer><span>vizscape · bar-matrix · 整体透视 3D（Canvas 投影，无 WebGL / 无 CDN）</span><span>复用 bar-basic 的 csv/json/xlsx 解析</span></footer>
+</div>
+
+<script>
+const CHART={"labels": ["北京", "上海", "广州", "深圳", "成都", "杭州", "武汉", "西安"], "series": [{"name": "数值", "values": [482, 468, 312, 298, 276, 258, 214, 188]}]};
+let norm='global', sortMode='value', showVal=true, showAxis=true;
+let azimuth=Math.PI/4, tilt=0.45, zoom=1, heightScale=260;
+let hidden=new Set(), hover=null, pinned=null, hits=[], spinning=false, spinId=null;
+let dragging=false, lastX=0, lastY=0;
+const PALETTE={light:['#0f766e','#e85d3f','#d99a06','#2563eb','#7c3aed','#059669','#db2777','#0891b2'],dark:['#c6f13f','#ff6b4a','#ffb224','#4de3c2','#7dd3fc','#f472b6','#a78bfa','#facc15']};
+const cv=document.getElementById('chart'), tip=document.getElementById('tooltip'), detail=document.getElementById('detail'), legendEl=document.getElementById('legend');
+function theme(){return document.documentElement.dataset.theme}
+function cols(){return PALETTE[theme()]}
+function shade(hex,amt){const n=parseInt(hex.slice(1),16);let r=(n>>16)+amt,g=((n>>8)&255)+amt,b=(n&255)+amt;r=Math.max(0,Math.min(255,r));g=Math.max(0,Math.min(255,g));b=Math.max(0,Math.min(255,b));return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1)}
+function rowOrder(){const idx=CHART.labels.map((_,i)=>i);if(sortMode==='value')idx.sort((a,b)=>CHART.series.reduce((s,x)=>s+x.values[b],0)-CHART.series.reduce((s,x)=>s+x.values[a],0));else if(sortMode==='label')idx.sort((a,b)=>CHART.labels[a].localeCompare(CHART.labels[b],'zh-CN'));return idx}
+function normMax(ci){if(norm==='global'){let m=0;CHART.series.forEach(s=>s.values.forEach(v=>{if(v>m)m=v}));return m||1}return Math.max(...CHART.series[ci].values,1)}
+function proj(x,y,z){
+  const c=Math.cos(azimuth), s=Math.sin(azimuth);
+  const Xr=x*c-y*s, Yr=x*s+y*c;
+  return {x:Xr, y:Yr*tilt - z*0.95, depth:Yr, Xr, Yr};
+}
+function pointInPoly(pt,poly){let inside=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const xi=poly[i].x,yi=poly[i].y,xj=poly[j].x,yj=poly[j].y;const hit=((yi>pt.y)!==(yj>pt.y))&&(pt.x<(xj-xi)*(pt.y-yi)/(yj-yi)+xi);if(hit)inside=!inside}return inside}
+function polyPath(g,p){g.beginPath();p.forEach((q,i)=>i?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y));g.closePath()}
+function draw(){
+  const dpr=window.devicePixelRatio||1, r=cv.getBoundingClientRect();
+  cv.width=r.width*dpr; cv.height=r.height*dpr;
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  const w=r.width,h=r.height;
+  const cs=getComputedStyle(document.documentElement);
+  const ink=cs.getPropertyValue('--ink').trim(), faint=cs.getPropertyValue('--faint').trim(), line=cs.getPropertyValue('--line').trim(), floor=cs.getPropertyValue('--floor').trim(), floorline=cs.getPropertyValue('--floorline').trim();
+  const palette=cols(), order=rowOrder(), nx=CHART.labels.length, ny=CHART.series.length;
+  const maxZBase=heightScale/100; // ~2.6 world units
+  // Build bars in world coords (x=category pos, y=series pos, z=value height)
+  const bars=[];
+  order.forEach((li,pos)=>{
+    CHART.series.forEach((s,ci)=>{
+      if(hidden.has(ci))return;
+      const v=s.values[li], ratio=v/normMax(ci);
+      bars.push({li,ci,pos,label:CHART.labels[li],series:s.name,value:v,z:Math.max(0.06,ratio*maxZBase),col:palette[ci%palette.length],
+        x0:pos+0.16,x1:pos+0.84,y0:ci+0.16,y1:ci+0.84});
+    });
+  });
+  // Fit: project platform corners + bar tops
+  const rawPts=[proj(0,0,0),proj(nx,0,0),proj(nx,ny,0),proj(0,ny,0)];
+  bars.forEach(b=>{[b.x0,b.x1].forEach(x=>[b.y0,b.y1].forEach(y=>{rawPts.push(proj(x,y,0));rawPts.push(proj(x,y,b.z))}))});
+  let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+  rawPts.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y)});
+  const bw=(maxX-minX)||1, bh=(maxY-minY)||1, scale=Math.min((w-90)/bw,(h-110)/bh)*zoom;
+  const ox=w/2-(minX+maxX)/2*scale, oy=h/2-(minY+maxY)/2*scale+10;
+  const P=(x,y,z)=>{const p=proj(x,y,z);return {x:p.x*scale+ox,y:p.y*scale+oy,depth:p.depth}};
+  hits=[];
+  // Floor platform
+  const floorPts=[P(0,0,0),P(nx,0,0),P(nx,ny,0),P(0,ny,0)];
+  polyPath(g,floorPts); g.fillStyle=floor; g.fill(); g.strokeStyle=floorline; g.lineWidth=1; g.stroke();
+  g.strokeStyle=floorline; g.lineWidth=1;
+  for(let i=0;i<=nx;i++){const a=P(i,0,0),b=P(i,ny,0);g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke()}
+  for(let j=0;j<=ny;j++){const a=P(0,j,0),b=P(nx,j,0);g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke()}
+  // Painter sort: back (small depth) first
+  bars.sort((a,b)=>{const da=(proj(a.x0+a.x1,a.y0+a.y1,0).depth),db=(proj(b.x0+b.x1,b.y0+b.y1,0).depth);return da-db});
+  const sA=Math.sin(azimuth), cA=Math.cos(azimuth);
+  bars.forEach(b=>{
+    const x0=b.x0,x1=b.x1,y0=b.y0,y1=b.y1,z=b.z;
+    const baseSW=P(x0,y0,0),baseSE=P(x1,y0,0),baseNE=P(x1,y1,0),baseNW=P(x0,y1,0);
+    const topSW=P(x0,y0,z),topSE=P(x1,y0,z),topNE=P(x1,y1,z),topNW=P(x0,y1,z);
+    // visible side faces: front edges are those pointing screen-down
+    const faces=[];
+    // y-front face (y = y1 if cos>0 else y0)
+    if(cA>=0) faces.push({pts:[baseNW,baseNE,topNE,topNW],kind:'front'});
+    else faces.push({pts:[baseSW,baseSE,topSE,topSW],kind:'front'});
+    // x-front face (x = x1 if sin>0 else x0)
+    if(sA>=0) faces.push({pts:[baseSE,baseNE,topNE,topSE],kind:'side'});
+    else faces.push({pts:[baseSW,baseNW,topNW,topSW],kind:'side'});
+    const active=hover||pinned, isActive=active&&active.li===b.li&&active.ci===b.ci, isDim=active&&!isActive;
+    faces.forEach(f=>{
+      polyPath(g,f.pts); g.fillStyle=f.kind==='front'?shade(b.col,-8):shade(b.col,-42); if(isActive)g.fillStyle=shade(b.col,28);
+      g.globalAlpha=isDim?0.3:1; g.fill(); g.globalAlpha=1;
+      g.strokeStyle='rgba(0,0,0,.18)'; g.lineWidth=1; g.stroke();
+      hits.push({li:b.li,ci:b.ci,label:b.label,series:b.series,value:b.value,poly:f.pts,top:[topSW,topSE,topNE,topNW]});
+    });
+    polyPath(g,[topSW,topSE,topNE,topNW]); g.fillStyle=isActive?shade(b.col,42):shade(b.col,30); g.globalAlpha=isDim?0.35:1; g.fill(); g.globalAlpha=1; g.strokeStyle='rgba(0,0,0,.16)'; g.stroke();
+    hits.push({li:b.li,ci:b.ci,label:b.label,series:b.series,value:b.value,poly:[topSW,topSE,topNE,topNW],top:[topSW,topSE,topNE,topNW]});
+    // value label at top center
+    if(showVal){
+      const cx=(topSW.x+topNE.x)/2, cy=(topSW.y+topNE.y)/2;
+      g.font='700 11px JetBrains Mono, monospace'; g.textAlign='center';
+      g.fillStyle=isDim?'rgba(128,128,128,.6)':ink; g.fillText(b.value.toLocaleString(),cx,cy-4); g.textAlign='left';
+    }
+  });
+  // Axis labels on front edges
+  g.font='11px JetBrains Mono, monospace';
+  if(showAxis){
+    // 3D axes: X = categories (bottom edge y=ny), Y = series (right edge x=nx), Z = value height (origin corner)
+    const origin=P(0,0,0);
+    const axCol=cs.getPropertyValue('--acc').trim();
+    g.lineWidth=1.6; g.strokeStyle=axCol;
+    // X axis
+    let a=P(0,ny,0), b=P(nx,ny,0); g.beginPath(); g.moveTo(a.x,a.y); g.lineTo(b.x,b.y); g.stroke();
+    // Y axis
+    a=P(nx,0,0); b=P(nx,ny,0); g.beginPath(); g.moveTo(a.x,a.y); g.lineTo(b.x,b.y); g.stroke();
+    // Z axis (from back-left origin up)
+    a=P(0,0,0); b=P(0,0,maxZBase); g.beginPath(); g.moveTo(a.x,a.y); g.lineTo(b.x,b.y); g.stroke();
+    // Z ticks
+    g.font='10px JetBrains Mono, monospace';
+    const normRef = norm==='global' ? Math.max(...CHART.series.flatMap(s=>s.values),1) : Math.max(...CHART.series.flatMap(s=>s.values),1);
+    for(let t=0;t<=4;t++){
+      const zz=maxZBase*t/4, pt=P(0,0,zz), val=Math.round(normRef*t/4);
+      g.strokeStyle=cs.getPropertyValue('--floorline').trim(); g.lineWidth=1;
+      g.beginPath(); g.moveTo(pt.x-5,pt.y); g.lineTo(pt.x+5,pt.y); g.stroke();
+      g.fillStyle=faint; g.textAlign='right'; g.fillText(val.toLocaleString(), pt.x-8, pt.y+3);
+    }
+    g.textAlign='left';
+    // Axis names
+    g.fillStyle=axCol; g.font='700 11px JetBrains Mono, monospace';
+    const px=P(nx+0.4,ny,0); g.fillText('X · 分类', px.x+2, px.y-4);
+    const py=P(nx,ny+0.4,0); g.fillText('Y · 系列', py.x+2, py.y+14);
+    const pz=P(0,0,maxZBase+0.15); g.fillText('Z · 数值', pz.x+4, pz.y-4);
+    g.font='11px JetBrains Mono, monospace';
+  }
+  order.forEach((li,pos)=>{
+    const p=P(pos+0.5,ny+0.05,0); g.fillStyle=showAxis?ink:faint; g.textAlign='center'; g.fillText(CHART.labels[li],p.x,p.y+ (showAxis?26:16));
+  });
+  CHART.series.forEach((s,ci)=>{
+    if(hidden.has(ci))return;
+    const p=P(nx+0.05,ci+0.5,0); g.fillStyle=showAxis?ink:faint; g.textAlign='left'; g.fillText(s.name,p.x+6,p.y+4);
+  });
+  g.textAlign='left';
+  // Compass / view info
+  const deg=((azimuth*180/Math.PI)%360+360)%360;
+  g.fillStyle=faint; g.font='11px JetBrains Mono, monospace';
+  g.fillText(`AZ ${deg.toFixed(0).padStart(3,'0')}° · TILT ${tilt.toFixed(2)} · ZOOM ${zoom.toFixed(2)}×`,12,20);
+  if(hover)showTip(hover); else tip.style.display='none';
+  updateDetail();
+}
+function showTip(hit){
+  const grand=CHART.series.reduce((a,s)=>a+s.values.reduce((x,y)=>x+y,0),0)||1;
+  const colTotal=CHART.series[hit.ci].values.reduce((a,b)=>a+b,0)||1, rowTotal=CHART.series.reduce((a,x)=>a+x.values[hit.li],0)||1;
+  tip.innerHTML=`<b>${hit.label} · ${hit.series}</b><br>数值 ${hit.value.toLocaleString()}<br>占总 ${(hit.value/grand*100).toFixed(1)}% · 占列 ${(hit.value/colTotal*100).toFixed(1)}% · 占行 ${(hit.value/rowTotal*100).toFixed(1)}%`;
+  tip.style.display='block';
+  const cr=cv.getBoundingClientRect(), card=cv.parentElement.getBoundingClientRect();
+  const cx=hit.poly.reduce((a,p)=>a+p.x,0)/hit.poly.length, cy=hit.poly.reduce((a,p)=>a+p.y,0)/hit.poly.length;
+  tip.style.left=Math.min(Math.max(6,cx-cr.left+12),cr.width-190)+'px'; tip.style.top=Math.max(6,cy-cr.top-10)+'px';
+}
+function updateDetail(){
+  const hit=pinned||hover;
+  if(!hit){detail.textContent='💡 拖拽旋转视角 · 滚轮缩放 · 悬浮命中整根柱 · 点击钉选 · 点图例隐藏系列';return}
+  const grand=CHART.series.reduce((a,s)=>a+s.values.reduce((x,y)=>x+y,0),0)||1;
+  detail.innerHTML=`📌 <b>${hit.label}</b> · ${hit.series} = <b>${hit.value.toLocaleString()}</b> · 占总 ${(hit.value/grand*100).toFixed(1)}% · ${pinned?'（已钉选）':'（悬浮中）'}`;
+}
+function pick(mx,my){
+  // top faces first (reverse paint order)
+  for(let i=hits.length-1;i>=0;i--) if(pointInPoly({x:mx,y:my},hits[i].poly)) return hits[i];
+  return null;
+}
+cv.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{
+  const r=cv.getBoundingClientRect(), mx=e.clientX-r.left,my=e.clientY-r.top;
+  if(dragging){azimuth+=(e.clientX-lastX)*0.01; tilt=Math.max(0.18,Math.min(0.85,tilt+(e.clientY-lastY)*0.004)); lastX=e.clientX;lastY=e.clientY; draw(); return}
+  hover=pick(mx,my); draw();
+});
+cv.addEventListener('pointerup',()=>dragging=false);
+cv.addEventListener('pointerleave',()=>{if(!dragging){hover=null;draw()}});
+cv.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(0.55,Math.min(2.2,zoom*(e.deltaY<0?1.08:0.92)));draw()},{passive:false});
+cv.addEventListener('click',()=>{pinned=pinned&&hover&&pinned.li===hover.li&&pinned.ci===hover.ci?null:hover;draw()});
+function renderLegend(){
+  legendEl.innerHTML=CHART.series.map((s,i)=>`<button class="chip ${hidden.has(i)?'off':''}" data-i="${i}"><i style="background:${cols()[i%cols().length]}"></i>${s.name}</button>`).join('')+`<span style="font-family:var(--mono);font-size:11px;color:var(--faint);margin-left:6px">X=分类 · Y=系列 · Z=数值 · 拖拽旋转</span>`;
+}
+legendEl.addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const i=+b.dataset.i;hidden.has(i)?hidden.delete(i):hidden.add(i);renderLegend();draw()});
+document.getElementById('normSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;norm=b.dataset.norm;document.querySelectorAll('#normSeg button').forEach(x=>x.classList.toggle('on',x===b));draw()});
+document.getElementById('sortSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;sortMode=b.dataset.sort;document.querySelectorAll('#sortSeg button').forEach(x=>x.classList.toggle('on',x===b));draw()});
+document.getElementById('heightRange').oninput=e=>{heightScale=+e.target.value;document.getElementById('heightVal').textContent=heightScale;draw()};
+document.getElementById('btnVal').onclick=e=>{showVal=!showVal;e.currentTarget.classList.toggle('on',showVal);draw()};
+document.getElementById('btnAxis').onclick=e=>{showAxis=!showAxis;e.currentTarget.classList.toggle('on',showAxis);draw()};
+document.getElementById('btnSpin').onclick=e=>{spinning=!spinning;e.currentTarget.classList.toggle('on',spinning);e.currentTarget.textContent=spinning?'⏸ 停止旋转':'⟳ 自动旋转';if(spinning){const loop=()=>{if(!spinning)return;azimuth+=0.012;draw();spinId=requestAnimationFrame(loop)};loop()}else cancelAnimationFrame(spinId)};
+document.getElementById('btnReset').onclick=()=>{azimuth=Math.PI/4;tilt=0.45;zoom=1;draw()};
+document.getElementById('themeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.dataset.theme=b.dataset.theme;document.querySelectorAll('#themeSeg button').forEach(x=>x.classList.toggle('on',x===b));renderLegend();draw()});
+document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('on',theme()===b.dataset.theme));
+renderLegend(); draw(); window.addEventListener('resize',draw);
+</script>
+</body>
+</html>

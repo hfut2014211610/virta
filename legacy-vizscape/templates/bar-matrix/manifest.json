@@ -1,0 +1,21 @@
+{
+  "name": "bar-matrix",
+  "title": "3D 透视柱状矩阵图（整体视角）",
+  "input_types": ["csv", "json", "xlsx"],
+  "required_columns": ["label", "value"],
+  "optional_columns": ["series"],
+  "options": {
+    "theme": ["light", "dark"],
+    "palette": ["signal", "cinnabar", "patina", "blueprint", "inkwash", "mono", "sundown", "dunhuang", "aurora", "morandi"],
+    "section": ["square", "circle", "octagon"],
+    "edge": ["sharp", "round", "chamfer"],
+    "cap": ["flat", "dome", "spire", "notch"],
+    "value_ramp": false,
+    "normalize": ["global", "per_column"],
+    "sort": ["value", "label", "none"],
+    "height": 260,
+    "show_axis": true,
+    "quality_report": true
+  },
+  "description": "整体 3D 透视矩阵：X=分类，Y=系列，Z=数值高度，共处带底板网格的三维场景，非每根柱单独加阴影。支持 10 种配色风格、3 种柱体截面（方柱/圆柱/八棱）、3 种棱边（锐边/圆棱/切棱，仅方柱）、4 种顶帽（平顶/穹顶/尖顶/凹槽）、数值浓淡编码、景深雾化、柔和接触阴影、质量报告、拖拽旋转/滚轮缩放/自动旋转/图例隐藏系列/悬浮命中整根柱。负值数据自动停用 3D 矩阵并给出替代建议。"
+}

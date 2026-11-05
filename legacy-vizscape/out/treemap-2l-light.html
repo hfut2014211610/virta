@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>产品线收入构成 · vizscape treemap-basic</title>
+<style>
+:root{--sans:"Noto Sans SC",system-ui,sans-serif;--serif:"Fraunces",Georgia,serif;--mono:"JetBrains Mono",ui-monospace,monospace}
+html[data-theme="light"]{--bg:#f6f3ec;--paper:#fffdf7;--ink:#171a1e;--muted:#6b6f6a;--faint:#9a9d96;--line:#e2ded2;--line2:#d1ccc0;--acc:#0f766e;--neg:#b5412f;--shadow:0 10px 36px rgba(23,26,30,.08);--grid:rgba(23,26,30,.06);--tip:#171a1e;--tipink:#fffdf7}
+html[data-theme="dark"]{--bg:#0d0e0a;--paper:#131410;--ink:#ede9dc;--muted:#9aa08a;--faint:#5e6450;--line:#23261d;--line2:#2e3323;--acc:#c6f13f;--neg:#ff6b4a;--shadow:0 10px 36px rgba(0,0,0,.4);--grid:rgba(237,233,220,.05);--tip:#ede9dc;--tipink:#0d0e0a}
+html[data-palette="cinnabar"]{--acc:#b5412f}
+html[data-palette="patina"]{--acc:#2f7f78}
+html[data-palette="blueprint"]{--acc:#2f5fd0}
+html[data-palette="inkwash"]{--acc:#4b5563}
+html[data-palette="mono"]{--acc:#171a1e}
+html[data-palette="sundown"]{--acc:#c2410c}
+html[data-palette="dunhuang"]{--acc:#b34a38}
+html[data-palette="aurora"]{--acc:#0d9488}
+html[data-palette="morandi"]{--acc:#8b9dad}
+html[data-theme="dark"][data-palette="mono"]{--acc:#ede9dc}
+html[data-theme="dark"][data-palette="sundown"]{--acc:#fb923c}
+html[data-theme="dark"][data-palette="dunhuang"]{--acc:#e07a5f}
+html[data-theme="dark"][data-palette="aurora"]{--acc:#5eead4}
+html[data-theme="dark"][data-palette="morandi"]{--acc:#b8c7d4}
+*{box-sizing:border-box;margin:0;padding:0}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:4px}
+body{background:radial-gradient(circle at 12% 8%,color-mix(in srgb,var(--acc) 12%,transparent),transparent 28rem),radial-gradient(circle at 88% 4%,rgba(232,93,63,.08),transparent 30rem),var(--bg);color:var(--ink);font-family:var(--sans);padding:28px;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:56px 56px;opacity:.6}
+.wrap{max-width:1080px;margin:0 auto;position:relative}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1.5px solid var(--ink);padding-bottom:16px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--acc);text-transform:uppercase}
+h1{font-family:var(--serif);font-weight:300;font-size:clamp(32px,5vw,52px);letter-spacing:-.02em}
+h1 em{font-style:italic;color:var(--acc)}
+.seg{display:flex;background:var(--paper);border:1px solid var(--line2);border-radius:99px;padding:3px;box-shadow:var(--shadow)}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:13px;padding:8px 14px;border-radius:99px;cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.deck{display:flex;flex-direction:column;gap:10px;margin:16px 0}
+.trow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:9px 12px}
+.trow .label{min-width:34px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.trow .spacer{flex:1}
+.trow .seg{box-shadow:none}
+.seg.wrap{flex-wrap:wrap;border-radius:18px}
+.toggle{appearance:none;border:1px solid var(--line2);background:var(--paper);color:var(--muted);border-radius:99px;padding:8px 14px;font-size:13px;cursor:pointer}
+.toggle.on{background:var(--acc);border-color:var(--acc);color:var(--paper);font-weight:700}
+#btnBack{display:none}
+#btnBack.show{display:inline-flex}
+.crumb{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.crumb button{appearance:none;border:1px solid var(--line2);background:var(--paper);color:var(--ink);border-radius:99px;padding:5px 10px;font-size:12px;cursor:pointer}
+.crumb button:hover{border-color:var(--acc);color:var(--acc)}
+.crumb button.cur{background:var(--ink);color:var(--paper);border-color:var(--ink);cursor:default}
+.summary{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 14px}
+.sum-card{display:inline-flex;align-items:baseline;gap:8px;border:1px solid var(--line2);border-radius:14px;padding:9px 12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sum-card b{color:var(--ink);font-size:19px;font-weight:500;letter-spacing:-.02em}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);position:relative}
+#legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:transparent;color:var(--ink);border-radius:99px;padding:6px 12px;font-size:12px;cursor:pointer;transition:.2s}
+.chip i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.chip.off{opacity:.38;text-decoration:line-through}
+canvas{width:100%;height:480px;display:block;cursor:pointer}
+#tooltip{position:absolute;pointer-events:none;background:var(--tip);color:var(--tipink);padding:10px 12px;border-radius:10px;font-family:var(--mono);font-size:12px;line-height:1.7;display:none;z-index:10;box-shadow:0 10px 30px rgba(0,0,0,.25);white-space:nowrap}
+#tooltip b{color:var(--acc)}
+#detail{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;line-height:1.8;min-height:44px}
+#detail b{color:var(--ink)}
+.table{width:100%;border-collapse:collapse;font-size:13px;margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.table th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-align:left;color:var(--muted);border-bottom:1.5px solid var(--ink);padding:10px}
+.table td{border-bottom:1px solid var(--line);padding:9px 10px}
+.table td.num,.table th.num{text-align:right;font-family:var(--mono)}
+.table tr.subtotal td{border-top:1.5px solid var(--line2);font-family:var(--mono);font-size:12px}
+.table tbody tr:hover td{background:color-mix(in srgb,var(--acc) 5%,transparent)}
+footer{margin-top:18px;font-family:var(--mono);font-size:11px;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.hint{font-size:12px;color:var(--faint);margin-top:8px}
+.quality{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--paper);border-radius:16px;padding:14px;margin:16px 0 8px;box-shadow:0 1px 0 rgba(0,0,0,.02) inset}
+.quality.warn{border-left-color:var(--neg)}
+.quality-head{display:flex;justify-content:space-between;gap:14px;align-items:center;border-bottom:1px dashed var(--line);padding-bottom:10px;margin-bottom:10px}
+.quality-head h2{font-family:var(--serif);font-size:20px;font-weight:420;letter-spacing:-.02em}
+.quality-score{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;line-height:1.6}.quality-score b{display:block;color:var(--acc);font-size:13px}.quality.warn .quality-score b{color:var(--neg)}
+.quality-grid{display:flex;gap:8px;flex-wrap:wrap}.qs{border:1px solid var(--line2);border-radius:999px;padding:5px 9px;font-family:var(--mono);font-size:11px;color:var(--muted)}.qs b{color:var(--ink);font-weight:500}
+.quality-warnings{margin:11px 0 0;padding-left:18px;color:var(--neg);font-size:12px;line-height:1.75}.quality-ok{margin:11px 0 0;color:var(--acc);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">vizscape · treemap-basic · LIGHT</div><h1>产品线收入构成 <em>· 树状图</em></h1></div>
+  <div class="seg" id="themeSeg" role="group" aria-label="主题"><button type="button" data-theme="light" aria-pressed="false">☀ 浅色</button><button type="button" data-theme="dark" aria-pressed="false">☾ 深色</button></div>
+</header>
+
+<div class="deck">
+  <div class="trow">
+    <span class="label">视图</span>
+    <span class="crumb" id="breadcrumb"></span>
+    <span class="spacer"></span>
+    <button class="toggle on" id="btnLabels" type="button" aria-pressed="true">🏷 标签</button>
+    <button class="toggle on" id="btnValues" type="button" aria-pressed="true">％ 数值</button>
+    <button class="toggle on" id="btnGroups" type="button" aria-pressed="true">▤ 分组底色</button>
+    <button class="toggle" id="btnBack" type="button" aria-pressed="false">↑ 返回上级</button>
+  </div>
+  <div class="trow">
+    <span class="label">风格</span>
+    <div class="seg wrap" id="paletteSeg" role="group" aria-label="配色风格">
+      <button type="button" data-palette="signal" class="on" aria-pressed="true">Signal</button>
+      <button type="button" data-palette="cinnabar" aria-pressed="false">朱砂</button>
+      <button type="button" data-palette="patina" aria-pressed="false">铜绿</button>
+      <button type="button" data-palette="blueprint" aria-pressed="false">蓝图</button>
+      <button type="button" data-palette="inkwash" aria-pressed="false">水墨</button>
+      <button type="button" data-palette="mono" aria-pressed="false">单色</button>
+      <button type="button" data-palette="sundown" aria-pressed="false">落日</button>
+      <button type="button" data-palette="dunhuang" aria-pressed="false">敦煌</button>
+      <button type="button" data-palette="aurora" aria-pressed="false">极光</button>
+      <button type="button" data-palette="morandi" aria-pressed="false">莫兰迪</button>
+    </div>
+  </div>
+</div>
+
+<div class="summary" aria-label="摘要"><span class="sum-card"><b>660</b>总面积</span><span class="sum-card"><b>深圳 22.7%</b>最大项</span><span class="sum-card"><b>3</b>组数</span><span class="sum-card"><b>7</b>叶项</span></div>
+
+<div class="card">
+  <div id="legend"></div>
+  <canvas id="chart" role="img" aria-label="产品线收入构成 树状图，总面积 660，模式 grouped；明细见下方表格"></canvas>
+  <div id="tooltip"></div>
+  <div id="detail"></div>
+  <div class="hint">读法：矩形面积 ∝ 数值，颜色区分分组/条目。<b>点击矩形下钻</b>（面包屑或返回按钮回到顶层），悬停看数值与占比，图例点击显隐。浮窗跟随光标，不遮挡图形。</div>
+</div>
+
+<section class="quality ok" aria-label="数据识别报告"><div class="quality-head"><div><p class="eyebrow">data quality</p><h2>数据识别报告</h2></div><div class="quality-score"><b>高置信识别</b>treemap · 销售额</div></div><div class="quality-grid"><span class="qs"><b>模式</b> grouped</span><span class="qs"><b>总面积</b> 660</span><span class="qs"><b>最大项</b> 深圳 22.7%</span><span class="qs"><b>组数</b> 3</span><span class="qs"><b>叶项</b> 7</span><span class="qs"><b>映射</b> group=大区 → label=城市 → value=销售额</span></div><p class="quality-ok">未发现缺失/非法/负值风险；面积与占比可直接引用。</p></section>
+
+<table class="table"><thead><tr><th>组</th><th>项</th><th class="num">数值</th><th class="num">占比</th></tr></thead><tbody><tr><td>华东</td><td>上海</td><td class="num">120</td><td class="num">18.2%</td></tr><tr><td></td><td>杭州</td><td class="num">80</td><td class="num">12.1%</td></tr><tr><td></td><td>南京</td><td class="num">60</td><td class="num">9.1%</td></tr><tr class="subtotal"><td></td><td><b>华东 小计</b></td><td class="num"><b>260</b></td><td class="num"><b>39.4%</b></td></tr><tr><td>华南</td><td>深圳</td><td class="num">150</td><td class="num">22.7%</td></tr><tr><td></td><td>广州</td><td class="num">95</td><td class="num">14.4%</td></tr><tr class="subtotal"><td></td><td><b>华南 小计</b></td><td class="num"><b>245</b></td><td class="num"><b>37.1%</b></td></tr><tr><td>华北</td><td>北京</td><td class="num">110</td><td class="num">16.7%</td></tr><tr><td></td><td>天津</td><td class="num">45</td><td class="num">6.8%</td></tr><tr class="subtotal"><td></td><td><b>华北 小计</b></td><td class="num"><b>155</b></td><td class="num"><b>23.5%</b></td></tr></tbody></table>
+
+<footer><span>vizscape · treemap-basic · 面积份额 · 纯 Canvas 无 CDN</span><span>输入兼容：group+label+value（两层）/ label+value（一维）· 与 sunburst 互补</span></footer>
+</div>
+
+<script>
+const RAW={"mode": "grouped", "total": 660.0, "warnings": [], "groups": [{"name": "华东", "value": 260.0, "share": 0.3939393939393939, "children": [{"label": "上海", "value": 120.0, "share": 0.18181818181818182}, {"label": "杭州", "value": 80.0, "share": 0.12121212121212122}, {"label": "南京", "value": 60.0, "share": 0.09090909090909091}]}, {"name": "华南", "value": 245.0, "share": 0.3712121212121212, "children": [{"label": "深圳", "value": 150.0, "share": 0.22727272727272727}, {"label": "广州", "value": 95.0, "share": 0.14393939393939395}]}, {"name": "华北", "value": 155.0, "share": 0.23484848484848486, "children": [{"label": "北京", "value": 110.0, "share": 0.16666666666666666}, {"label": "天津", "value": 45.0, "share": 0.06818181818181818}]}], "n_groups": 3, "n_leaf": 7, "top": {"label": "深圳", "value": 150.0, "share": 0.22727272727272727}, "mapping": {"group": "大区", "label": "城市", "value": "销售额"}, "quality": {"rows": 7, "mode": "long", "mapping": {"group": "大区", "label": "城市", "value": "销售额"}, "numeric_columns": [], "missing": 0, "invalid": 0, "percent": 0, "negative": 0, "anchors": 0, "unknown_types": 0, "kind_conflicts": 0, "type_column": "—", "duplicate_pairs": 0, "warnings": [], "confidence": "high"}};
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const cv=document.getElementById('chart'), tip=document.getElementById('tooltip'), detail=document.getElementById('detail'), legendEl=document.getElementById('legend'), crumbEl=document.getElementById('breadcrumb');
+const FONT='12px "Noto Sans SC", system-ui, sans-serif', MONO='11px "JetBrains Mono", monospace';
+const PALETTES={
+  signal:{light:['#0f766e','#e85d3f','#d99a06','#2563eb','#7c3aed','#059669','#db2777','#0891b2'],dark:['#c6f13f','#ff6b4a','#ffb224','#4de3c2','#7dd3fc','#f472b6','#a78bfa','#facc15']},
+  cinnabar:{light:['#b5412f','#d36a2e','#8a3324','#c08a2d','#6b4f2c','#a16207','#0f766e','#3f3f46'],dark:['#ff8a5c','#ffd166','#ef4444','#fbbf24','#f97316','#fef08a','#5eead4','#fda4af']},
+  patina:{light:['#2f7f78','#386641','#588157','#a3b18a','#c69a4a','#344e41','#7f5539','#40916c'],dark:['#67a58d','#a7c957','#d2b46a','#8ecae6','#c9f2c7','#ffd166','#bde0fe','#80ed99']},
+  blueprint:{light:['#2f5fd0','#0b3b75','#3b82f6','#60a5fa','#1d4ed8','#0f766e','#475569','#93c5fd'],dark:['#7dd3fc','#38bdf8','#93c5fd','#a5f3fc','#60a5fa','#22d3ee','#e0f2fe','#67e8f9']},
+  inkwash:{light:['#171a1e','#3f4650','#69707d','#9299a5','#6b7280','#a3a3a3','#525252','#d4d4d4'],dark:['#ede9dc','#d6d3c8','#b8b4a8','#8f8b80','#6e6a61','#4b4841','#a8a29e','#f5f5f4']},
+  mono:{light:['#171a1e','#2f343c','#555d68','#7a828d','#a0a6af','#c5c8cd','#3f4650','#6b6f6a'],dark:['#ede9dc','#c9c6ba','#a5a296','#817e73','#5e5b52','#f5f5f4','#b9b5a8','#8f8b80']},
+  sundown:{light:['#c2410c','#ea580c','#f59e0b','#b91c1c','#db2777','#7c2d12','#f97316','#a16207'],dark:['#fb923c','#fbbf24','#f87171','#f472b6','#fdba74','#fde047','#fca5a5','#e879f9']},
+  dunhuang:{light:['#35618e','#4d8a6a','#b34a38','#c89b3c','#7a5c3e','#2f4f4f','#8e5a2b','#5b7a8c'],dark:['#7fb3d5','#7fc7a3','#e07a5f','#e5c07b','#b0927a','#81b29a','#d4a373','#a8c3cf']},
+  aurora:{light:['#0d9488','#0891b2','#7c3aed','#db2777','#059669','#2563eb','#c026d3','#0f766e'],dark:['#5eead4','#67e8f9','#a78bfa','#f0abfc','#6ee7b7','#93c5fd','#e879f9','#4ade80']},
+  morandi:{light:['#8b9dad','#c9a7a0','#a8b5a0','#b8b0a4','#9d8fa8','#c4b198','#8fa39e','#ad9b8f'],dark:['#b8c7d4','#dbc4be','#c3cfc0','#d0c9be','#c0b5c9','#d9cbb8','#b5c4bf','#c9bcb0']}
+};
+const GROUPTINT={light:'rgba(23,26,30,.045)',groupline:'rgba(23,26,30,.10)',gap:2,gap2:5,header:20};
+const GROUPTINT_D={light:'rgba(237,233,220,.035)',groupline:'rgba(237,233,220,.10)',gap:2,gap2:5,header:20};
+const mode=RAW.mode;
+const groups=RAW.groups||[];
+const flatItems=RAW.flat||[];
+const TOTAL=RAW.total;
+let hidden=new Set(), hoverKey=null, drill=null, showLabels=true, showValues=true, showGroups=true, paletteKey='signal';
+const PADR=14,PADT=14,PADB=14,PADL=14;
+
+function theme(){return document.documentElement.dataset.theme}
+function pal(){const grp=PALETTES[paletteKey]||PALETTES.signal;return grp[theme()]||grp.light}
+function GT(){return theme()==='dark'?GROUPTINT_D:GROUPTINT}
+function hx(c){c=String(c).trim();if(c.startsWith('rgb')){const m=c.match(/\d+(\.\d+)?/g);return m.slice(0,3).map(Number)}c=c.replace('#','');return [parseInt(c.slice(0,2),16),parseInt(c.slice(2,4),16),parseInt(c.slice(4,6),16)]}
+function lum(c){const[r,g,b]=hx(c);return 0.299*r+0.587*g+0.114*b}
+function inkOn(c){return lum(c)>140?'#171a1e':'#fffdf7'}
+function fmt(v){return Math.abs(v)>=1000?Math.round(v).toLocaleString():(+v.toFixed(2)).toLocaleString()}
+
+function squarify(items,rect){
+  const n=items.length;
+  if(!n)return[];
+  const tot=items.reduce((s,it)=>s+it.value,0);
+  if(tot<=0||rect.w<=0||rect.h<=0)return items.map(()=>({x:rect.x,y:rect.y,w:0,h:0}));
+  const areas=items.map(it=>it.value/tot*rect.w*rect.h);
+  const rects=[]; let i=0;
+  while(i<n){
+    const vert=rect.w>=rect.h, side=vert?rect.h:rect.w;
+    let j=i,sumA=0,worst=Infinity,best=null;
+    while(j<n){
+      const s2=sumA+areas[j];
+      let w2=0;
+      for(let k=i;k<=j;k++){const thick=areas[k]/s2*side,other=s2/side;w2=Math.max(w2,thick/other,other/thick)}
+      if(w2<=worst){worst=w2;best={cnt:j-i+1,sum:s2};sumA=s2;j++}
+      else break;
+    }
+    const {cnt,sum:laySum}=best;
+    if(vert){
+      const colw=laySum/side;let yy=rect.y;
+      for(let k=i;k<i+cnt;k++){const rh=areas[k]/colw;rects.push({x:rect.x,y:yy,w:colw,h:rh});yy+=rh}
+      rect.x+=colw;rect.w-=colw;
+    }else{
+      const rowh=laySum/side;let xx=rect.x;
+      for(let k=i;k<i+cnt;k++){const rw=areas[k]/rowh;rects.push({x:xx,y:rect.y,w:rw,h:rowh});xx+=rw}
+      rect.y+=rowh;rect.h-=rowh;
+    }
+    i+=cnt;
+  }
+  return rects;
+}
+
+function currentLeaves(){
+  // 返回当前视图的叶子数组（含 group name），已过滤 hidden
+  if(mode==='grouped'){
+    if(drill!=null){
+      const g=groups[drill];
+      return g.children.map((c,k)=>({key:'g'+drill+'c'+k,label:c.label,value:c.value,share:c.share,gidx:drill,groupName:g.name}));
+    }
+    return groups.flatMap((g,gi)=>g.children.map((c,k)=>({key:'g'+gi+'c'+k,label:c.label,value:c.value,share:c.share,gidx:gi,groupName:g.name})));
+  }
+  return flatItems.map((c,k)=>({key:'f'+k,label:c.label,value:c.value,share:c.share,gidx:-1,groupName:null}));
+}
+
+function currentGroups(){
+  // 分组容器（grouped 且非下钻时用）
+  if(mode==='grouped'&&drill==null) return groups;
+  return null;
+}
+
+function layout(){
+  // 纯几何计算：只读画布尺寸，绝不写 cv.width/height（写入会清空位图）
+  const r=cv.getBoundingClientRect();
+  const W=r.width,H=r.height;
+  const gt=GT();
+  const base={x:PADL,y:PADT,w:W-PADL-PADR,h:H-PADT-PADB};
+  const leaves=currentLeaves();
+  const leavesShown=leaves.filter(l=>!hidden.has(l.key));
+  const groupsShown=currentGroups();
+  let gContainers=[], leafRects=new Map();
+  if(groupsShown){
+    // 两层：按组面积切分区（区高 = 组高），再在区内 squarify 子项
+    const header=gt.header, gap=gt.gap2;
+    const usable={x:base.x,y:base.y,w:base.w,h:base.h-gap*(groupsShown.length-1)};
+    // 先用 squarify 把每个组切成矩形区
+    const gRects=squarify(groupsShown.map(g=>({value:g.value})),usable);
+    groupsShown.forEach((g,gi)=>{
+      const gr=gRects[gi];
+      gContainers.push({g,gi,x:gr.x,y:gr.y,w:gr.w,h:gr.h,color:pal()[gi%pal().length]});
+      const inner={x:gr.x+gap,y:gr.y+header,w:gr.w-gap*2,h:gr.h-header-gap};
+      const kids=g.children.filter(c=>!hidden.has('g'+gi+'c'+g.children.indexOf(c)));
+      const kidItems=kids.map(c=>({value:c.value}));
+      const rects=squarify(kidItems,inner);
+      kids.forEach((c,k)=>{leafRects.set('g'+gi+'c'+g.children.indexOf(c),rects[k])});
+    });
+  }else{
+    const gap=gt.gap;
+    const usable={x:base.x,y:base.y,w:base.w,h:base.h};
+    const rects=squarify(leavesShown.map(l=>({value:l.value})),usable);
+    leavesShown.forEach((l,k)=>{leafRects.set(l.key,{x:rects[k].x+gap,y:rects[k].y+gap,w:rects[k].w-gap*2,h:rects[k].h-gap*2})});
+  }
+  return {W,H,leaves:leavesShown,leafRects,gContainers,gt};
+}
+
+function draw(){
+  const dpr=window.devicePixelRatio||1;
+  const rr=cv.getBoundingClientRect();
+  if(rr.width<40)return; // resize 中间态（如整页截图）保留 backing store
+  const wPx=Math.round(rr.width*dpr), hPx=Math.round(rr.height*dpr);
+  if(cv.width!==wPx)cv.width=wPx; // 仅尺寸变化时重写，避免无谓清空位图
+  if(cv.height!==hPx)cv.height=hPx;
+  const L=layout(), g=cv.getContext('2d');
+  g.setTransform(dpr,0,0,dpr,0,0);
+  const cs=getComputedStyle(document.documentElement);
+  const paper=cs.getPropertyValue('--paper').trim(), ink=cs.getPropertyValue('--ink').trim(), gt=L.gt;
+  const cols=pal();
+  g.clearRect(0,0,L.W,L.H);
+  // 分组底色 + 头
+  if(mode==='grouped'&&drill==null){
+    L.gContainers.forEach(gc=>{
+      g.fillStyle=showGroups?gt.light:'transparent';
+      g.beginPath();g.roundRect(gc.x,gc.y,gc.w,gc.h,6);g.fill();
+      g.strokeStyle=showGroups?gt.groupline:'transparent';g.lineWidth=1;g.stroke();
+      if(gc.h>gt.header){
+        g.fillStyle=gc.color;g.font='bold 11px "Noto Sans SC", system-ui, sans-serif';g.textBaseline='middle';g.textAlign='left';
+        const label=gc.g.name+'  '+(showValues?fmt(gc.g.value):'')+'  '+(showValues?(gc.g.share*100).toFixed(1)+'%':'');
+        g.fillText(label,gc.x+6,gc.y+gt.header/2,gc.w-12);
+      }
+    });
+  }
+  // 叶子
+  L.leaves.forEach(l=>{
+    const r=L.leafRects.get(l.key); if(!r)return;
+    const base=l.gidx>=0?l.gidx:parseInt(l.key.slice(1));
+    const col2=cols[base%cols.length];
+    g.fillStyle=col2;g.globalAlpha=0.88;
+    g.beginPath();g.roundRect(r.x,r.y,Math.max(0,r.w),Math.max(0,r.h),3);g.fill();
+    g.globalAlpha=1;
+    g.strokeStyle=paper;g.lineWidth=gt.gap;g.stroke();
+    if(hoverKey===l.key){g.strokeStyle=ink;g.lineWidth=2.5;g.beginPath();g.roundRect(r.x+1,r.y+1,Math.max(0,r.w-2),Math.max(0,r.h-2),3);g.stroke();}
+    // 标签/数值
+    const fits=(r.w>34&&r.h>18);
+    const labelInk=inkOn(col2);
+    if(showLabels&&fits){
+      g.fillStyle=labelInk;
+      g.font='bold 11.5px "Noto Sans SC", system-ui, sans-serif';g.textAlign='left';g.textBaseline='top';
+      const tw=g.measureText(l.label).width;
+      if(tw<r.w-6){g.fillText(l.label,r.x+5,r.y+4,Math.max(0,r.w-10));}
+    }
+    if(showValues&&fits&&r.h>36){
+      g.fillStyle=labelInk;g.font=MONO;g.textAlign='left';g.textBaseline='top';
+      const vt=fmt(l.value)+' '+(l.share*100).toFixed(1)+'%';
+      if(g.measureText(vt).width<r.w-8){g.fillText(vt,r.x+5,r.y+20,Math.max(0,r.w-10));}
+    }
+  });
+  if(!L.leaves.length){g.fillStyle=cs.getPropertyValue('--faint').trim();g.font=FONT;g.textAlign='center';g.textBaseline='middle';g.fillText('没有可见数据（全部图例已隐藏）',L.W/2,L.H/2)}
+  updateCrumb(); updateDetail();
+}
+
+function hitTest(mx,my){
+  const L=layout();
+  for(const l of L.leaves){const r=L.leafRects.get(l.key);if(r&&mx>=r.x&&mx<=r.x+r.w&&my>=r.y&&my<=r.y+r.h)return l}
+  return null;
+}
+
+function showTip(l,mx,my){
+  let html='<b>'+esc(l.label)+'</b><br>';
+  if(l.groupName) html+='<span style="opacity:.8">'+esc(l.groupName)+'</span><br>';
+  html+='数值 <b>'+fmt(l.value)+'</b> · 占比 <b>'+(l.share*100).toFixed(1)+'%</b>';
+  if(l.groupName&&drill==null){
+    const g=groups[l.gidx];const inner=l.value/g.value*100;
+    html+='<br>组内占比 <b>'+inner.toFixed(1)+'%</b>';
+  }
+  tip.innerHTML=html;tip.style.display='block';
+  // 跟随光标，绝不压在命中矩形上；水平触边翻转，四边钳在卡片内
+  const card=cv.parentElement, cw=cv.clientWidth, ch=cv.clientHeight;
+  const flip=mx>cw*0.6;
+  let left=cv.offsetLeft+(flip?mx-tip.offsetWidth-12:mx+14);
+  left=Math.max(8,Math.min(left,card.clientWidth-tip.offsetWidth-8));
+  let top=cv.offsetTop+my+16;
+  if(top+tip.offsetHeight>cv.offsetTop+ch-6) top=cv.offsetTop+my-tip.offsetHeight-10; // 底部触边翻到光标上方
+  top=Math.max(cv.offsetTop+4,top);
+  tip.style.left=left+'px';tip.style.top=top+'px';
+}
+
+function updateDetail(){
+  if(hoverKey){
+    const l=currentLeaves().find(x=>x.key===hoverKey);
+    if(l){detail.innerHTML='📌 <b>'+esc(l.label)+'</b>'+(l.groupName?' · '+esc(l.groupName):'')+' · 数值 <b>'+fmt(l.value)+'</b> · 占比 <b>'+(l.share*100).toFixed(1)+'%</b>'+(drill==null&&l.groupName?' · 💡 点击下钻':(mode==='grouped'?' · ↑ 返回上级':''));return}
+  }
+  const top=RAW.top;
+  detail.innerHTML=(mode==='grouped'?'▤ 双层树状图 · '+(drill!=null?'已下钻 <b>'+esc(groups[drill].name)+'</b>':'顶层'):'▦ 一维树状图')+' · 总面积 <b>'+fmt(TOTAL)+'</b> · 最大 <b>'+esc(top.label)+'</b> '+ (top.share*100).toFixed(1)+'% · 💡 点击矩形下钻 / 返回上级';
+}
+
+function updateCrumb(){
+  if(mode!=='grouped'){crumbEl.innerHTML='<span style="color:var(--faint)">一维平铺 · 无层级</span>';return}
+  crumbEl.innerHTML='';
+  const mk=(label,cur,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=label;if(cur)b.className='cur';if(fn)b.onclick=fn;crumbEl.appendChild(b)};
+  if(drill==null){mk('全部',true,null)}
+  else{mk('全部',false,()=>goBack());crumbEl.insertAdjacentHTML('beforeend','<span>›</span>');mk(groups[drill].name,true,null)}
+}
+
+function renderLegend(){
+  const cols=pal();
+  let chips=[];
+  if(mode==='grouped'&&drill==null){
+    chips=groups.map((g,gi)=>{const keys=g.children.map((c,ci)=>'g'+gi+'c'+ci);const allOff=keys.every(k=>hidden.has(k));
+      return {key:'g'+gi,label:g.name,col:cols[gi%cols.length],off:allOff}});
+  }else{
+    chips=currentLeaves().map(l=>({key:l.key,label:l.label,col:cols[(l.gidx>=0?l.gidx:parseInt(l.key.slice(1)))%cols.length],off:hidden.has(l.key)}));
+  }
+  legendEl.innerHTML=chips.map(c=>'<button type="button" class="chip '+(c.off?'off':'')+'" data-k="'+esc(c.key)+'" aria-pressed="'+(!c.off)+'"><i style="background:'+c.col+'"></i>'+esc(c.label)+'</button>').join('')+'<span style="font-family:var(--mono);font-size:11px;color:var(--faint);margin-left:6px">点击显隐</span>';
+}
+
+cv.addEventListener('mousemove',e=>{
+  const r=cv.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  const l=hitTest(mx,my);
+  const k=l?l.key:null;
+  if(k!==hoverKey){hoverKey=k;draw()}
+  if(l)showTip(l,mx,my);else tip.style.display='none';
+});
+cv.addEventListener('mouseleave',()=>{hoverKey=null;tip.style.display='none';draw()});
+cv.addEventListener('click',e=>{
+  if(mode!=='grouped')return;
+  const r=cv.getBoundingClientRect();const l=hitTest(e.clientX-r.left,e.clientY-r.top);
+  if(l&&drill==null){drill=l.gidx;hoverKey=null;tip.style.display='none';document.getElementById('btnBack').classList.add('show');setOn(btnBack,true);renderLegend();draw()}
+});
+function setOn(el,on){el.classList.toggle('on',on);el.setAttribute('aria-pressed',String(on))}
+const btnBack=document.getElementById('btnBack');
+function goBack(){drill=null;hoverKey=null;tip.style.display='none';btnBack.classList.remove('show');setOn(btnBack,false);renderLegend();draw()}
+btnBack.onclick=goBack;
+document.getElementById('btnLabels').onclick=e=>{showLabels=!showLabels;setOn(e.currentTarget,showLabels);draw()};
+document.getElementById('btnValues').onclick=e=>{showValues=!showValues;setOn(e.currentTarget,showValues);draw()};
+document.getElementById('btnGroups').onclick=e=>{showGroups=!showGroups;setOn(e.currentTarget,showGroups);draw()};
+legendEl.addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const k=b.dataset.k;
+  if(mode==='grouped'&&drill==null&&k.startsWith('g')&&!k.includes('c')){
+    // 顶层按组显隐 = 整组子项一起显隐
+    const gi=+k.slice(1);const g=groups[gi];
+    g.children.forEach((c,ci)=>{const ck='g'+gi+'c'+ci;hidden.has(ck)?hidden.delete(ck):hidden.add(ck)});
+  }else{hidden.has(k)?hidden.delete(k):hidden.add(k)}
+  renderLegend();draw();updateDetail()});
+document.getElementById('paletteSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;paletteKey=b.dataset.palette;document.documentElement.dataset.palette=paletteKey;document.querySelectorAll('#paletteSeg button').forEach(x=>setOn(x,x===b));renderLegend();draw()});
+document.getElementById('themeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.dataset.theme=b.dataset.theme;document.querySelectorAll('#themeSeg button').forEach(x=>setOn(x,x===b));renderLegend();draw()});
+document.querySelectorAll('#themeSeg button').forEach(b=>setOn(b,theme()===b.dataset.theme));
+renderLegend();draw();
+// 监听视口变化重绘会与截图工具的视口扩展死锁，故不做 resize 重绘（画布 width:100% 随容器缩放）
+// @@SCRIPT2@@
+</script>
+</body>
+</html>

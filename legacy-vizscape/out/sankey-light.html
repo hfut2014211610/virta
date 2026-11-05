@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>流量转化路径 · vizscape sankey-basic</title>
+<style>
+:root{--sans:"Noto Sans SC",system-ui,sans-serif;--serif:"Fraunces",Georgia,serif;--mono:"JetBrains Mono",ui-monospace,monospace}
+html[data-theme="light"]{--bg:#f6f3ec;--paper:#fffdf7;--ink:#171a1e;--muted:#6b6f6a;--faint:#9a9d96;--line:#e2ded2;--line2:#d1ccc0;--acc:#0f766e;--neg:#b5412f;--shadow:0 10px 36px rgba(23,26,30,.08);--grid:rgba(23,26,30,.06);--tip:#171a1e;--tipink:#fffdf7}
+html[data-theme="dark"]{--bg:#0d0e0a;--paper:#131410;--ink:#ede9dc;--muted:#9aa08a;--faint:#5e6450;--line:#23261d;--line2:#2e3323;--acc:#c6f13f;--neg:#ff6b4a;--shadow:0 10px 36px rgba(0,0,0,.4);--grid:rgba(237,233,220,.05);--tip:#ede9dc;--tipink:#0d0e0a}
+html[data-palette="cinnabar"]{--acc:#b5412f}
+html[data-palette="patina"]{--acc:#2f7f78}
+html[data-palette="blueprint"]{--acc:#2f5fd0}
+html[data-palette="inkwash"]{--acc:#4b5563}
+html[data-palette="mono"]{--acc:#171a1e}
+html[data-palette="sundown"]{--acc:#c2410c}
+html[data-palette="dunhuang"]{--acc:#b34a38}
+html[data-palette="aurora"]{--acc:#0d9488}
+html[data-palette="morandi"]{--acc:#8b9dad}
+html[data-theme="dark"][data-palette="mono"]{--acc:#ede9dc}
+html[data-theme="dark"][data-palette="sundown"]{--acc:#fb923c}
+html[data-theme="dark"][data-palette="dunhuang"]{--acc:#e07a5f}
+html[data-theme="dark"][data-palette="aurora"]{--acc:#5eead4}
+html[data-theme="dark"][data-palette="morandi"]{--acc:#b8c7d4}
+*{box-sizing:border-box;margin:0;padding:0}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:4px}
+body{background:radial-gradient(circle at 12% 8%,color-mix(in srgb,var(--acc) 12%,transparent),transparent 28rem),radial-gradient(circle at 88% 4%,rgba(232,93,63,.08),transparent 30rem),var(--bg);color:var(--ink);font-family:var(--sans);padding:28px;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:56px 56px;opacity:.6}
+.wrap{max-width:1080px;margin:0 auto;position:relative}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1.5px solid var(--ink);padding-bottom:16px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--acc);text-transform:uppercase}
+h1{font-family:var(--serif);font-weight:300;font-size:clamp(32px,5vw,52px);letter-spacing:-.02em}
+h1 em{font-style:italic;color:var(--acc)}
+.seg{display:flex;background:var(--paper);border:1px solid var(--line2);border-radius:99px;padding:3px;box-shadow:var(--shadow)}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:13px;padding:8px 14px;border-radius:99px;cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.deck{display:flex;flex-direction:column;gap:10px;margin:16px 0}
+.trow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:9px 12px}
+.trow .label{min-width:34px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.trow .spacer{flex:1}
+.trow .seg{box-shadow:none}
+.seg.wrap{flex-wrap:wrap;border-radius:18px}
+.seg button[disabled],.toggle[disabled]{opacity:.35;pointer-events:none}
+.toggle{appearance:none;border:1px solid var(--line2);background:var(--paper);color:var(--muted);border-radius:99px;padding:8px 14px;font-size:13px;cursor:pointer}
+.toggle.on{background:var(--acc);border-color:var(--acc);color:var(--paper);font-weight:700}
+.summary{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 14px}
+.sum-card{display:inline-flex;align-items:baseline;gap:8px;border:1px solid var(--line2);border-radius:14px;padding:9px 12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sum-card b{color:var(--ink);font-size:19px;font-weight:500;letter-spacing:-.02em}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);position:relative}
+canvas{width:100%;display:block;cursor:default}
+#tooltip{position:absolute;pointer-events:none;background:var(--tip);color:var(--tipink);padding:10px 12px;border-radius:10px;font-family:var(--mono);font-size:12px;line-height:1.7;display:none;z-index:10;min-width:150px;box-shadow:0 10px 30px rgba(0,0,0,.25);white-space:nowrap}
+#tooltip b{color:var(--acc)}
+#detail{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;line-height:1.8;min-height:44px}
+#detail b{color:var(--ink)}
+.table{width:100%;border-collapse:collapse;font-size:13px;margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.table th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-align:left;color:var(--muted);border-bottom:1.5px solid var(--ink);padding:10px}
+.table td{border-bottom:1px solid var(--line);padding:9px 10px}
+.table td.num,.table th.num{text-align:right;font-family:var(--mono)}
+.table tbody tr:hover td{background:color-mix(in srgb,var(--acc) 5%,transparent)}
+footer{margin-top:18px;font-family:var(--mono);font-size:11px;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.hint{font-size:12px;color:var(--faint);margin-top:8px}
+.quality{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--paper);border-radius:16px;padding:14px;margin:16px 0 8px;box-shadow:0 1px 0 rgba(0,0,0,.02) inset}
+.quality.warn{border-left-color:var(--neg)}
+.quality-head{display:flex;justify-content:space-between;gap:14px;align-items:center;border-bottom:1px dashed var(--line);padding-bottom:10px;margin-bottom:10px}
+.quality-head h2{font-family:var(--serif);font-size:20px;font-weight:420;letter-spacing:-.02em}
+.quality-score{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;line-height:1.6}.quality-score b{display:block;color:var(--acc);font-size:13px}.quality.warn .quality-score b{color:var(--neg)}
+.quality-grid{display:flex;gap:8px;flex-wrap:wrap}.qs{border:1px solid var(--line2);border-radius:999px;padding:5px 9px;font-family:var(--mono);font-size:11px;color:var(--muted)}.qs b{color:var(--ink);font-weight:500}
+.quality-warnings{margin:11px 0 0;padding-left:18px;color:var(--neg);font-size:12px;line-height:1.75}.quality-ok{margin:11px 0 0;color:var(--acc);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">vizscape · sankey-basic · LIGHT</div><h1>流量转化路径 <em>· 桑基图</em></h1></div>
+  <div class="seg" id="themeSeg" role="group" aria-label="主题"><button type="button" data-theme="light" aria-pressed="false">☀ 浅色</button><button type="button" data-theme="dark" aria-pressed="false">☾ 深色</button></div>
+</header>
+
+<div class="deck">
+  <div class="trow">
+    <span class="label">标签</span>
+    <div class="seg" id="labelSeg" role="group" aria-label="标签"><button type="button" data-label="both" class="on" aria-pressed="true">名称+值</button><button type="button" data-label="name" aria-pressed="false">仅名称</button><button type="button" data-label="none" aria-pressed="false">隐藏</button></div>
+    <span class="label">密度</span>
+    <div class="seg" id="densitySeg" role="group" aria-label="密度"><button type="button" data-density="comfort" class="on" aria-pressed="true">舒适</button><button type="button" data-density="compact" aria-pressed="false">紧凑</button></div>
+    <span class="spacer"></span>
+    <button class="toggle on" id="btnFlow" type="button" aria-pressed="true">〰 流带渐变</button>
+    <button class="toggle" id="btnReplay" type="button">▶ 重播动画</button>
+  </div>
+  <div class="trow">
+    <span class="label">风格</span>
+    <div class="seg wrap" id="paletteSeg" role="group" aria-label="配色风格">
+      <button type="button" data-palette="signal" class="on" aria-pressed="true">Signal</button>
+      <button type="button" data-palette="cinnabar" aria-pressed="false">朱砂</button>
+      <button type="button" data-palette="patina" aria-pressed="false">铜绿</button>
+      <button type="button" data-palette="blueprint" aria-pressed="false">蓝图</button>
+      <button type="button" data-palette="inkwash" aria-pressed="false">水墨</button>
+      <button type="button" data-palette="mono" aria-pressed="false">单色</button>
+      <button type="button" data-palette="sundown" aria-pressed="false">落日</button>
+      <button type="button" data-palette="dunhuang" aria-pressed="false">敦煌</button>
+      <button type="button" data-palette="aurora" aria-pressed="false">极光</button>
+      <button type="button" data-palette="morandi" aria-pressed="false">莫兰迪</button>
+    </div>
+  </div>
+</div>
+
+<div class="summary" aria-label="摘要"><span class="sum-card"><b>14</b>节点</span><span class="sum-card"><b>18</b>流带</span><span class="sum-card"><b>7</b>层级</span><span class="sum-card"><b>44,600</b>总流量</span></div>
+
+<div class="card">
+  <canvas id="chart" role="img" aria-label="流量转化路径 桑基图，14 节点 18 条流带，7 层；明细见下方表格"></canvas>
+  <div id="tooltip"></div>
+  <div id="detail"></div>
+  <div class="hint">读法：流带宽度 ∝ 流量；节点高度 = 经过它的总流量。悬停节点高亮其上下游链路；悬停流带看单条流量与占比。<b>节点可上下拖动微调布局</b>（流带自动跟随）。数据若有循环依赖，会在识别报告中剔除最弱成环边。</div>
+</div>
+
+<section class="quality ok" aria-label="数据识别报告"><div class="quality-head"><div><p class="eyebrow">data quality</p><h2>数据识别报告</h2></div><div class="quality-score"><b>高置信识别</b>sankey · source → target</div></div><div class="quality-grid"><span class="qs"><b>节点</b> 14</span><span class="qs"><b>流带</b> 18</span><span class="qs"><b>层级</b> 7</span><span class="qs"><b>总流量</b> 44,600</span><span class="qs"><b>源列</b> source</span><span class="qs"><b>目标列</b> target</span><span class="qs"><b>数值列</b> value</span></div><p class="quality-ok">有向无环；流带与节点可直接引用。</p></section>
+
+<table class="table"><thead><tr><th>源</th><th>目标</th><th class="num">流量</th><th class="num">占比</th></tr></thead><tbody><tr><td>搜索引擎</td><td>首页</td><td class="num">6,800</td><td class="num">15.2%</td></tr><tr><td>首页</td><td>产品详情</td><td class="num">5,200</td><td class="num">11.7%</td></tr><tr><td>活动页</td><td>产品详情</td><td class="num">4,600</td><td class="num">10.3%</td></tr><tr><td>直接访问</td><td>首页</td><td class="num">4,200</td><td class="num">9.4%</td></tr><tr><td>产品详情</td><td>加入购物车</td><td class="num">3,800</td><td class="num">8.5%</td></tr><tr><td>搜索引擎</td><td>活动页</td><td class="num">3,100</td><td class="num">7.0%</td></tr><tr><td>加入购物车</td><td>下单支付</td><td class="num">2,900</td><td class="num">6.5%</td></tr><tr><td>社交媒体</td><td>活动页</td><td class="num">2,800</td><td class="num">6.3%</td></tr><tr><td>下单支付</td><td>支付成功</td><td class="num">2,600</td><td class="num">5.8%</td></tr><tr><td>社交媒体</td><td>首页</td><td class="num">2,400</td><td class="num">5.4%</td></tr><tr><td>邮件营销</td><td>活动页</td><td class="num">1,200</td><td class="num">2.7%</td></tr><tr><td>活动页</td><td>注册页</td><td class="num">1,100</td><td class="num">2.5%</td></tr><tr><td>首页</td><td>帮助中心</td><td class="num">900</td><td class="num">2.0%</td></tr><tr><td>产品详情</td><td>直接咨询</td><td class="num">800</td><td class="num">1.8%</td></tr><tr><td>注册页</td><td>加入购物车</td><td class="num">700</td><td class="num">1.6%</td></tr><tr><td>帮助中心</td><td>产品详情</td><td class="num">600</td><td class="num">1.3%</td></tr><tr><td>下单支付</td><td>支付失败</td><td class="num">600</td><td class="num">1.3%</td></tr><tr><td>直接咨询</td><td>下单支付</td><td class="num">300</td><td class="num">0.7%</td></tr></tbody></table>
+
+<footer><span>vizscape · sankey-basic · 桑基图 · 纯 Canvas 无 CDN</span><span>输入兼容：source / target / value · 自动合并重复边 · DAG 校验</span></footer>
+</div>
+
+<script>
+const RAW={"nodes": [{"name": "直接访问", "depth": 0, "value": 4200.0}, {"name": "首页", "depth": 1, "value": 13400.0}, {"name": "搜索引擎", "depth": 0, "value": 9900.0}, {"name": "社交媒体", "depth": 0, "value": 5200.0}, {"name": "活动页", "depth": 1, "value": 7100.0}, {"name": "邮件营销", "depth": 0, "value": 1200.0}, {"name": "产品详情", "depth": 3, "value": 10400.0}, {"name": "帮助中心", "depth": 2, "value": 900.0}, {"name": "注册页", "depth": 2, "value": 1100.0}, {"name": "加入购物车", "depth": 4, "value": 4500.0}, {"name": "直接咨询", "depth": 4, "value": 800.0}, {"name": "下单支付", "depth": 5, "value": 3200.0}, {"name": "支付成功", "depth": 6, "value": 2600.0}, {"name": "支付失败", "depth": 6, "value": 600.0}], "links": [{"s": 0, "t": 1, "v": 4200.0}, {"s": 2, "t": 1, "v": 6800.0}, {"s": 3, "t": 1, "v": 2400.0}, {"s": 2, "t": 4, "v": 3100.0}, {"s": 3, "t": 4, "v": 2800.0}, {"s": 5, "t": 4, "v": 1200.0}, {"s": 1, "t": 6, "v": 5200.0}, {"s": 1, "t": 7, "v": 900.0}, {"s": 4, "t": 6, "v": 4600.0}, {"s": 4, "t": 8, "v": 1100.0}, {"s": 6, "t": 9, "v": 3800.0}, {"s": 6, "t": 10, "v": 800.0}, {"s": 7, "t": 6, "v": 600.0}, {"s": 9, "t": 11, "v": 2900.0}, {"s": 8, "t": 9, "v": 700.0}, {"s": 10, "t": 11, "v": 300.0}, {"s": 11, "t": 12, "v": 2600.0}, {"s": 11, "t": 13, "v": 600.0}], "counts": {"nodes": 14, "links": 18, "layers": 7, "total": 44600.0}, "quality": {"rows": 18, "kept": 18, "warnings": [], "confidence": "high", "mapping": {"source": "source", "target": "target", "value": "value"}}};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let density='comfort', paletteKey='signal', labelMode='both', flowGradient=true;
+let hoverNode=-1, hoverLink=-1, dragNode=-1, dragDY=0, dragging=false;
+const PALETTES={
+  signal:{light:['#0f766e','#e85d3f','#d99a06','#2563eb','#7c3aed','#059669','#db2777','#0891b2'],dark:['#c6f13f','#ff6b4a','#ffb224','#4de3c2','#7dd3fc','#f472b6','#a78bfa','#facc15']},
+  cinnabar:{light:['#b5412f','#d36a2e','#8a3324','#c08a2d','#6b4f2c','#a16207','#0f766e','#3f3f46'],dark:['#ff8a5c','#ffd166','#ef4444','#fbbf24','#f97316','#fef08a','#5eead4','#fda4af']},
+  patina:{light:['#2f7f78','#386641','#588157','#a3b18a','#c69a4a','#344e41','#7f5539','#40916c'],dark:['#67a58d','#a7c957','#d2b46a','#8ecae6','#c9f2c7','#ffd166','#bde0fe','#80ed99']},
+  blueprint:{light:['#2f5fd0','#0b3b75','#3b82f6','#60a5fa','#1d4ed8','#0f766e','#475569','#93c5fd'],dark:['#7dd3fc','#38bdf8','#93c5fd','#a5f3fc','#60a5fa','#22d3ee','#e0f2fe','#67e8f9']},
+  inkwash:{light:['#171a1e','#3f4650','#69707d','#9299a5','#6b7280','#a3a3a3','#525252','#d4d4d4'],dark:['#ede9dc','#d6d3c8','#b8b4a8','#8f8b80','#6e6a61','#4b4841','#a8a29e','#f5f5f4']},
+  mono:{light:['#171a1e','#2f343c','#555d68','#7a828d','#a0a6af','#c5c8cd','#3f4650','#6b6f6a'],dark:['#ede9dc','#c9c6ba','#a5a296','#817e73','#5e5b52','#f5f5f4','#b9b5a8','#8f8b80']},
+  sundown:{light:['#c2410c','#ea580c','#f59e0b','#b91c1c','#db2777','#7c2d12','#f97316','#a16207'],dark:['#fb923c','#fbbf24','#f87171','#f472b6','#fdba74','#fde047','#fca5a5','#e879f9']},
+  dunhuang:{light:['#35618e','#4d8a6a','#b34a38','#c89b3c','#7a5c3e','#2f4f4f','#8e5a2b','#5b7a8c'],dark:['#7fb3d5','#7fc7a3','#e07a5f','#e5c07b','#b0927a','#81b29a','#d4a373','#a8c3cf']},
+  aurora:{light:['#0d9488','#0891b2','#7c3aed','#db2777','#059669','#2563eb','#c026d3','#0f766e'],dark:['#5eead4','#67e8f9','#a78bfa','#f0abfc','#6ee7b7','#93c5fd','#e879f9','#4ade80']},
+  morandi:{light:['#8b9dad','#c9a7a0','#a8b5a0','#b8b0a4','#9d8fa8','#c4b198','#8fa39e','#ad9b8f'],dark:['#b8c7d4','#dbc4be','#c3cfc0','#d0c9be','#c0b5c9','#d9cbb8','#b5c4bf','#c9bcb0']}
+};
+const cv=document.getElementById('chart'), tip=document.getElementById('tooltip'), detail=document.getElementById('detail');
+const FONT='12px "Noto Sans SC", sans-serif';
+function theme(){return document.documentElement.dataset.theme}
+function pal(){const grp=PALETTES[paletteKey]||PALETTES.signal;return grp[theme()]||grp.light}
+function nodeColor(i){const p=pal();return p[i%p.length]}
+function hx(c){c=String(c).trim();if(c.startsWith('rgb')){const m=c.match(/\d+(\.\d+)?/g);return m.slice(0,3).map(Number)}c=c.replace('#','');return [parseInt(c.slice(0,2),16),parseInt(c.slice(2,4),16),parseInt(c.slice(4,6),16)]}
+function rgba(c,a){const[r,g,b]=hx(c);return `rgba(${r},${g},${b},${a})`}
+const fmtV=v=>Math.abs(v)>=1000?Math.round(v).toLocaleString():(Math.round(v*10)/10).toLocaleString();
+// —— 布局：分层 + 重心排序 + 垂直堆叠 ——
+let L=null; // {cols, x[], y[], h[], sY[], tY[], scale, nodeW, H, W}
+function layout(){
+  const nodes=RAW.nodes.map(n=>({...n})), links=RAW.links.map(l=>({...l}));
+  const maxDepth=Math.max(...nodes.map(n=>n.depth));
+  const cols=[]; for(let d=0;d<=maxDepth;d++)cols.push(nodes.map((n,i)=>i).filter(i=>nodes[i].depth===d));
+  // 重心排序：4 遍正反 sweep
+  const inL=nodes.map(()=>[]), outL=nodes.map(()=>[]);
+  links.forEach((l,li)=>{outL[l.s].push(li);inL[l.t].push(li)});
+  const yOf=i=>nodes[i]._y||0;
+  for(let pass=0;pass<4;pass++){
+    const fwd=pass%2===0;
+    const range=fwd?cols.slice(1):cols.slice(0,-1).reverse();
+    range.forEach(col=>{
+      col.forEach(i=>{
+        const ns=fwd?inL[i].map(li=>links[li].s):outL[i].map(li=>links[li].t);
+        if(ns.length)nodes[i]._bc=ns.reduce((s,j)=>s+yOf(j),0)/ns.length;
+      });
+      col.sort((a,b)=>((nodes[a]._bc??1e9)-(nodes[b]._bc??1e9)));
+      col.forEach((i,k)=>nodes[i]._y=k);
+    });
+  }
+  const r=cv.getBoundingClientRect(), W=r.width;
+  const gap=density==='comfort'?14:8, nodeW=14;
+  const LBL_R=90, LBL_L=90;
+  const availW=W-LBL_L-LBL_R-nodeW*1.4;
+  const colX=cols.map((_,d)=>LBL_L+(maxDepth?availW/maxDepth*d:availW/2));
+  const H=Math.max(320,Math.min(640,Math.max(...cols.map(c=>c.length))*52+40));
+  // scale：最长列塞满 H-24
+  let scale=1e18;
+  cols.forEach(col=>{
+    const sum=col.reduce((s,i)=>s+nodes[i].value,0);
+    if(sum>0)scale=Math.min(scale,(H-24-(col.length-1)*gap)/sum);
+  });
+  if(!isFinite(scale)||scale<=0)scale=1;
+  // 每列垂直居中堆叠
+  const yArr=new Array(nodes.length), hArr=new Array(nodes.length);
+  cols.forEach(col=>{
+    const sum=col.reduce((s,i)=>s+nodes[i].value,0)*scale+(col.length-1)*gap;
+    let y=(H-sum)/2;
+    col.forEach(i=>{yArr[i]=y;hArr[i]=Math.max(3,nodes[i].value*scale);y+=hArr[i]+gap});
+  });
+  // 手动拖拽覆盖
+  if(L&&L.yOverride){for(const[i,y]of Object.entries(L.yOverride)){yArr[+i]=y}}
+  // 流带端点堆叠 offset
+  const sOff=new Array(nodes.length).fill(0), tOff=new Array(nodes.length).fill(0);
+  const linkGeo=links.map(l=>{
+    const sy=yArr[l.s]+sOff[l.s], ty=yArr[l.t]+tOff[l.t], w=Math.max(1,l.v*scale);
+    sOff[l.s]+=l.v*scale; tOff[l.t]+=l.v*scale;
+    return {...l, sy, ty, w};
+  });
+  // 入边/出边按目标/源 y 排序可减少交叉：按 ty 重排输出顺序
+  nodes.forEach((n,i)=>{
+    const outs=linkGeo.filter(l=>l.s===i).sort((a,b)=>a.ty-b.ty);
+    let y=yArr[i];
+    outs.forEach(l=>{l.sy=y+l.w/2-l.w/2;l.sy=y;y+=l.w});
+    const ins=linkGeo.filter(l=>l.t===i).sort((a,b)=>a.sy-b.sy);
+    y=yArr[i];
+    ins.forEach(l=>{l.ty=y;y+=l.w});
+  });
+  return {cols, colX, yArr, hArr, linkGeo, nodeW, H, W, yOverride:(L&&L.yOverride)||{}};
+}
+let animStart=null;
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function draw(ts){
+  if(!L)return;
+  if(cv.getBoundingClientRect().width<40)return; // resize 中间态（如整页截图）保留 backing store
+  const dpr=window.devicePixelRatio||1;
+  cv.style.height=L.H+'px';
+  const r=cv.getBoundingClientRect();
+  cv.width=r.width*dpr; cv.height=r.height*dpr;
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  const cs=getComputedStyle(document.documentElement);
+  const ink=cs.getPropertyValue('--ink').trim(), faint=cs.getPropertyValue('--faint').trim(), acc=cs.getPropertyValue('--acc').trim(), line=cs.getPropertyValue('--line').trim();
+  g.clearRect(0,0,r.width,L.H); g.font=FONT;
+  const animP=(animStart===null||ts===undefined)?1:Math.min(1,(ts-animStart)/700);
+  const nodes=RAW.nodes;
+  // 流带
+  L.linkGeo.forEach((l,li)=>{
+    const x0=L.colX[nodes[l.s].depth]+L.nodeW, x1=L.colX[nodes[l.t].depth];
+    const mid=(x0+x1)/2;
+    const p=Math.max(0,Math.min(1,animP*1.4-nodes[l.s].depth*0.12));
+    if(p<=0)return;
+    const w=l.w*p;
+    const hl=hoverLink===li||hoverNode===l.s||hoverNode===l.t;
+    const dim=(hoverLink>=0||hoverNode>=0)&&!hl;
+    g.beginPath();
+    g.moveTo(x0,l.sy);
+    g.bezierCurveTo(mid,l.sy,mid,l.ty,x1,l.ty);
+    g.lineTo(x1,l.ty+w);
+    g.bezierCurveTo(mid,l.ty+w,mid,l.sy+w,x0,l.sy+w);
+    g.closePath();
+    if(flowGradient){
+      const grad=g.createLinearGradient(x0,0,x1,0);
+      grad.addColorStop(0,rgba(nodeColor(l.s),dim?0.05:(hl?0.62:0.34)));
+      grad.addColorStop(1,rgba(nodeColor(l.t),dim?0.05:(hl?0.62:0.34)));
+      g.fillStyle=grad;
+    }else{
+      g.fillStyle=rgba(nodeColor(l.s),dim?0.05:(hl?0.55:0.3));
+    }
+    g.fill();
+    if(hl){g.strokeStyle=rgba(nodeColor(l.s),0.8);g.lineWidth=1;g.stroke()}
+  });
+  // 节点
+  L.cols.forEach((col,d)=>{
+    const p=Math.max(0,Math.min(1,animP*1.4-d*0.12));
+    if(p<=0)return;
+    col.forEach(i=>{
+      const x=L.colX[d], y=L.yArr[i], h=L.hArr[i];
+      const hot=hoverNode===i;
+      const dim=hoverNode>=0&&!hot&&!(L.linkGeo.some(l=>(hoverNode===l.s&&l.t===i)||(hoverNode===l.t&&l.s===i)));
+      g.globalAlpha=p*(dim?0.3:1);
+      g.fillStyle=nodeColor(i);
+      g.beginPath(); g.roundRect(x,y,L.nodeW,h,3); g.fill();
+      if(hot){g.strokeStyle=acc;g.lineWidth=2;g.beginPath();g.roundRect(x-1.5,y-1.5,L.nodeW+3,h+3,4);g.stroke()}
+      g.globalAlpha=1;
+      // 标签
+      if(labelMode!=='none'&&h>=10){
+        const lastCol=d===L.cols.length-1;
+        const tx=lastCol?x-8:x+L.nodeW+8;
+        g.textAlign=lastCol?'right':'left';
+        g.textBaseline='middle';
+        g.fillStyle=hot?acc:ink;
+        g.font=hot?'bold 12px "Noto Sans SC", sans-serif':FONT;
+        const nm=nodes[i].name;
+        const label=labelMode==='both'?`${nm} ${fmtV(nodes[i].value)}`:nm;
+        g.fillText(label,tx,y+h/2,lastCol?86:86);
+        g.font=FONT;
+      }
+    });
+  });
+  g.globalAlpha=1;
+}
+function replay(){if(reduced)return;animStart=performance.now();requestAnimationFrame(animLoop)}
+function animLoop(ts){if(animStart===null)return;draw(ts);if(ts-animStart<1000)requestAnimationFrame(animLoop);else{animStart=null;draw()}}
+function hitNode(mx,my){
+  for(let i=0;i<RAW.nodes.length;i++){
+    const d=RAW.nodes[i].depth, x=L.colX[d], y=L.yArr[i], h=L.hArr[i];
+    if(mx>=x-4&&mx<=x+L.nodeW+4&&my>=y&&my<=y+h)return i;
+  }
+  return -1;
+}
+function hitLink(mx,my){
+  // 近似：采样 bezier 中点带
+  for(let li=0;li<L.linkGeo.length;li++){
+    const l=L.linkGeo[li], nodes=RAW.nodes;
+    const x0=L.colX[nodes[l.s].depth]+L.nodeW, x1=L.colX[nodes[l.t].depth];
+    if(mx<x0||mx>x1)continue;
+    const t=(mx-x0)/(x1-x0);
+    // cubic bezier 中控制点 y 不变（sy/ty），y(t) = 标准缓动插值
+    const u=1-t, y=u*u*u*l.sy+3*u*u*t*l.sy+3*u*t*t*l.ty+t*t*t*l.ty;
+    if(Math.abs(my-(y+l.w/2))<=l.w/2+3)return li;
+  }
+  return -1;
+}
+function showTipNode(i,mx,my){
+  const n=RAW.nodes[i];
+  const inS=L.linkGeo.filter(l=>l.t===i).reduce((s,l)=>s+l.v,0);
+  const outS=L.linkGeo.filter(l=>l.s===i).reduce((s,l)=>s+l.v,0);
+  tip.innerHTML=`<b>${esc(n.name)}</b><br>流入：<b>${fmtV(inS)}</b> · 流出：<b>${fmtV(outS)}</b><br>经过流量：<b>${fmtV(n.value)}</b>`;
+  tip.style.display='block';
+  const r=cv.getBoundingClientRect(), flip=mx>r.width*0.6;
+  tip.style.left=(cv.offsetLeft+(flip?mx-tip.offsetWidth-12:mx+14))+'px';
+  tip.style.top=(cv.offsetTop+Math.max(4,my-10))+'px';
+}
+function showTipLink(li,mx,my){
+  const l=L.linkGeo[li], nodes=RAW.nodes;
+  const total=L.linkGeo.reduce((s,x)=>s+x.v,0)/ (RAW.counts.layers>1?1:1);
+  tip.innerHTML=`<b>${esc(nodes[l.s].name)} → ${esc(nodes[l.t].name)}</b><br>流量：<b>${fmtV(l.v)}</b>（占源流出 ${(l.v/L.linkGeo.filter(x=>x.s===l.s).reduce((s,x)=>s+x.v,0)*100).toFixed(1)}%）`;
+  tip.style.display='block';
+  const r=cv.getBoundingClientRect(), flip=mx>r.width*0.6;
+  tip.style.left=(cv.offsetLeft+(flip?mx-tip.offsetWidth-12:mx+14))+'px';
+  tip.style.top=(cv.offsetTop+Math.max(4,my-10))+'px';
+}
+function updateDetail(){
+  if(hoverNode>=0){
+    const n=RAW.nodes[hoverNode];
+    const ins=L.linkGeo.filter(l=>l.t===hoverNode).map(l=>`${esc(RAW.nodes[l.s].name)} ${fmtV(l.v)}`).join('、')||'—';
+    const outs=L.linkGeo.filter(l=>l.s===hoverNode).map(l=>`${esc(RAW.nodes[l.t].name)} ${fmtV(l.v)}`).join('、')||'—';
+    detail.innerHTML=`◈ <b>${esc(n.name)}</b> · 入：${ins} · 出：${outs}`;
+  }else if(hoverLink>=0){
+    const l=L.linkGeo[hoverLink];
+    detail.innerHTML=`〰 <b>${esc(RAW.nodes[l.s].name)} → ${esc(RAW.nodes[l.t].name)}</b> · 流量 <b>${fmtV(l.v)}</b>`;
+  }else{
+    detail.innerHTML='💡 悬停节点看上下游链路 · 拖动节点可微调布局 · 流带宽度 ∝ 流量';
+  }
+}
+cv.addEventListener('mousemove',e=>{
+  const r=cv.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  if(dragging&&dragNode>=0){
+    L.yOverride[dragNode]=Math.max(4,Math.min(L.H-L.hArr[dragNode]-4,my-dragDY));
+    const save=L.yOverride; L=layout(); L.yOverride=save; Object.assign(L.yOverride,save);
+    draw(); return;
+  }
+  const ni=hitNode(mx,my);
+  const li=ni<0?hitLink(mx,my):-1;
+  if(ni!==hoverNode||li!==hoverLink){
+    hoverNode=ni; hoverLink=li;
+    cv.style.cursor=ni>=0?'grab':(li>=0?'pointer':'default');
+    if(ni>=0)showTipNode(ni,mx,my);
+    else if(li>=0)showTipLink(li,mx,my);
+    else tip.style.display='none';
+    draw(animStart!==null?performance.now():undefined);
+    updateDetail();
+  }else if(ni>=0||li>=0){
+    if(ni>=0)showTipNode(ni,mx,my);else showTipLink(li,mx,my);
+  }
+});
+cv.addEventListener('mousedown',e=>{
+  const r=cv.getBoundingClientRect(), ni=hitNode(e.clientX-r.left,e.clientY-r.top);
+  if(ni>=0){dragging=true;dragNode=ni;dragDY=(e.clientY-r.top)-L.yArr[ni];cv.style.cursor='grabbing';e.preventDefault()}
+});
+window.addEventListener('mouseup',()=>{dragging=false;dragNode=-1;cv.style.cursor='default'});
+cv.addEventListener('mouseleave',()=>{if(!dragging){hoverNode=-1;hoverLink=-1;tip.style.display='none';draw();updateDetail()}});
+function setOn(el,on){el.classList.toggle('on',on);el.setAttribute('aria-pressed',String(on))}
+document.getElementById('labelSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;labelMode=b.dataset.label;document.querySelectorAll('#labelSeg button').forEach(x=>setOn(x,x===b));draw()});
+document.getElementById('densitySeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;density=b.dataset.density;document.querySelectorAll('#densitySeg button').forEach(x=>setOn(x,x===b));L.yOverride={};L=layout();draw();replay()});
+document.getElementById('paletteSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;paletteKey=b.dataset.palette;document.documentElement.dataset.palette=paletteKey;document.querySelectorAll('#paletteSeg button').forEach(x=>setOn(x,x===b));draw()});
+document.getElementById('btnFlow').onclick=e=>{flowGradient=!flowGradient;setOn(e.currentTarget,flowGradient);draw()};
+document.getElementById('btnReplay').onclick=replay;
+document.getElementById('themeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.dataset.theme=b.dataset.theme;document.querySelectorAll('#themeSeg button').forEach(x=>setOn(x,x===b));draw()});
+document.querySelectorAll('#themeSeg button').forEach(b=>setOn(b,theme()===b.dataset.theme));
+L=layout();draw();updateDetail();
+if(!reduced){animStart=performance.now();requestAnimationFrame(animLoop)}
+// 监听视口变化重绘会与截图工具的视口扩展死锁，故不做 resize 重绘（画布 width:100% 随容器缩放）
+// @@SCRIPT2@@
+</script>
+</body>
+</html>

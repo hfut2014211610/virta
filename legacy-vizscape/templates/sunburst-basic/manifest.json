@@ -1,0 +1,16 @@
+{
+  "name": "sunburst-basic",
+  "view": "sunburst",
+  "title": "旭日图",
+  "input_types": ["csv", "json", "xlsx"],
+  "required_columns": ["level1", "value"],
+  "optional_columns": ["level2", "level3", "level4"],
+  "options": {
+    "theme": ["light", "dark"],
+    "palette": ["signal", "cinnabar", "patina", "blueprint", "inkwash", "mono", "sundown", "dunhuang", "aurora", "morandi"],
+    "arclabel": true,
+    "drilldown": true,
+    "replay": true
+  },
+  "description": "旭日图：层级占比的径向表达，与 treemap 互补（treemap 看面积，sunburst 看层级路径）。非数值列按列顺序自动作为层级路径（≤4 层），value 列聚合；父级值为子树和。内圈=第一层逐层向外，弧长∝数值；子节点继承父色做明度阶梯。交互：点击扇区下钻子树 + 面包屑返回 + 中心圆返回上级、悬停高亮祖先链并显示占当前视图/全局双占比、弧上标签开关（过小扇区自动省略）、径向扫入动画。占比 <0.5% 的不可读扇区计入识别报告。双主题可切换；离线单文件。"
+}

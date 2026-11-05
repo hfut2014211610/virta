@@ -1,0 +1,18 @@
+{
+  "name": "treemap-basic",
+  "view": "treemap",
+  "title": "矩形树状图",
+  "input_types": ["csv", "json", "xlsx"],
+  "required_columns": ["label", "value"],
+  "optional_columns": ["group"],
+  "options": {
+    "theme": ["light", "dark"],
+    "palette": ["signal", "cinnabar", "patina", "blueprint", "inkwash", "mono", "sundown", "dunhuang", "aurora", "morandi"],
+    "layout": ["squarify"],
+    "grouped": true,
+    "flat": true,
+    "show_labels": true,
+    "show_values": true
+  },
+  "description": "矩形树状图（treemap）：面积正比数值，看份额构成与层级，与 sunburst 互补（treemap 看面积，sunburst 看层级路径）。自适应：有 (分组, 子类, 数值) 走两层——按组分区、组内 squarify 平铺；只有 (标签, 数值) 走一维平铺。负值/0 值剔除并警告。悬浮浮窗跟随光标并触边翻转（不遮挡命中矩形），悬停显示数值/占比/组内占比；点击下钻到子类，面包屑或返回按钮回顶层；图例显隐；10 套配色风格；双主题。squarify 布局近似保持方块比例，可读性优于普通 slice-dice。输入兼容：group+label+value / label+value。"
+}

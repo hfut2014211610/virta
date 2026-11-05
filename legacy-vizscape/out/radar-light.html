@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sample-radar · vizscape radar-basic</title>
+<style>
+:root{--sans:"Noto Sans SC",system-ui,sans-serif;--serif:"Fraunces",Georgia,serif;--mono:"JetBrains Mono",ui-monospace,monospace}
+html[data-theme="light"]{--bg:#f6f3ec;--paper:#fffdf7;--ink:#171a1e;--muted:#6b6f6a;--faint:#9a9d96;--line:#e2ded2;--line2:#d1ccc0;--acc:#0f766e;--neg:#b5412f;--shadow:0 10px 36px rgba(23,26,30,.08);--grid:rgba(23,26,30,.06);--tip:#171a1e;--tipink:#fffdf7}
+html[data-theme="dark"]{--bg:#0d0e0a;--paper:#131410;--ink:#ede9dc;--muted:#9aa08a;--faint:#5e6450;--line:#23261d;--line2:#2e3323;--acc:#c6f13f;--neg:#ff6b4a;--shadow:0 10px 36px rgba(0,0,0,.4);--grid:rgba(237,233,220,.05);--tip:#ede9dc;--tipink:#0d0e0a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);padding:28px;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:56px 56px;opacity:.6}
+.wrap{max-width:1080px;margin:0 auto;position:relative}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1.5px solid var(--ink);padding-bottom:16px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--acc);text-transform:uppercase}
+h1{font-family:var(--serif);font-weight:300;font-size:clamp(32px,5vw,52px);letter-spacing:-.02em}
+h1 em{font-style:italic;color:var(--acc)}
+.seg{display:flex;background:var(--paper);border:1px solid var(--line2);border-radius:99px;padding:3px;box-shadow:var(--shadow)}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:13px;padding:8px 14px;border-radius:99px;cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0}
+.toolbar .label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.toggle{appearance:none;border:1px solid var(--line2);background:var(--paper);color:var(--muted);border-radius:99px;padding:8px 14px;font-size:13px;cursor:pointer}
+.toggle.on{background:var(--acc);border-color:var(--acc);color:var(--paper);font-weight:700}
+.summary{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 14px}
+.sum-card{display:inline-flex;align-items:baseline;gap:8px;border:1px solid var(--line2);border-radius:14px;padding:9px 12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sum-card b{color:var(--ink);font-size:19px;font-weight:500;letter-spacing:-.02em}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);position:relative}
+#legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:transparent;color:var(--ink);border-radius:99px;padding:6px 12px;font-size:12px;cursor:pointer;transition:.2s}
+.chip i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.chip.off{opacity:.38;text-decoration:line-through}
+canvas{width:100%;height:480px;display:block;cursor:crosshair}
+#tooltip{position:absolute;pointer-events:none;background:var(--tip);color:var(--tipink);padding:10px 12px;border-radius:10px;font-family:var(--mono);font-size:12px;line-height:1.7;display:none;z-index:10;min-width:180px;max-width:280px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+#tooltip b{color:var(--acc)}
+#detail{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;line-height:1.8;min-height:44px}
+#detail b{color:var(--ink)}
+.table{width:100%;border-collapse:collapse;font-size:13px;margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.table th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-align:left;color:var(--muted);border-bottom:1.5px solid var(--ink);padding:10px}
+.table td{border-bottom:1px solid var(--line);padding:9px 10px}
+.table td.num,.table th.num{text-align:right;font-family:var(--mono)}
+footer{margin-top:18px;font-family:var(--mono);font-size:11px;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.hint{font-size:12px;color:var(--faint);margin-top:8px}
+.quality{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--paper);border-radius:16px;padding:14px;margin:16px 0 8px;box-shadow:0 1px 0 rgba(0,0,0,.02) inset}
+.quality.warn{border-left-color:var(--neg)}
+.quality-head{display:flex;justify-content:space-between;gap:14px;align-items:center;border-bottom:1px dashed var(--line);padding-bottom:10px;margin-bottom:10px}
+.quality-head h2{font-family:var(--serif);font-size:20px;font-weight:420;letter-spacing:-.02em}
+.quality-score{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;line-height:1.6}.quality-score b{display:block;color:var(--acc);font-size:13px}.quality.warn .quality-score b{color:var(--neg)}
+.quality-grid{display:flex;gap:8px;flex-wrap:wrap}.qs{border:1px solid var(--line2);border-radius:999px;padding:5px 9px;font-family:var(--mono);font-size:11px;color:var(--muted)}.qs b{color:var(--ink);font-weight:500}
+.quality-warnings{margin:11px 0 0;padding-left:18px;color:var(--neg);font-size:12px;line-height:1.75}.quality-ok{margin:11px 0 0;color:var(--acc);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">vizscape · radar-basic · LIGHT</div><h1>sample-radar <em>· 雷达图</em></h1></div>
+  <div class="seg" id="themeSeg" role="group" aria-label="主题"><button type="button" data-theme="light" aria-pressed="false">☀ 浅色</button><button type="button" data-theme="dark" aria-pressed="false">☾ 深色</button></div>
+</header>
+
+<div class="toolbar">
+  <span class="label">填充</span>
+  <button class="toggle on" id="btnFill" type="button" aria-pressed="true">◕ 填充多边形</button>
+  <button class="toggle on" id="btnWeb" type="button" aria-pressed="true">✳ 网格与轴</button>
+  <button class="toggle on" id="btnTick" type="button" aria-pressed="true">％ 轴刻度环</button>
+  <button class="toggle on" id="btnVertex" type="button" aria-pressed="true">● 顶点数值</button>
+</div>
+
+<div class="summary" aria-label="摘要"><span class="sum-card"><b>5</b>轴数</span><span class="sum-card"><b>3</b>对比项</span><span class="sum-card"><b>产品B</b>领先</span><span class="sum-card"><b>2.11</b>领先覆盖</span><span class="sum-card"><b>按轴 max=1</b>归一化</span></div>
+
+<div class="card">
+  <div id="legend"></div>
+  <canvas id="chart" role="img" aria-label="sample-radar 雷达图，5 轴 × 3 对比项，领先 产品B；明细见下方表格"></canvas>
+  <div id="tooltip"></div>
+  <div id="detail"></div>
+  <div class="hint">读法：每个方向是一个维度轴，多边形覆盖面积越大越均衡占优；凹陷处是短板。各轴按该轴最大值归一化（解决量纲不同），面积仅用于同图对比。支持：填充/描边 · 网格与轴 · 轴刻度环 · 顶点数值 · 悬浮命中 · 图例显隐</div>
+</div>
+
+<section class="quality ok" aria-label="数据识别报告"><div class="quality-head"><div><p class="eyebrow">data quality</p><h2>数据识别报告</h2></div><div class="quality-score"><b>高置信识别</b>radar · 5 轴 × 3 项</div></div><div class="quality-grid"><span class="qs"><b>模式</b> radar</span><span class="qs"><b>轴数</b> 5</span><span class="qs"><b>对比项</b> 3</span><span class="qs"><b>分类列</b> 维度</span><span class="qs"><b>数值列</b> 产品A, 产品B, 产品C</span><span class="qs"><b>领先</b> 产品B</span><span class="qs"><b>归一化</b> 按轴 max=1</span></div><p class="quality-ok">各轴按最大值归一化；面积与形状可直接对比。</p></section>
+
+<table class="table"><thead><tr><th>对比项</th><th class="num">易用性</th><th class="num">性能</th><th class="num">安全</th><th class="num">成本</th><th class="num">生态</th><th class="num">覆盖面积</th></tr></thead><tbody><tr><td>产品A</td><td class="num">4.5</td><td class="num">3.2</td><td class="num">4.8</td><td class="num">3.9</td><td class="num">2.8</td><td class="num">1.62</td></tr><tr><td>产品B</td><td class="num">3.8</td><td class="num">4.7</td><td class="num">4.2</td><td class="num">4.6</td><td class="num">4.3</td><td class="num">2.11</td></tr><tr><td>产品C</td><td class="num">4.1</td><td class="num">3.9</td><td class="num">3.5</td><td class="num">4.4</td><td class="num">3.7</td><td class="num">1.74</td></tr></tbody></table>
+
+<footer><span>vizscape · radar-basic · 多轴评分 · 纯 Canvas 无 CDN</span><span>输入兼容：宽表（行=轴）/ label+value / label+series+value / ECharts JSON</span></footer>
+</div>
+
+<script>
+const RAW={"axes": [{"label": "易用性", "max": 4.5, "min": 0}, {"label": "性能", "max": 4.7, "min": 0}, {"label": "安全", "max": 4.8, "min": 0}, {"label": "成本", "max": 4.6, "min": 0}, {"label": "生态", "max": 4.3, "min": 0}], "items": [{"name": "产品A", "values": [4.5, 3.2, 4.8, 3.9, 2.8], "norm": [1.0, 0.6808510638297872, 1.0, 0.8478260869565218, 0.6511627906976744], "area": 1.6228656281946068, "avg": 0.8359679882967967, "min_i": 4, "max_i": 0}, {"name": "产品B", "values": [3.8, 4.7, 4.2, 4.6, 4.3], "norm": [0.8444444444444444, 1.0, 0.8750000000000001, 1.0, 1.0], "area": 2.110817101443966, "avg": 0.943888888888889, "min_i": 0, "max_i": 1}, {"name": "产品C", "values": [4.1, 3.9, 3.5, 4.4, 3.7], "norm": [0.911111111111111, 0.8297872340425532, 0.7291666666666667, 0.9565217391304349, 0.8604651162790699], "area": 1.7430860384474887, "avg": 0.857410373445967, "min_i": 2, "max_i": 3}]};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const axes=RAW.axes, items=RAW.items, nax=axes.length, TAU=Math.PI*2;
+let hidden=new Set(), hoverI=-1;
+let showFill=true, showWeb=true, showTick=true, showVertex=true;
+const PALETTE={light:['#0f766e','#e85d3f','#d99a06','#2563eb','#7c3aed','#059669','#db2777','#0891b2'],dark:['#c6f13f','#ff6b4a','#ffb224','#4de3c2','#7dd3fc','#f472b6','#a78bfa','#facc15']};
+const cv=document.getElementById('chart'), tip=document.getElementById('tooltip'), detail=document.getElementById('detail'), legendEl=document.getElementById('legend');
+const FONT='12px JetBrains Mono, monospace';
+function theme(){return document.documentElement.dataset.theme}
+function colors(){return PALETTE[theme()]||PALETTE.light}
+function fmt(v){return Math.abs(v)>=10?Math.round(v).toLocaleString():(+v.toFixed(2)).toLocaleString()}
+function visItems(){return items.map((it,i)=>({it,i})).filter(x=>!hidden.has(x.i))}
+function angleAt(k){return -Math.PI/2 + k*TAU/nax}
+function geom(){
+  const r=cv.getBoundingClientRect(), w=r.width, h=r.height;
+  const padX=92, padY=54;                       // 左右留轴标签（含 max），上下留轴标签
+  const cx=w/2, cy=h/2+4;
+  const R=Math.max(30, Math.min(w/2-padX, h/2-padY));
+  return {w,h,cx,cy,R};
+}
+function ptAt(k,radius){const g=geom();const a=angleAt(k);return {x:g.cx+Math.cos(a)*radius*g.R,y:g.cy+Math.sin(a)*radius*g.R}}
+function polyFor(pts){const g=geom();return pts.map((v,k)=>{const a=angleAt(k);return {x:g.cx+Math.cos(a)*v*g.R,y:g.cy+Math.sin(a)*v*g.R}})}
+function draw(){
+  if(cv.getBoundingClientRect().width<40)return; // resize 中间态（如整页截图）保留 backing store
+  const dpr=window.devicePixelRatio||1, r=cv.getBoundingClientRect();
+  cv.width=r.width*dpr; cv.height=r.height*dpr;
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  const cs=getComputedStyle(document.documentElement);
+  const ink=cs.getPropertyValue('--ink').trim(), faint=cs.getPropertyValue('--faint').trim(), line=cs.getPropertyValue('--line').trim(), grid=cs.getPropertyValue('--grid').trim(), acc=cs.getPropertyValue('--acc').trim();
+  g.clearRect(0,0,geom().w,geom().h); g.font=FONT;
+  const vis=visItems();
+  if(showWeb){
+    // 刻度环
+    for(let t=1;t<=4;t++){const pts=[];for(let k=0;k<nax;k++)pts.push(ptAt(k,t/4));g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));g.closePath();g.strokeStyle=line;g.lineWidth=1;g.stroke()}
+    // 轴线
+    for(let k=0;k<nax;k++){const p=ptAt(k,1);g.beginPath();g.moveTo(geom().cx,geom().cy);g.lineTo(p.x,p.y);g.strokeStyle=line;g.stroke()}
+  }
+  if(showTick){
+    g.fillStyle=faint;g.font='10px JetBrains Mono, monospace';g.textAlign='center';g.textBaseline='middle';
+    for(let t=1;t<=4;t++){const p=ptAt(0,t/4);g.fillText(String(t/4),p.x-2,p.y+11)}
+  }
+  // 轴标签 + 该轴最大值
+  const gl=geom();
+  for(let k=0;k<nax;k++){
+    const a=angleAt(k), c=Math.cos(a), s=Math.sin(a);
+    const vertical=Math.abs(s)>0.85;            // 朝上或朝下的轴
+    const p={x:gl.cx+c*(gl.R+22),y:gl.cy+s*(gl.R+22)};
+    g.textAlign=c>0.3?'left':(c<-0.3?'right':'center');
+    g.textBaseline=s>0.3?'top':(s<-0.3?'bottom':'middle');
+    g.fillStyle=ink;g.font='bold 12.5px Noto Sans SC, system-ui, sans-serif';
+    g.fillText(axes[k].label,p.x,p.y);
+    g.fillStyle=faint;g.font='10px JetBrains Mono, monospace';
+    // 朝下的轴标签向下长、max 在其下；朝上则 max 略上移；水平轴 max 放到同一行更外侧
+    const mx=vertical?p.x:(p.x+c*8), my=vertical?(p.y+(s>0?24:-25)):(p.y+s*13);
+    g.fillText('max '+fmt(axes[k].max),mx,my);
+  }
+  const cols=colors();
+  if(showFill){
+    vis.forEach(({it,i})=>{
+      const poly=polyFor(it.norm);
+      g.beginPath();poly.forEach((p,j)=>j?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));g.closePath();
+      const col=cols[i%cols.length];
+      const gr=g.createRadialGradient(gl.cx,gl.cy,0,gl.cx,gl.cy,gl.R);
+      gr.addColorStop(0,col+'55');gr.addColorStop(1,col+'22');
+      g.fillStyle=gr;g.fill();
+      g.strokeStyle=col;g.lineWidth=(hoverI===i)?3:2.2;g.lineJoin='round';g.stroke();
+      if(hoverI===i){g.globalAlpha=0.22;g.fill();g.globalAlpha=1}
+    });
+  }else{
+    vis.forEach(({it,i})=>{const poly=polyFor(it.norm);g.beginPath();poly.forEach((p,j)=>j?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));g.closePath();g.strokeStyle=cols[i%cols.length];g.lineWidth=(hoverI===i)?3:2.2;g.stroke()});
+  }
+  if(showVertex&&vis.length<=6){
+    vis.forEach(({it,i})=>{
+      const poly=polyFor(it.norm),col=cols[i%cols.length];
+      poly.forEach((p,k)=>{
+        g.beginPath();g.arc(p.x,p.y,(hoverI===i)?4.5:3,0,TAU);g.fillStyle=col;g.fill();
+        if(hoverI===i){g.strokeStyle=ink;g.lineWidth=1.4;g.stroke()}
+      });
+      if(hoverI===i){
+        g.fillStyle=ink;g.font='bold 11px JetBrains Mono, monospace';g.textAlign='center';g.textBaseline='middle';
+        poly.forEach((p,k)=>{const ox=(p.x-gl.cx)*0.12,oy=(p.y-gl.cy)*0.12;g.fillText(fmt(it.values[k]),p.x+ox,p.y+oy-14)});
+      }
+    });
+  }
+  updateDetail();
+}
+function hitTest(mx,my){
+  const gl=geom(), d=Math.hypot(mx-gl.cx,my-gl.cy);
+  if(d>gl.R+40) return -1;
+  let a=Math.atan2(my-gl.cy,mx-gl.cx);
+  let k=Math.round((a+Math.PI/2)/TAU*nax)%nax; if(k<0)k+=nax;
+  let best=-1,bd=1e9;
+  visItems().forEach(({it,i})=>{const p=polyFor(it.norm)[k];const dd=Math.hypot(p.x-mx,p.y-my);if(dd<=22&&dd<bd){bd=dd;best=i}});
+  return best;
+}
+function showTip(i){
+  const it=items[i]; if(!it) return;
+  const cols=colors();
+  let html=`<b>${esc(it.name)}</b><br>`;
+  axes.forEach((a,k)=>{const norm=it.norm[k];const col=cols[i%cols.length];html+=`<span style="color:${col}">●</span> ${esc(a.label)} <b>${fmt(it.values[k])}</b> <span style="opacity:.7">(${Math.round(norm*100)}%)</span><br>`});
+  html+=`覆盖面积 <b>${it.area.toFixed(2)}</b> · 均分 <b>${(it.avg*100).toFixed(0)}%</b>`;
+  tip.innerHTML=html;tip.style.display='block';
+  const gl=geom();
+  tip.style.left=Math.max(8,gl.cx-tip.offsetWidth/2)+'px';
+  tip.style.top=(cv.offsetTop+gl.cy+gl.R+8)+'px';
+}
+function updateDetail(){
+  if(hoverI<0){
+    const lead=visItems().sort((a,b)=>b.it.area-a.it.area)[0];
+    detail.innerHTML=lead?`🏆 领先 <b>${esc(lead.it.name)}</b> · 覆盖面积 <b>${lead.it.area.toFixed(2)}</b> · ${esc(axes[lead.it.max_i].label)} 最强 · 💡 悬停对比项看各轴强弱`:'💡 点图例恢复对比项';
+    return;
+  }
+  const it=items[hoverI];
+  detail.innerHTML=`📌 <b>${esc(it.name)}</b> · 覆盖面积 <b>${it.area.toFixed(2)}</b> · 均分 <b>${(it.avg*100).toFixed(0)}%</b> · 最强 <b>${esc(axes[it.max_i].label)}</b> · 最弱 <b>${esc(axes[it.min_i].label)}</b>`;
+}
+cv.addEventListener('mousemove',e=>{const r=cv.getBoundingClientRect();const i=hitTest(e.clientX-r.left,e.clientY-r.top);if(i!==hoverI){hoverI=i;if(i>=0)showTip(i);else tip.style.display='none';draw();updateDetail()}});
+cv.addEventListener('mouseleave',()=>{hoverI=-1;tip.style.display='none';draw();updateDetail()});
+function renderLegend(){
+  const cols=colors();
+  legendEl.innerHTML=items.map((it,i)=>`<button type="button" class="chip ${hidden.has(i)?'off':''}" data-i="${i}" aria-pressed="${!hidden.has(i)}"><i style="background:${cols[i%cols.length]}"></i>${esc(it.name)} <span style="font-family:var(--mono);opacity:.7">${it.area.toFixed(2)}</span></button>`).join('')+'<span style="font-family:var(--mono);font-size:11px;color:var(--faint);margin-left:6px">点击显隐对比项</span>';
+}
+legendEl.addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const i=+b.dataset.i;hidden.has(i)?hidden.delete(i):hidden.add(i);renderLegend();draw();updateDetail()});
+function setOn(el,on){el.classList.toggle('on',on);el.setAttribute('aria-pressed',String(on))}
+document.getElementById('btnFill').onclick=e=>{showFill=!showFill;setOn(e.currentTarget,showFill);draw()};
+document.getElementById('btnWeb').onclick=e=>{showWeb=!showWeb;setOn(e.currentTarget,showWeb);draw()};
+document.getElementById('btnTick').onclick=e=>{showTick=!showTick;setOn(e.currentTarget,showTick);draw()};
+document.getElementById('btnVertex').onclick=e=>{showVertex=!showVertex;setOn(e.currentTarget,showVertex);draw()};
+document.getElementById('themeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.dataset.theme=b.dataset.theme;document.querySelectorAll('#themeSeg button').forEach(x=>setOn(x,x===b));renderLegend();draw()});
+document.querySelectorAll('#themeSeg button').forEach(b=>setOn(b,theme()===b.dataset.theme));
+renderLegend();draw();updateDetail();
+window.addEventListener('resize',draw);
+// @@SCRIPT2@@
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "name": "bullet",
+  "view": "bullet",
+  "title": "子弹图 KPI 评估面板",
+  "category": "bullet",
+  "input_types": ["csv", "json", "xlsx"],
+  "required_columns": ["label", "actual", "target"],
+  "optional_columns": ["poor", "good", "max"],
+  "options": {
+    "theme": ["light", "dark"],
+    "palette": ["signal", "cinnabar", "patina", "blueprint", "inkwash", "mono", "sundown", "dunhuang", "aurora", "morandi"],
+    "sort": ["original", "ratio_asc", "gap_asc"],
+    "layout": ["card", "compact"],
+    "only_miss": false,
+    "gap_chips": false,
+    "quarter_ticks": false,
+    "scale": "global"
+  },
+  "description": "面向 KPI / 目标达成的子弹图：actual 横条、target 竖线、poor/ok/good 定性区间。三种排序、⚠ 只看落后筛选、± 差距 chip、25/50/75 刻度线、入场动画重播、10 种主色（语义色 达标/接近/偏离 不随动）。适合越高越好的指标，输入 label + actual + target，可选 poor/good/max 阈值。",
+  "schema": {
+    "label": ["label", "name", "category", "x", "分类", "类别", "标签", "名称", "指标"],
+    "actual": ["actual", "value", "实际", "实际值", "本期值", "完成值"],
+    "target": ["target", "goal", "目标", "目标值", "计划值", "plan", "指标目标"],
+    "poor": ["poor", "low", "bad", "bad_max", "差", "较差线", "较差上限", "差阈值"],
+    "good": ["good", "high", "ok", "good_min", "好", "良好线", "良好下限", "好阈值"],
+    "max": ["max", "scale", "upper", "上限", "量程"]
+  }
+}

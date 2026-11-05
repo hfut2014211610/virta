@@ -1,0 +1,23 @@
+{
+  "name": "scatter-basic",
+  "view": "scatter",
+  "title": "散点 / 相关性气泡图",
+  "input_types": ["csv", "json", "xlsx"],
+  "required_columns": ["x", "y"],
+  "optional_columns": ["label", "series", "size"],
+  "options": {
+    "theme": ["light", "dark"],
+    "palette": ["signal", "cinnabar", "patina", "blueprint", "inkwash", "mono", "sundown", "dunhuang", "aurora", "morandi"],
+    "fit_line": true,
+    "log_axis": true,
+    "mean_lines": false,
+    "confidence_ellipse": false,
+    "marker": ["circle", "square", "diamond", "triangle", "mixed"],
+    "dot_scale": [0.72, 1, 1.45],
+    "point_labels": ["none", "outlier", "all"],
+    "brush": true,
+    "legend_toggle": true,
+    "bubble_size": "auto"
+  },
+  "description": "散点图：X/Y 双数值列揭示相关性、分布与离群点。Pearson r 与线性拟合线、均值参考线（象限 Ⅰ~Ⅳ）、分组 1σ 置信椭圆（协方差旋转）、5 种点形（可按分组编码）、3 档点径、离群/全量点标注、10 种配色、hover 命中、拖拽框选刷选、双对数轴、气泡尺寸、图例显隐。双主题可切换；离线单文件。输入兼容：x/y 列（别名 成本/转化/投入/收益/自变量/因变量）、宽表前两数值列、ECharts [x,y] 或 [x,y,size]。"
+}

@@ -1,0 +1,20 @@
+{
+  "name": "line-basic",
+  "view": "line",
+  "title": "多系列折线图",
+  "input_types": ["csv", "json", "xlsx"],
+  "required_columns": ["label", "value"],
+  "optional_columns": ["series"],
+  "options": {
+    "theme": ["light", "dark"],
+    "palette": ["signal", "cinnabar", "patina", "blueprint", "inkwash", "mono", "sundown", "dunhuang", "aurora", "morandi"],
+    "line": ["smooth", "straight", "step"],
+    "fill": ["none", "area", "stack"],
+    "marker": ["circle", "square", "diamond", "none"],
+    "width": [1.6, 2.4, 3.4],
+    "dash_texture": false,
+    "end_labels": false,
+    "zoom": true
+  },
+  "description": "时间序列 / 顺序数据的折线图：多系列、3 种线形（平滑/直线/阶梯）、3 种填充（无/面积/堆叠面积）、4 种数据点标记（圆点/方块/菱形/无）、3 档线宽、虚线纹理编码系列、端点数值、10 种配色、框选缩放、悬浮多系列 tooltip、图例显隐、负值自动下探。双主题可切换。"
+}

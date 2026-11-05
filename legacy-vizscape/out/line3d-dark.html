@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sample-line3d · vizscape line3d-basic</title>
+<style>
+:root{--sans:"Noto Sans SC",system-ui,sans-serif;--serif:"Fraunces",Georgia,serif;--mono:"JetBrains Mono",ui-monospace,monospace}
+html[data-theme="light"]{--bg:#f6f3ec;--paper:#fffdf7;--ink:#171a1e;--muted:#6b6f6a;--faint:#9a9d96;--line:#e2ded2;--line2:#d1ccc0;--acc:#0f766e;--neg:#b5412f;--shadow:0 10px 36px rgba(23,26,30,.08);--grid:rgba(23,26,30,.06);--tip:#171a1e;--tipink:#fffdf7;--floor:rgba(15,118,110,.05);--floorline:rgba(23,26,30,.16)}
+html[data-theme="dark"]{--bg:#0d0e0a;--paper:#131410;--ink:#ede9dc;--muted:#9aa08a;--faint:#5e6450;--line:#23261d;--line2:#2e3323;--acc:#c6f13f;--neg:#ff6b4a;--shadow:0 10px 36px rgba(0,0,0,.4);--grid:rgba(237,233,220,.05);--tip:#ede9dc;--tipink:#0d0e0a;--floor:rgba(198,241,63,.04);--floorline:rgba(237,233,220,.16)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);padding:28px;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:56px 56px;opacity:.6}
+.wrap{max-width:1080px;margin:0 auto;position:relative}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1.5px solid var(--ink);padding-bottom:16px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--acc);text-transform:uppercase}
+h1{font-family:var(--serif);font-weight:300;font-size:clamp(32px,5vw,52px);letter-spacing:-.02em}
+h1 em{font-style:italic;color:var(--acc)}
+.seg{display:flex;background:var(--paper);border:1px solid var(--line2);border-radius:99px;padding:3px;box-shadow:var(--shadow)}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:13px;padding:8px 14px;border-radius:99px;cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0}
+.toolbar .label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.toggle{appearance:none;border:1px solid var(--line2);background:var(--paper);color:var(--muted);border-radius:99px;padding:8px 14px;font-size:13px;cursor:pointer}
+.toggle.on{background:var(--acc);border-color:var(--acc);color:var(--paper);font-weight:700}
+.toolbar input[type=range]{accent-color:var(--acc);width:110px}
+.summary{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 14px}
+.sum-card{display:inline-flex;align-items:baseline;gap:8px;border:1px solid var(--line2);border-radius:14px;padding:9px 12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sum-card b{color:var(--ink);font-size:19px;font-weight:500;letter-spacing:-.02em}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);position:relative}
+#legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:transparent;color:var(--ink);border-radius:99px;padding:6px 12px;font-size:12px;cursor:pointer;transition:.2s}
+.chip i{width:10px;height:10px;border-radius:99px;display:inline-block}
+.chip.off{opacity:.38;text-decoration:line-through}
+canvas{width:100%;height:560px;display:block;cursor:grab}
+canvas.dragging{cursor:grabbing}
+#tooltip{position:absolute;pointer-events:none;background:var(--tip);color:var(--tipink);padding:10px 12px;border-radius:10px;font-family:var(--mono);font-size:12px;line-height:1.7;display:none;z-index:10;min-width:180px;max-width:280px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+#tooltip b{color:var(--acc)}
+#detail{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;line-height:1.8;min-height:44px}
+#detail b{color:var(--ink)}
+.table{width:100%;border-collapse:collapse;font-size:13px;margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.table th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-align:left;color:var(--muted);border-bottom:1.5px solid var(--ink);padding:10px}
+.table td{border-bottom:1px solid var(--line);padding:9px 10px}
+.table td.num,.table th.num{text-align:right;font-family:var(--mono)}
+.bar-cell{height:8px;border-radius:99px;background:var(--acc)}
+footer{margin-top:18px;font-family:var(--mono);font-size:11px;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.hint{font-size:12px;color:var(--faint);margin-top:8px}
+.quality{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--paper);border-radius:16px;padding:14px;margin:16px 0 8px;box-shadow:0 1px 0 rgba(0,0,0,.02) inset}
+.quality.warn{border-left-color:var(--neg)}
+.quality-head{display:flex;justify-content:space-between;gap:14px;align-items:center;border-bottom:1px dashed var(--line);padding-bottom:10px;margin-bottom:10px}
+.quality-head h2{font-family:var(--serif);font-size:20px;font-weight:420;letter-spacing:-.02em}
+.quality-score{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;line-height:1.6}.quality-score b{display:block;color:var(--acc);font-size:13px}.quality.warn .quality-score b{color:var(--neg)}
+.quality-grid{display:flex;gap:8px;flex-wrap:wrap}.qs{border:1px solid var(--line2);border-radius:999px;padding:5px 9px;font-family:var(--mono);font-size:11px;color:var(--muted)}.qs b{color:var(--ink);font-weight:500}
+.quality-warnings{margin:11px 0 0;padding-left:18px;color:var(--neg);font-size:12px;line-height:1.75}.quality-ok{margin:11px 0 0;color:var(--acc);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">vizscape · line3d-basic · DARK</div><h1>sample-line3d <em>· 3D 折线</em></h1></div>
+  <div class="seg" id="themeSeg" role="group" aria-label="主题"><button type="button" data-theme="light" aria-pressed="false">☀ 浅色</button><button type="button" data-theme="dark" aria-pressed="false">☾ 深色</button></div>
+</header>
+
+<div class="toolbar">
+  <span class="label">视角</span>
+  <button class="toggle" id="btnReset" type="button">↺ 复位视角</button>
+  <button class="toggle on" id="btnFloor" type="button" aria-pressed="true">▤ 地面网格</button>
+  <button class="toggle on" id="btnAxis" type="button" aria-pressed="true">╫ 三轴</button>
+  <button class="toggle on" id="btnWall" type="button" aria-pressed="true">◫ 参考墙</button>
+  <button class="toggle on" id="btnRibbon" type="button" aria-pressed="true">▟ 飘带填充</button>
+  <button class="toggle on" id="btnDots" type="button" aria-pressed="true">● 数据点</button>
+  <span class="label">深度</span>
+  <input type="range" id="tilt" min="15" max="85" value="50" aria-label="倾角">
+</div>
+
+<div class="summary" aria-label="摘要"><span class="sum-card"><b>12</b>分类</span><span class="sum-card"><b>3</b>系列</span><span class="sum-card"><b>880</b>峰值</span><span class="sum-card"><b>12月·消费</b>峰值点</span></div>
+
+<div class="card">
+  <div id="legend"></div>
+  <canvas id="chart" role="img" aria-label="sample-line3d 三维折线图，12 个分类、3 条系列沿深度轴排列；拖拽旋转，明细见下方表格"></canvas>
+  <div id="tooltip"></div>
+  <div id="detail"></div>
+  <div class="hint">读法：X=月份（分类/时间），Z=数值（数值高度），Y=系列深度；颜色=系列，飘带为系列到地面的投影。拖拽旋转、滚轮缩放，各系列共用同一 Z 刻度可直接比较。</div>
+</div>
+
+<section class="quality ok" aria-label="数据识别报告"><div class="quality-head"><div><p class="eyebrow">data quality</p><h2>数据识别报告</h2></div><div class="quality-score"><b>高置信识别</b>line3d · 12 分类 × 3 系列</div></div><div class="quality-grid"><span class="qs"><b>模式</b> line3d</span><span class="qs"><b>分类</b> 12</span><span class="qs"><b>系列</b> 3</span><span class="qs"><b>分类列</b> 月份</span><span class="qs"><b>数值</b> 消费, 出行, 政务</span><span class="qs"><b>序列类型</b> 时间</span><span class="qs"><b>Y范围</b> 180 ~ 880</span></div><p class="quality-ok">序列无缺失/非法风险；各系列共用同一 Z 刻度，可直接比较前后系列的高度。</p></section>
+
+<table class="table"><thead><tr><th>分类</th><th class="num">消费</th><th class="num">出行</th><th class="num">政务</th><th class="num">小计</th><th>相对占比</th><th class="num">占绝对量</th></tr></thead><tbody><tr><td>1月</td><td class="num">420</td><td class="num">300</td><td class="num">180</td><td class="num">900</td><td><div class="bar-cell" style="width:49%"></div></td><td class="num">5.5%</td></tr><tr><td>2月</td><td class="num">460</td><td class="num">330</td><td class="num">200</td><td class="num">990</td><td><div class="bar-cell" style="width:54%"></div></td><td class="num">6.1%</td></tr><tr><td>3月</td><td class="num">520</td><td class="num">310</td><td class="num">230</td><td class="num">1,060</td><td><div class="bar-cell" style="width:57%"></div></td><td class="num">6.5%</td></tr><tr><td>4月</td><td class="num">510</td><td class="num">360</td><td class="num">250</td><td class="num">1,120</td><td><div class="bar-cell" style="width:61%"></div></td><td class="num">6.9%</td></tr><tr><td>5月</td><td class="num">590</td><td class="num">390</td><td class="num">270</td><td class="num">1,250</td><td><div class="bar-cell" style="width:68%"></div></td><td class="num">7.7%</td></tr><tr><td>6月</td><td class="num">640</td><td class="num">420</td><td class="num">260</td><td class="num">1,320</td><td><div class="bar-cell" style="width:71%"></div></td><td class="num">8.1%</td></tr><tr><td>7月</td><td class="num">700</td><td class="num">455</td><td class="num">300</td><td class="num">1,455</td><td><div class="bar-cell" style="width:79%"></div></td><td class="num">8.9%</td></tr><tr><td>8月</td><td class="num">730</td><td class="num">480</td><td class="num">320</td><td class="num">1,530</td><td><div class="bar-cell" style="width:83%"></div></td><td class="num">9.4%</td></tr><tr><td>9月</td><td class="num">690</td><td class="num">460</td><td class="num">310</td><td class="num">1,460</td><td><div class="bar-cell" style="width:79%"></div></td><td class="num">9.0%</td></tr><tr><td>10月</td><td class="num">760</td><td class="num">510</td><td class="num">340</td><td class="num">1,610</td><td><div class="bar-cell" style="width:87%"></div></td><td class="num">9.9%</td></tr><tr><td>11月</td><td class="num">820</td><td class="num">560</td><td class="num">360</td><td class="num">1,740</td><td><div class="bar-cell" style="width:94%"></div></td><td class="num">10.7%</td></tr><tr><td>12月</td><td class="num">880</td><td class="num">590</td><td class="num">380</td><td class="num">1,850</td><td><div class="bar-cell" style="width:100%"></div></td><td class="num">11.4%</td></tr></tbody></table>
+
+<footer><span>vizscape · line3d-basic · 多系列带状折线 · 纯 Canvas 无 CDN</span><span>输入兼容：宽表 / label+series+value / ECharts JSON</span></footer>
+</div>
+
+<script>
+const RAW={"labels": ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"], "series": [{"name": "消费", "values": [420, 460, 520, 510, 590, 640, 700, 730, 690, 760, 820, 880]}, {"name": "出行", "values": [300, 330, 310, 360, 390, 420, 455, 480, 460, 510, 560, 590]}, {"name": "政务", "values": [180, 200, 230, 250, 270, 260, 300, 320, 310, 340, 360, 380]}], "x_key": "月份", "z_key": "数值", "y_key": "系列", "value_range": [180, 880], "temporal": true};
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const cv=document.getElementById('chart'), tip=document.getElementById('tooltip'), detail=document.getElementById('detail'), legendEl=document.getElementById('legend');
+const FONT='12px "Noto Sans SC", system-ui, sans-serif', MONO='11px "JetBrains Mono", monospace';
+const PALETTE={light:['#0f766e','#e85d3f','#d99a06','#2563eb','#7c3aed','#059669','#db2777','#0891b2','#65a30d','#b5412f'],dark:['#c6f13f','#ff6b4a','#ffb224','#4de3c2','#7dd3fc','#f472b6','#a78bfa','#facc15','#34d399','#fb7185']};
+const labels=RAW.labels, series=RAW.series, xKey=RAW.x_key, zKey=RAW.z_key, yKey=RAW.y_key;
+const VR=RAW.value_range||[0,1];
+const ymin=VR[0], ymax=VR[1], yspan=(ymax-ymin)||1;
+let hidden=new Set(), hover={s:-1,i:-1};
+let az=0.62, tilt=50, zoom=1.0;
+let showFloor=true, showAxis=true, showWall=true, showRibbon=true, showDots=true;
+const TILT_MIN=15, TILT_MAX=85, ZOOM_MIN=0.5, ZOOM_MAX=2.4;
+const nL=labels.length, nS=series.length;
+function theme(){return document.documentElement.dataset.theme}
+function colors(){return PALETTE[theme()]||PALETTE.light}
+function fmt(v){return Math.abs(v)>=10000?Math.round(v).toLocaleString():(+v.toFixed(2)).toLocaleString()}
+function rad(d){return d*Math.PI/180}
+function seriesT(j){return nS<=1?0.5:j/(nS-1)}
+function seriesIdx(name){return series.findIndex(s=>s.name===name)}
+function normVal(v){return (v-ymin)/yspan}
+function trunc(s,n){s=String(s);return s.length>n?s.slice(0,n-1)+'…':s}
+
+// 三维→二维投影：单位立方体居中到 0，绕垂直轴(Z值)旋转方位角，倾角压扁
+function raw(nx,ny,nz){
+  const c=Math.cos(az), s=Math.sin(az);
+  const X=nx-0.5, Y=ny-0.5, Z=nz-0.5;
+  const xr=X*c-Y*s, yr=X*s+Y*c;
+  const t=rad(tilt);
+  return {px:xr, py:yr*Math.sin(t)-Z*Math.cos(t), depth:yr*Math.cos(t)+Z*Math.sin(t)};
+}
+let FIT={s:1,cx:0,cy:0};
+function fitView(W,H){
+  const vs=[];
+  for(const nx of [0,1]) for(const ny of [0,1]) for(const nz of [0,1]) vs.push(raw(nx,ny,nz));
+  const xs=vs.map(q=>q.px), ys=vs.map(q=>q.py);
+  const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+  const pad=54;
+  FIT={s:Math.min((W-2*pad)/((maxX-minX)||1),(H-2*pad)/((maxY-minY)||1)), cx:(minX+maxX)/2, cy:(minY+maxY)/2};
+}
+function proj(nx,ny,nz,W,H){
+  const q=raw(nx,ny,nz), k=FIT.s*zoom;
+  return {x:W/2+(q.px-FIT.cx)*k, y:H/2+(q.py-FIT.cy)*k, depth:q.depth, scale:k};
+}
+function nrmVal(v){return normVal(v)}
+
+function draw(){
+  const dpr=window.devicePixelRatio||1, r=cv.getBoundingClientRect();
+  cv.width=r.width*dpr; cv.height=r.height*dpr;
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  const W=r.width, H=r.height;
+  const cs=getComputedStyle(document.documentElement);
+  const ink=cs.getPropertyValue('--ink').trim(), faint=cs.getPropertyValue('--faint').trim(),
+        floorline=cs.getPropertyValue('--floorline').trim(), acc=cs.getPropertyValue('--acc').trim(),
+        paper=cs.getPropertyValue('--paper').trim(), grid=cs.getPropertyValue('--grid').trim();
+  g.clearRect(0,0,W,H); g.font=FONT;
+  const cols=colors();
+  fitView(W,H);
+  const P=(nx,ny,nz)=>proj(nx,ny,nz,W,H);
+  const vx=(i)=>(nL<=1?0.5:i/(nL-1));
+  const gridLine=(a,b,stroke,w,alpha)=>{g.strokeStyle=stroke;g.lineWidth=w;g.globalAlpha=alpha;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();g.globalAlpha=1};
+
+  // 参考墙（nz? no: ny=1 平面，即最远系列之后）
+  if(showWall){
+    const A=P(0,1,0), B=P(1,1,0), C=P(1,1,1), D=P(0,1,1);
+    g.fillStyle=grid; g.globalAlpha=0.9; g.beginPath(); g.moveTo(A.x,A.y); g.lineTo(B.x,B.y); g.lineTo(C.x,C.y); g.lineTo(D.x,D.y); g.closePath(); g.fill(); g.globalAlpha=1;
+    g.strokeStyle=faint; g.lineWidth=1; g.globalAlpha=0.6;
+    g.beginPath(); g.moveTo(D.x,D.y); g.lineTo(C.x,C.y); g.stroke(); g.beginPath(); g.moveTo(A.x,A.y); g.lineTo(D.x,D.y); g.stroke(); g.beginPath(); g.moveTo(B.x,B.y); g.lineTo(C.x,C.y); g.stroke();
+    for(const t of [0.25,0.5,0.75]){ gridLine(P(0,1,t),P(1,1,t),floorline,1,0.35) }
+    g.globalAlpha=1; g.fillStyle=faint; g.font=MONO; g.textAlign='right'; g.textBaseline='middle';
+    for(const t of [0,0.25,0.5,0.75,1]){
+      const v=ymin+yspan*t, p=P(0,1,t);
+      g.fillText(fmt(v), p.x-8, p.y);
+    }
+  }
+  // 地面网格
+  if(showFloor){
+    const colsN = nL<=14 ? nL : 6;
+    const rowsN = nS<=10 ? nS : 6;
+    for(let j=0;j<rowsN;j++){ const t=rowsN<=1?0.5:j/(rowsN-1); gridLine(P(0,t,0),P(1,t,0),floorline,1,0.28) }
+    for(let k=0;k<colsN;k++){ const t=colsN<=1?0.5:k/(colsN-1); gridLine(P(t,0,0),P(t,1,0),floorline,1,0.28) }
+  }
+  // 三轴 + 轴标签 + 刻度
+  if(showAxis){
+    const O=P(0,0,0), X=P(1,0,0), Y=P(0,1,0), Z=P(0,0,1);
+    g.lineWidth=1.6;
+    [[O,X,'X · '+xKey],[O,Y,'Y · '+yKey],[O,Z,'Z · '+zKey]].forEach(([a,b,lab])=>{
+      g.strokeStyle=ink; g.globalAlpha=0.7; g.beginPath(); g.moveTo(a.x,a.y); g.lineTo(b.x,b.y); g.stroke();
+      g.globalAlpha=1; g.fillStyle=faint; g.font=MONO; g.textBaseline='middle';
+      const dx=b.x-a.x, dy=b.y-a.y, L=Math.hypot(dx,dy)||1, vert=Math.abs(dx)<6;
+      g.textAlign=(vert||dx>0)?'left':'right';
+      g.fillText(lab, vert?b.x+10:b.x+dx/L*22, vert?b.y:b.y+dy/L*22);
+    });
+    // X 轴分类刻度（太多时跳画）
+    const step=Math.ceil(nL/12); g.fillStyle=faint; g.font=MONO; g.textAlign='center'; g.textBaseline='top';
+    for(let i=0;i<nL;i+=step){ const p=P(vx(i),0,0); g.fillText(trunc(labels[i],6), p.x, p.y+12) }
+    // Z 轴高度刻度（基准底值由参考墙承担，避免与 X 轴首刻度贴合）
+    g.textAlign='right'; g.textBaseline='middle';
+    [0.5,1].forEach(t=>{ const v=ymin+yspan*t; g.fillText(fmt(v), P(0,0,t).x-8, P(0,0,t).y) });
+  }
+  // 系列（远的先画）
+  const vis=series.map((s,j)=>({s,j})).filter(o=>!hidden.has(o.s.name)).sort((a,b)=>proj(0,seriesT(a.j),0,0,0).depth-proj(0,seriesT(b.j),0,0,0).depth);
+  const lineDepth=new Map();
+  vis.forEach(({s,j})=>{
+    const t=seriesT(j), col=cols[j%cols.length];
+    const yTop=(i)=>{ const v=s.values[i]||0; return P(vx(i),t,normVal(v)) };
+    const pts=s.values.map((_,i)=>yTop(i));
+    const a0=pts[0], a1=pts[pts.length-1];
+    // 飘带填充到底面
+    if(showRibbon){
+      g.beginPath(); g.moveTo(P(vx(0),t,0).x,P(vx(0),t,0).y);
+      pts.forEach(p=>g.lineTo(p.x,p.y));
+      g.lineTo(P(vx(nL-1),t,0).x,P(vx(nL-1),t,0).y); g.closePath();
+      g.fillStyle=col; g.globalAlpha=0.14; g.fill(); g.globalAlpha=1;
+    }
+    // 折线
+    g.lineJoin='round'; g.lineCap='round'; g.strokeStyle=col; g.lineWidth=2.6; g.globalAlpha=0.95;
+    g.beginPath(); pts.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); g.stroke(); g.globalAlpha=1;
+    // 顶点
+    if(showDots){
+      pts.forEach((p,i)=>{ g.beginPath(); g.arc(p.x,p.y,(hover.s===j&&hover.i===i)?5:3,0,Math.PI*2); g.fillStyle=col; g.fill(); if(hover.s===j&&hover.i===i){g.strokeStyle=ink;g.lineWidth=2;g.beginPath();g.arc(p.x,p.y,8,0,Math.PI*2);g.stroke()} });
+    }
+    // 悬停：垂下铅垂线到地面
+    if(hover.s===j&&hover.i>=0){
+      const p=pts[hover.i]; g.setLineDash([5,4]); g.strokeStyle=ink; g.globalAlpha=0.55; g.lineWidth=1.4;
+      const g0=P(vx(hover.i),t,0); g.beginPath(); g.moveTo(p.x,p.y); g.lineTo(g0.x,g0.y); g.stroke(); g.setLineDash([]); g.globalAlpha=1;
+    }
+    lineDepth.set(j, pts[0].depth);
+    dotCache.set(j, pts);
+  });
+  // 隐藏的系列清理缓存
+  [...dotCache.keys()].forEach(k=>{ if(hidden.has(series[k].name)) dotCache.delete(k) });
+  if(!vis.length){ g.fillStyle=faint; g.textAlign='center'; g.textBaseline='middle'; g.fillText('没有可见系列（全部图例已隐藏）',W/2,H/2) }
+  updateDetail();
+}
+const dotCache=new Map();
+
+function hitTest(mx,my){
+  let best={s:-1,i:-1,d:-Infinity};
+  dotCache.forEach((pts,j)=>{
+    pts.forEach((p,i)=>{
+      const d=Math.hypot(p.x-mx,p.y-my);
+      if(d<=12&&p.depth>best.d) best={s:j,i,d:p.depth};
+    });
+  });
+  return best.s>=0?best:null;
+}
+
+function showTip(s,i){
+  const ss=series[s], col=colors()[s%10];
+  const v=ss.values[i], prev=i>0?ss.values[i-1]:null;
+  const top=maxSeries(s)||1;
+  let html='<b>'+esc(labels[i])+'</b><br><span style="color:'+col+'">━</span> '+esc(ss.name)+'<br>';
+  html+='数值 <b>'+fmt(v)+'</b><br>';
+  html+='较前期 <b>'+(prev===null?'—':(v>=prev?'↑ +':'↓ ')+fmt(Math.abs(v-prev)))+'</b><br>';
+  html+='占该系列峰值 <b>'+Math.round(Math.abs(v)/Math.abs(top)*100)+'%</b>';
+  tip.innerHTML=html; tip.style.display='block';
+  const p=dotCache.get(s)[i], ox=cv.offsetLeft, oy=cv.offsetTop;
+  tip.style.left=Math.min(Math.max(ox+8,ox+p.x+14),ox+cv.clientWidth-tip.offsetWidth-8)+'px';
+  tip.style.top=Math.max(oy+4,oy+p.y-tip.offsetHeight/2)+'px';
+}
+function maxSeries(j){ let m=0; for(const v of series[j].values){ if(Math.abs(v)>Math.abs(m)) m=v } return m }
+
+function updateDetail(){
+  if(hover.s<0){
+    detail.innerHTML='🏆 拖拽旋转 · 滚轮缩放 · 悬停看数值与较前期变化 · 💡 点图例显隐系列；深度轴可按图例顺序排布';
+    return;
+  }
+  const s=series[hover.s], v=s.values[hover.i], prev=hover.i>0?s.values[hover.i-1]:null;
+  detail.innerHTML='📌 <b>'+esc(s.name)+'</b> · '+esc(labels[hover.i])+' · 值 <b>'+fmt(v)+'</b> · 较前期 <b>'+(prev===null?'—':(v>=prev?'+':'')+(v-prev).toLocaleString())+'</b>';
+}
+
+// 拖拽旋转 / 滚轮缩放 / 倾角
+let dragging=false, lx=0, ly=0;
+cv.addEventListener('mousedown',e=>{dragging=true;lx=e.clientX;ly=e.clientY;cv.classList.add('dragging');hover={s:-1,i:-1};tip.style.display='none';draw()});
+window.addEventListener('mouseup',()=>{dragging=false;cv.classList.remove('dragging')});
+window.addEventListener('mousemove',e=>{
+  if(dragging){
+    const dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
+    az+=dx*0.008; tilt=Math.max(TILT_MIN,Math.min(TILT_MAX,tilt+dy*0.25));
+    document.getElementById('tilt').value=Math.round(tilt);
+    draw(); return;
+  }
+  const r=cv.getBoundingClientRect();
+  const m=hitTest(e.clientX-r.left,e.clientY-r.top);
+  const s=m?m.s:-1, i=m?m.i:-1;
+  if(s!==hover.s||i!==hover.i){ hover={s,i}; if(m)showTip(s,i); else tip.style.display='none'; draw(); updateDetail() }
+});
+cv.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(ZOOM_MIN,Math.min(ZOOM_MAX,zoom*(e.deltaY<0?1.1:0.9)));draw()},{passive:false});
+
+function renderLegend(){
+  const cols=colors();
+  legendEl.innerHTML=series.map((s,j)=>'<button type="button" class="chip '+(hidden.has(s.name)?'off':'')+'" data-s="'+esc(s.name)+'" aria-pressed="'+(!hidden.has(s.name))+'"><i style="background:'+cols[j%cols.length]+'"></i>'+esc(s.name)+' <span style="font-family:var(--mono);opacity:.7">Σ '+s.values.reduce((a,b)=>a+b,0).toLocaleString()+'</span></button>').join('')+'<span style="font-family:var(--mono);font-size:11px;color:var(--faint);margin-left:6px">点击显隐系列</span>';
+}
+legendEl.addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const n=b.dataset.s;hidden.has(n)?hidden.delete(n):hidden.add(n);hover={s:-1,i:-1};tip.style.display='none';renderLegend();draw();updateDetail()});
+function setOn(el,on){el.classList.toggle('on',on);el.setAttribute('aria-pressed',String(on))}
+document.getElementById('btnReset').onclick=()=>{az=0.62;tilt=50;zoom=1.0;document.getElementById('tilt').value=50;draw()};
+document.getElementById('btnFloor').onclick=e=>{showFloor=!showFloor;setOn(e.currentTarget,showFloor);draw()};
+document.getElementById('btnAxis').onclick=e=>{showAxis=!showAxis;setOn(e.currentTarget,showAxis);draw()};
+document.getElementById('btnWall').onclick=e=>{showWall=!showWall;setOn(e.currentTarget,showWall);draw()};
+document.getElementById('btnRibbon').onclick=e=>{showRibbon=!showRibbon;setOn(e.currentTarget,showRibbon);draw()};
+document.getElementById('btnDots').onclick=e=>{showDots=!showDots;setOn(e.currentTarget,showDots);draw()};
+document.getElementById('tilt').addEventListener('input',e=>{tilt=+e.target.value;draw()});
+document.getElementById('themeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.dataset.theme=b.dataset.theme;document.querySelectorAll('#themeSeg button').forEach(x=>setOn(x,x===b));renderLegend();draw()});
+document.querySelectorAll('#themeSeg button').forEach(b=>setOn(b,theme()===b.dataset.theme));
+renderLegend();draw();
+window.addEventListener('resize',draw);
+</script>
+</body>
+</html>

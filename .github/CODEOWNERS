@@ -1,0 +1,5 @@
+# Virta CODEOWNERS
+# 单一维护者仓库：所有路径归同一 owner。
+# 使用前把 @your-org/owner 替换为真实 GitHub 用户或团队。
+
+*    @your-org/owner

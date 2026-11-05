@@ -1,0 +1,16 @@
+{
+  "name": "fishbone-basic",
+  "view": "fish",
+  "title": "鱼骨图（因果图）",
+  "input_types": ["csv", "json", "xlsx"],
+  "required_columns": ["category", "cause"],
+  "optional_columns": ["sub", "owner"],
+  "options": {
+    "theme": ["light", "dark"],
+    "palette": ["signal", "cinnabar", "patina", "blueprint", "inkwash", "mono", "sundown", "dunhuang", "aurora", "morandi"],
+    "density": ["comfort", "compact"],
+    "direction": ["head-right", "head-left"],
+    "replay": true
+  },
+  "description": "鱼骨图（石川图/因果图）：把一个问题的原因按大类拆解成鱼刺结构。category + cause 必需；可选 sub（子原因，45° 细刺）/ owner（负责人）；鱼头（问题）= 标题（--title 或文件名）。大类骨 64° 斜刺上下交替，小骨横枝贴骨（文字宽度参与槽位计算防止碰撞），重复原因合并、缺原因跳过、类目失衡警告全部计入数据识别报告。鱼头方向可翻转，悬停高亮因果链 + tooltip + 明细行，图例显隐类别，舒适/紧凑密度，10 配色，错峰入场动画（主骨生长→大骨→小骨），版面超宽自动等比缩放。双主题可切换；离线单文件。"
+}

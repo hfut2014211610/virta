@@ -1,0 +1,16 @@
+{
+  "name": "report-basic",
+  "view": "report",
+  "kind": "doc",
+  "title": "Markdown 报告页",
+  "input_types": ["md", "txt"],
+  "required_columns": [],
+  "optional_columns": [],
+  "options": {
+    "theme": ["light", "dark"],
+    "toc": true,
+    "kpi_max": 8,
+    "images": "placeholder"
+  },
+  "description": "Markdown / 文本报告：目录 + 正文 + 关键指标抽取（显式标签 / 推断 / 表格，逐条标注来源句）+ 章节篇幅 + 文档识别报告。双主题可切换；离线单文件，图片不加载。"
+}

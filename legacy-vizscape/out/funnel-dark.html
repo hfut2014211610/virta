@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sample-funnel · vizscape funnel-basic</title>
+<style>
+:root{--sans:"Noto Sans SC",system-ui,sans-serif;--serif:"Fraunces",Georgia,serif;--mono:"JetBrains Mono",ui-monospace,monospace}
+html[data-theme="light"]{--bg:#f6f3ec;--paper:#fffdf7;--ink:#171a1e;--muted:#6b6f6a;--faint:#9a9d96;--line:#e2ded2;--line2:#d1ccc0;--acc:#0f766e;--neg:#b5412f;--shadow:0 10px 36px rgba(23,26,30,.08);--grid:rgba(23,26,30,.06);--tip:#171a1e;--tipink:#fffdf7}
+html[data-theme="dark"]{--bg:#0d0e0a;--paper:#131410;--ink:#ede9dc;--muted:#9aa08a;--faint:#5e6450;--line:#23261d;--line2:#2e3323;--acc:#c6f13f;--neg:#ff6b4a;--shadow:0 10px 36px rgba(0,0,0,.4);--grid:rgba(237,233,220,.05);--tip:#ede9dc;--tipink:#0d0e0a}
+html[data-palette="cinnabar"]{--acc:#b5412f}
+html[data-palette="patina"]{--acc:#2f7f78}
+html[data-palette="blueprint"]{--acc:#2f5fd0}
+html[data-palette="inkwash"]{--acc:#4b5563}
+html[data-palette="mono"]{--acc:#171a1e}
+html[data-palette="sundown"]{--acc:#c2410c}
+html[data-palette="dunhuang"]{--acc:#b34a38}
+html[data-palette="aurora"]{--acc:#0d9488}
+html[data-palette="morandi"]{--acc:#8b9dad}
+html[data-theme="dark"][data-palette="mono"]{--acc:#ede9dc}
+html[data-theme="dark"][data-palette="sundown"]{--acc:#fb923c}
+html[data-theme="dark"][data-palette="dunhuang"]{--acc:#e07a5f}
+html[data-theme="dark"][data-palette="aurora"]{--acc:#5eead4}
+html[data-theme="dark"][data-palette="morandi"]{--acc:#b8c7d4}
+*{box-sizing:border-box;margin:0;padding:0}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:4px}
+body{background:radial-gradient(circle at 12% 8%,color-mix(in srgb,var(--acc) 12%,transparent),transparent 28rem),radial-gradient(circle at 88% 4%,rgba(232,93,63,.08),transparent 30rem),var(--bg);color:var(--ink);font-family:var(--sans);padding:28px;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:56px 56px;opacity:.6}
+.wrap{max-width:1080px;margin:0 auto;position:relative}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1.5px solid var(--ink);padding-bottom:16px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--acc);text-transform:uppercase}
+h1{font-family:var(--serif);font-weight:300;font-size:clamp(32px,5vw,52px);letter-spacing:-.02em}
+h1 em{font-style:italic;color:var(--acc)}
+.seg{display:flex;background:var(--paper);border:1px solid var(--line2);border-radius:99px;padding:3px;box-shadow:var(--shadow)}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:13px;padding:8px 14px;border-radius:99px;cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.deck{display:flex;flex-direction:column;gap:10px;margin:16px 0}
+.trow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:9px 12px}
+.trow .label{min-width:34px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.trow .spacer{flex:1}
+.trow .seg{box-shadow:none}
+.seg.wrap{flex-wrap:wrap;border-radius:18px}
+.seg button[disabled]{opacity:.35;pointer-events:none}
+.toggle{appearance:none;border:1px solid var(--line2);background:var(--paper);color:var(--muted);border-radius:99px;padding:8px 14px;font-size:13px;cursor:pointer}
+.toggle.on{background:var(--acc);border-color:var(--acc);color:var(--paper);font-weight:700}
+.summary{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 14px}
+.sum-card{display:inline-flex;align-items:baseline;gap:8px;border:1px solid var(--line2);border-radius:14px;padding:9px 12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sum-card b{color:var(--ink);font-size:19px;font-weight:500;letter-spacing:-.02em}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);position:relative}
+#legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:transparent;color:var(--ink);border-radius:99px;padding:6px 12px;font-size:12px;cursor:pointer;transition:.2s}
+.chip i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.chip.off{opacity:.38;text-decoration:line-through}
+canvas{width:100%;height:430px;display:block;cursor:pointer}
+.table tbody tr:hover td{background:color-mix(in srgb,var(--acc) 5%,transparent)}
+.table{font-variant-numeric:tabular-nums}
+#tooltip{position:absolute;pointer-events:none;background:var(--tip);color:var(--tipink);padding:10px 12px;border-radius:10px;font-family:var(--mono);font-size:12px;line-height:1.7;display:none;z-index:10;min-width:170px;box-shadow:0 10px 30px rgba(0,0,0,.25);white-space:nowrap}
+#tooltip b{color:var(--acc)}
+#detail{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;line-height:1.8;min-height:44px}
+#detail b{color:var(--ink)}
+#detail .drop{color:var(--neg)}
+.table{width:100%;border-collapse:collapse;font-size:13px;margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.table th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-align:left;color:var(--muted);border-bottom:1.5px solid var(--ink);padding:10px}
+.table td{border-bottom:1px solid var(--line);padding:9px 10px}
+.table td.num,.table th.num{text-align:right;font-family:var(--mono)}
+footer{margin-top:18px;font-family:var(--mono);font-size:11px;color:var(--faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.hint{font-size:12px;color:var(--faint);margin-top:8px}
+.quality{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--paper);border-radius:16px;padding:14px;margin:16px 0 8px;box-shadow:0 1px 0 rgba(0,0,0,.02) inset}
+.quality.warn{border-left-color:var(--neg)}
+.quality-head{display:flex;justify-content:space-between;gap:14px;align-items:center;border-bottom:1px dashed var(--line);padding-bottom:10px;margin-bottom:10px}
+.quality-head h2{font-family:var(--serif);font-size:20px;font-weight:420;letter-spacing:-.02em}
+.quality-score{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;line-height:1.6}.quality-score b{display:block;color:var(--acc);font-size:13px}.quality.warn .quality-score b{color:var(--neg)}
+.quality-grid{display:flex;gap:8px;flex-wrap:wrap}.qs{border:1px solid var(--line2);border-radius:999px;padding:5px 9px;font-family:var(--mono);font-size:11px;color:var(--muted)}.qs b{color:var(--ink);font-weight:500}
+.quality-warnings{margin:11px 0 0;padding-left:18px;color:var(--neg);font-size:12px;line-height:1.75}.quality-ok{margin:11px 0 0;color:var(--acc);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><div class="eyebrow">vizscape · funnel-basic · DARK</div><h1>sample-funnel <em>· 转化漏斗</em></h1></div>
+  <div class="seg" id="themeSeg" role="group" aria-label="主题"><button type="button" data-theme="light" aria-pressed="false">☀ 浅色</button><button type="button" data-theme="dark" aria-pressed="false">☾ 深色</button></div>
+</header>
+
+<div class="deck">
+  <div class="trow">
+    <span class="label">对齐</span>
+    <div class="seg" id="alignSeg" role="group" aria-label="对齐"><button type="button" data-align="center" class="on" aria-pressed="true">◫ 居中</button><button type="button" data-align="left" aria-pressed="false">▤ 左对齐</button></div>
+    <span class="label">色彩</span>
+    <div class="seg" id="cmodeSeg" role="group" aria-label="色彩"><button type="button" data-cmode="ramp" class="on" aria-pressed="true">◆ 渐层</button><button type="button" data-cmode="cat" aria-pressed="false">▦ 分类</button></div>
+    <span class="label">质感</span>
+    <div class="seg wrap" id="finishSeg" role="group" aria-label="质感"><button type="button" data-finish="gradient" class="on" aria-pressed="true">渐变</button><button type="button" data-finish="flat" aria-pressed="false">纯色</button><button type="button" data-finish="glass" aria-pressed="false">玻璃</button><button type="button" data-finish="metal" aria-pressed="false">金属</button><button type="button" data-finish="outline" aria-pressed="false">描边</button><button type="button" data-finish="papercut" aria-pressed="false">纸雕</button></div>
+    <span class="label">视图</span>
+    <button class="toggle on" id="btnRate" type="button" aria-pressed="true">％ 转化率</button>
+    <button class="toggle" id="btnWorst" type="button" aria-pressed="false">▼ 高亮最大流失</button>
+    <span class="spacer"></span>
+    <button class="toggle" id="btnReplay" type="button">▶ 重播动画</button>
+  </div>
+  <div class="trow">
+    <span class="label">风格</span>
+    <div class="seg wrap" id="paletteSeg" role="group" aria-label="配色风格">
+      <button type="button" data-palette="signal" class="on" aria-pressed="true">Signal</button>
+      <button type="button" data-palette="cinnabar" aria-pressed="false">朱砂</button>
+      <button type="button" data-palette="patina" aria-pressed="false">铜绿</button>
+      <button type="button" data-palette="blueprint" aria-pressed="false">蓝图</button>
+      <button type="button" data-palette="inkwash" aria-pressed="false">水墨</button>
+      <button type="button" data-palette="mono" aria-pressed="false">单色</button>
+      <button type="button" data-palette="sundown" aria-pressed="false">落日</button>
+      <button type="button" data-palette="dunhuang" aria-pressed="false">敦煌</button>
+      <button type="button" data-palette="aurora" aria-pressed="false">极光</button>
+      <button type="button" data-palette="morandi" aria-pressed="false">莫兰迪</button>
+    </div>
+  </div>
+</div>
+
+<div class="summary" aria-label="摘要"><span class="sum-card"><b>5</b>阶段</span><span class="sum-card"><b>10,000</b>首级</span><span class="sum-card"><b>140</b>末级</span><span class="sum-card"><b>1.4%</b>整体转化</span><span class="sum-card"><b>复购 -75%</b>最大流失</span></div>
+
+<div class="card">
+  <div id="legend"></div>
+  <canvas id="chart" role="img" aria-label="sample-funnel 转化漏斗，共 5 个阶段，整体转化 1.4%；明细见下方表格"></canvas>
+  <div id="tooltip"></div>
+  <div id="detail"></div>
+  <div class="hint">读法：圆角横条宽度 = 该阶段数值，逐级收窄即成漏斗；渐层配色沿主色阶梯淡化，高亮最大流失时对应横条红描边。左栏阶段与数值、右栏逐级转化率徽章，阅读动线垂直对齐。支持：居中/左对齐 · 渐层/分类色彩 · 渐变/纯色/玻璃/金属/描边/纸雕 6 种柱面质感 · 10 种配色 · 悬浮命中 · 点击图例显隐 · 入场动画重播 · 阶段按行序（非时间）</div>
+</div>
+
+<section class="quality ok" aria-label="数据识别报告"><div class="quality-head"><div><p class="eyebrow">data quality</p><h2>数据识别报告</h2></div><div class="quality-score"><b>高置信识别</b>funnel · 阶段 × 人数</div></div><div class="quality-grid"><span class="qs"><b>模式</b> funnel</span><span class="qs"><b>阶段</b> 5</span><span class="qs"><b>系列</b> 1</span><span class="qs"><b>分类列</b> 阶段</span><span class="qs"><b>数值列</b> 人数</span><span class="qs"><b>首级</b> 10,000</span><span class="qs"><b>末级</b> 140</span><span class="qs"><b>整体转化</b> 1.4%</span><span class="qs"><b>最大流失</b> 复购 -75%</span></div><p class="quality-ok">阶段顺序单调递减；转化率可直接引用。</p></section>
+
+<table class="table"><thead><tr><th>阶段</th><th class="num">数值</th><th class="num">逐级转化</th><th class="num">累计留存</th><th class="num">流失</th></tr></thead><tbody><tr><td>曝光</td><td class="num">10,000</td><td class="num">—</td><td class="num">100.0%</td><td class="num">—</td></tr><tr><td>点击</td><td class="num">3,200</td><td class="num">32.0%</td><td class="num">32.0%</td><td class="num">-6,800</td></tr><tr><td>加购</td><td class="num">1,200</td><td class="num">37.5%</td><td class="num">12.0%</td><td class="num">-2,000</td></tr><tr><td>下单</td><td class="num">560</td><td class="num">46.7%</td><td class="num">5.6%</td><td class="num">-640</td></tr><tr><td>复购</td><td class="num">140</td><td class="num">25.0%</td><td class="num">1.4%</td><td class="num">-420</td></tr></tbody></table>
+
+<footer><span>vizscape · funnel-basic · 转化漏斗 · 纯 Canvas 无 CDN</span><span>输入兼容：label+value / label+series+value / 宽表 / ECharts JSON · 阶段按行序</span></footer>
+</div>
+
+<script>
+const RAW={"stages": [{"label": "曝光", "value": 10000, "step": null, "cum": 1.0, "drop": 0, "drop_rate": 0, "index": 0}, {"label": "点击", "value": 3200, "step": 0.32, "cum": 0.32, "drop": 6800, "drop_rate": 0.68, "index": 1}, {"label": "加购", "value": 1200, "step": 0.375, "cum": 0.12, "drop": 2000, "drop_rate": 0.625, "index": 2}, {"label": "下单", "value": 560, "step": 0.4666666666666667, "cum": 0.056, "drop": 640, "drop_rate": 0.5333333333333333, "index": 3}, {"label": "复购", "value": 140, "step": 0.25, "cum": 0.014, "drop": 420, "drop_rate": 0.75, "index": 4}]};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let stages=RAW.stages.map((s,i)=>({...s,i}));
+let hidden=new Set(), hoverIdx=-1;
+let align='center', showRate=true, highlightWorst=false, finish='gradient', paletteKey='signal', colorMode='ramp';
+const PALETTES={
+  signal:{light:['#0f766e','#e85d3f','#d99a06','#2563eb','#7c3aed','#059669','#db2777','#0891b2'],dark:['#c6f13f','#ff6b4a','#ffb224','#4de3c2','#7dd3fc','#f472b6','#a78bfa','#facc15']},
+  cinnabar:{light:['#b5412f','#d36a2e','#8a3324','#c08a2d','#6b4f2c','#a16207','#0f766e','#3f3f46'],dark:['#ff8a5c','#ffd166','#ef4444','#fbbf24','#f97316','#fef08a','#5eead4','#fda4af']},
+  patina:{light:['#2f7f78','#386641','#588157','#a3b18a','#c69a4a','#344e41','#7f5539','#40916c'],dark:['#67a58d','#a7c957','#d2b46a','#8ecae6','#c9f2c7','#ffd166','#bde0fe','#80ed99']},
+  blueprint:{light:['#2f5fd0','#0b3b75','#3b82f6','#60a5fa','#1d4ed8','#0f766e','#475569','#93c5fd'],dark:['#7dd3fc','#38bdf8','#93c5fd','#a5f3fc','#60a5fa','#22d3ee','#e0f2fe','#67e8f9']},
+  inkwash:{light:['#171a1e','#3f4650','#69707d','#9299a5','#6b7280','#a3a3a3','#525252','#d4d4d4'],dark:['#ede9dc','#d6d3c8','#b8b4a8','#8f8b80','#6e6a61','#4b4841','#a8a29e','#f5f5f4']},
+  mono:{light:['#171a1e','#2f343c','#555d68','#7a828d','#a0a6af','#c5c8cd','#3f4650','#6b6f6a'],dark:['#ede9dc','#c9c6ba','#a5a296','#817e73','#5e5b52','#f5f5f4','#b9b5a8','#8f8b80']},
+  sundown:{light:['#c2410c','#ea580c','#f59e0b','#b91c1c','#db2777','#7c2d12','#f97316','#a16207'],dark:['#fb923c','#fbbf24','#f87171','#f472b6','#fdba74','#fde047','#fca5a5','#e879f9']},
+  dunhuang:{light:['#35618e','#4d8a6a','#b34a38','#c89b3c','#7a5c3e','#2f4f4f','#8e5a2b','#5b7a8c'],dark:['#7fb3d5','#7fc7a3','#e07a5f','#e5c07b','#b0927a','#81b29a','#d4a373','#a8c3cf']},
+  aurora:{light:['#0d9488','#0891b2','#7c3aed','#db2777','#059669','#2563eb','#c026d3','#0f766e'],dark:['#5eead4','#67e8f9','#a78bfa','#f0abfc','#6ee7b7','#93c5fd','#e879f9','#4ade80']},
+  morandi:{light:['#8b9dad','#c9a7a0','#a8b5a0','#b8b0a4','#9d8fa8','#c4b198','#8fa39e','#ad9b8f'],dark:['#b8c7d4','#dbc4be','#c3cfc0','#d0c9be','#c0b5c9','#d9cbb8','#b5c4bf','#c9bcb0']}
+};
+const cv=document.getElementById('chart'), tip=document.getElementById('tooltip'), detail=document.getElementById('detail'), legendEl=document.getElementById('legend');
+const FONT='12px JetBrains Mono, monospace';
+function theme(){return document.documentElement.dataset.theme}
+function colors0(){const grp=PALETTES[paletteKey]||PALETTES.signal;return grp[theme()]||grp.light}
+// 阶段取色：渐层 = 沿主色阶梯淡化（浅色向白、深色向黑）；分类 = 调色板循环
+function stageColor(i){
+  if(colorMode==='cat')return colors0()[i%8];
+  const acc=getComputedStyle(document.documentElement).getPropertyValue('--acc').trim()||'#0f766e';
+  const t=i/Math.max(1,stages.length-1);
+  return theme()==='dark'?mix(acc,'#000000',t*0.36):mix(acc,'#ffffff',0.06+t*0.40);
+}
+function fmt(v){return Math.abs(v)>=10?Math.round(v).toLocaleString():(+v.toFixed(2)).toLocaleString()}
+function visStages(){return stages.filter(s=>!hidden.has(s.label))}
+// —— 颜色 / 路径 helper ——
+function hx(c){c=String(c).trim();if(c.startsWith('rgb')){const m=c.match(/\d+(\.\d+)?/g);return m.slice(0,3).map(Number)}c=c.replace('#','');return [parseInt(c.slice(0,2),16),parseInt(c.slice(2,4),16),parseInt(c.slice(4,6),16)]}
+function mix(a,b,t){const A=hx(a),B=hx(b);return 'rgb('+A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')+')'}
+function shade(c,amt){const[r,g,b]=hx(c);const cl=v=>Math.max(0,Math.min(255,v+amt));return '#'+((1<<24)+(cl(r)<<16)+(cl(g)<<8)+cl(b)).toString(16).slice(1)}
+function hexA(c,a){const[r,g,b]=hx(c);return 'rgba('+r+','+g+','+b+','+a+')'}
+function pill(g,x,y,txt,fg,bd,bg){
+  g.font='bold 11px JetBrains Mono, monospace';
+  const pw=g.measureText(txt).width+18, ph=19;
+  g.beginPath(); g.roundRect(x,y,pw,ph,9);
+  g.fillStyle=bg; g.fill();
+  g.strokeStyle=bd; g.lineWidth=1; g.stroke();
+  g.fillStyle=fg; g.textAlign='left'; g.textBaseline='middle';
+  g.fillText(txt,x+9,y+ph/2+.5);
+}
+function worstIdx(){
+  if(!highlightWorst) return -1;
+  let best=-1, bd=-1;
+  visStages().forEach(s=>{if(s.step!==null&&s.drop_rate>bd){bd=s.drop_rate;best=s.i}});
+  return best;
+}
+let GEO=null; // 每级几何，供 hover 命中
+let animStart=null;
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ease=t=>1-Math.pow(1-t,3);
+function draw(ts){
+  if(cv.getBoundingClientRect().width<40)return; // resize 中间态（如整页截图）保留 backing store
+  const dpr=window.devicePixelRatio||1, r=cv.getBoundingClientRect();
+  cv.width=r.width*dpr; cv.height=r.height*dpr;
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  const w=r.width, h=r.height;
+  const cs=getComputedStyle(document.documentElement);
+  const ink=cs.getPropertyValue('--ink').trim(), faint=cs.getPropertyValue('--faint').trim(), neg=cs.getPropertyValue('--neg').trim(), acc=cs.getPropertyValue('--acc').trim();
+  const paper=cs.getPropertyValue('--paper').trim(), line2=cs.getPropertyValue('--line2').trim();
+  g.clearRect(0,0,w,h); g.font=FONT;
+  const vis=visStages(); GEO=[];
+  if(!vis.length){g.fillStyle=faint;g.textAlign='center';g.fillText('所有阶段已隐藏 · 点击图例恢复',w/2,h/2);return}
+  const maxV=Math.max(...vis.map(s=>s.value));
+  const padT=16, padB=16;
+  const bandH=(h-padT-padB)/vis.length;
+  // 三栏：左标签栏 / 中绘图区 / 右徽章栏 —— 阅读动线垂直对齐
+  const labelX=112, plotX0=134, plotX1=w-170, plotW=plotX1-plotX0, pcx=(plotX0+plotX1)/2;
+  const wi=worstIdx();
+  const animP=(animStart===null||ts===undefined)?null:ts-animStart;
+  // ════ 圆角横条 + 微弧流失飘带 ════
+  const gap=Math.min(20,bandH*0.26), bh=bandH-gap;
+  const rows=vis.map((s,row)=>{
+    const bw=Math.max(10,(s.value/maxV)*plotW);
+    return {s,row,bw,bx:align==='center'?pcx-bw/2:plotX0,by:padT+row*bandH+gap/2,cy:padT+row*bandH+bandH/2};
+  });
+  const prog=row=>{if(animP===null)return 1;const p=animP<row*90?0:Math.min(1,(animP-row*90)/520);return ease(p)};
+  // 中轴参考线（仅居中模式，极淡虚线）
+  if(align==='center'){g.save();g.strokeStyle=faint;g.globalAlpha=.3;g.setLineDash([2,6]);g.beginPath();g.moveTo(pcx,padT-4);g.lineTo(pcx,h-padB+4);g.stroke();g.restore()}
+  // —— 横条：宽度 = 数值 ——
+  rows.forEach(R=>{
+    const s=R.s, row=R.row, cy=R.cy, by=R.by, bw=R.bw, bx=R.bx;
+    const next=vis[row+1];
+    const col=stageColor(s.i);
+    const isWorst=(s.i===wi);
+    const p=prog(row);
+    const aBase=(hoverIdx<0||hoverIdx===s.i)?1:0.3, aP=0.15+0.85*p;
+    const rr=()=>{g.beginPath();g.roundRect(bx,by,bw,bh,10)};
+    g.save();
+    if(p<1){const ax=align==='center'?pcx:plotX0;g.translate(ax,cy);g.scale(Math.max(.001,p),1);g.translate(-ax,-cy)}
+    g.globalAlpha=aBase*aP;
+    const sh=()=>{g.shadowColor=theme()==='dark'?'rgba(0,0,0,.5)':'rgba(23,26,30,.13)';g.shadowBlur=14;g.shadowOffsetY=5};
+    const unsh=()=>{g.shadowColor='transparent';g.shadowBlur=0;g.shadowOffsetY=0};
+    if(finish==='flat'){
+      rr(); g.fillStyle=col; g.fill();
+      g.globalAlpha=aBase*aP*0.45; g.strokeStyle=mix(col,'#000000',theme()==='dark'?0.45:0.25); g.lineWidth=1; g.stroke();
+    }else if(finish==='outline'){
+      rr(); g.fillStyle=theme()==='light'?'rgba(255,253,247,.72)':'rgba(237,233,220,.08)'; g.fill();
+      g.lineWidth=2; g.strokeStyle=col; g.stroke();
+    }else if(finish==='glass'){
+      const gr=g.createLinearGradient(0,by,0,by+bh);
+      gr.addColorStop(0,hexA(shade(col,24),.94)); gr.addColorStop(.48,hexA(col,.82)); gr.addColorStop(1,hexA(shade(col,-34),.66));
+      sh(); rr(); g.fillStyle=gr; g.fill(); unsh();
+      g.lineWidth=1; g.strokeStyle=theme()==='light'?'rgba(255,255,255,.86)':'rgba(255,255,255,.28)'; g.stroke();
+      g.save(); rr(); g.clip(); g.fillStyle='rgba(255,255,255,.34)'; g.fillRect(bx+3,by+3,Math.max(2,bw-6),Math.min(5,Math.max(2,bh*.16))); g.restore();
+    }else if(finish==='metal'){
+      const gr=g.createLinearGradient(bx,0,bx+Math.max(2,bw),0);
+      gr.addColorStop(0,shade(col,-48)); gr.addColorStop(.18,shade(col,18)); gr.addColorStop(.38,hexA('#ffffff',.62)); gr.addColorStop(.54,col); gr.addColorStop(.76,shade(col,-26)); gr.addColorStop(1,shade(col,-52));
+      sh(); rr(); g.fillStyle=gr; g.fill(); unsh();
+      g.save(); rr(); g.clip();
+      g.fillStyle='rgba(255,255,255,.42)'; g.fillRect(bx+2,by+2,Math.max(2,bw-4),Math.max(1,bh*.06));
+      g.fillStyle='rgba(0,0,0,.18)'; g.fillRect(bx+2,by+bh-Math.max(1,bh*.06)-2,Math.max(2,bw-4),Math.max(1,bh*.06));
+      g.restore();
+      rr(); g.strokeStyle=shade(col,-42); g.lineWidth=1.2; g.stroke();
+    }else if(finish==='papercut'){
+      g.save(); g.globalAlpha=aBase*aP*.48; g.translate(5,6); rr(); g.fillStyle=theme()==='light'?'#171a1e':'#000000'; g.fill(); g.restore(); g.globalAlpha=aBase*aP;
+      const gr=g.createLinearGradient(0,by,0,by+bh); gr.addColorStop(0,shade(col,22)); gr.addColorStop(.62,col); gr.addColorStop(1,shade(col,-22));
+      rr(); g.fillStyle=gr; g.fill();
+      g.lineWidth=1.5; g.strokeStyle=shade(col,-28); g.stroke();
+    }else{ // gradient（默认）
+      const gr=g.createLinearGradient(0,by,0,by+bh); gr.addColorStop(0,shade(col,10)); gr.addColorStop(1,shade(col,-18));
+      sh(); rr(); g.fillStyle=gr; g.fill(); unsh();
+      g.globalAlpha=aBase*aP*0.45; rr(); g.strokeStyle=mix(col,'#000000',theme()==='dark'?0.45:0.25); g.lineWidth=1; g.stroke();
+    }
+    if(isWorst){g.globalAlpha=aBase*aP;rr();g.strokeStyle=neg;g.lineWidth=2.5;g.stroke()}
+    g.restore();
+    // —— 左栏：阶段 + 数值 ——
+    g.globalAlpha=((hoverIdx<0||hoverIdx===s.i)?1:0.4)*p;
+    g.textAlign='right'; g.textBaseline='middle';
+    g.fillStyle=ink; g.font='bold 13px JetBrains Mono, monospace';
+    const label=s.label.length>10?s.label.slice(0,9)+'…':s.label;
+    g.fillText(label,labelX,cy-8);
+    g.font='11px JetBrains Mono, monospace'; g.fillStyle=faint;
+    g.fillText(s.value.toLocaleString(),labelX,cy+9);
+    // —— 右栏：转化率徽章 + 流失 ——
+    if(showRate&&next){
+      const rate=(next.value/s.value*100).toFixed(1)+'%';
+      const dr=next.value-s.value;
+      pill(g,plotX1+16,cy-19,'↓ '+rate,isWorst?neg:ink,isWorst?neg:line2,paper);
+      g.font='11px JetBrains Mono, monospace'; g.fillStyle=neg; g.textAlign='left';
+      g.fillText('−'+fmt(Math.abs(dr)),plotX1+17,cy+12);
+    }
+    if(!showRate&&s.step!==null){
+      g.textAlign='left'; g.font='11px JetBrains Mono, monospace'; g.fillStyle=faint;
+      g.fillText((s.cum*100).toFixed(0)+'% 累计',plotX1+16,cy);
+    }
+    g.globalAlpha=1;
+    GEO.push({y0:by,y1:by+bh,a0:bx,a1:bx+bw,b0:bx,b1:bx+bw,i:s.i});
+  });
+}
+function replay(){if(reduced)return;animStart=performance.now();requestAnimationFrame(animLoop)}
+function animLoop(ts){if(animStart===null)return;draw(ts);if(ts-animStart<90*stages.length+560)requestAnimationFrame(animLoop);else{animStart=null;draw()}}
+function hit(mx,my){
+  for(const q of GEO){ if(my>=q.y0&&my<=q.y1&&mx>=q.a0-2&&mx<=q.a1+2) return q.i }
+  return -1;
+}
+function showTip(i){
+  const s=stages.find(x=>x.i===i); if(!s) return;
+  const step=s.step===null?'—':(s.step*100).toFixed(1)+'%';
+  const dr=s.index===0?'—':'-'+fmt(s.drop);
+  tip.innerHTML=`<b>${esc(s.label)}</b><br>${fmt(s.value)} · 累计留存 <b>${(s.cum*100).toFixed(1)}%</b><br>逐级转化 ${step} · 流失 <b class="drop">${dr}</b>`;
+  tip.style.display='block';
+  const q=GEO.find(x=>x.i===i); const r=cv.getBoundingClientRect();
+  const x=q?(q.a0+q.a1)/2:r.width/2;
+  const flip=x>r.width*0.6;
+  tip.style.left=(cv.offsetLeft+(flip?x-tip.offsetWidth-12:x+12))+'px';
+  tip.style.top=(cv.offsetTop+(q?q.y0+8:20))+'px';
+}
+function updateDetail(){
+  if(hoverIdx<0){const ws=worstIdx()>=0?stages.find(x=>x.i===worstIdx()):null;detail.innerHTML=ws?`▼ 最大流失在 <b>${esc(ws.label)}</b>：转化 <b>${(ws.step*100).toFixed(1)}%</b>，流失 <span class="drop">${fmt(ws.drop)}</span> · 整体转化 <b>${(stages[stages.length-1].cum*100).toFixed(1)}%</b>`:'💡 悬停阶段查看转化率与流失 · 点击图例显隐';return}
+  const s=stages.find(x=>x.i===hoverIdx);
+  detail.innerHTML=`📌 <b>${esc(s.label)}</b> · ${fmt(s.value)} · 累计留存 <b>${(s.cum*100).toFixed(1)}%</b>${s.step!==null?` · 逐级转化 <b>${(s.step*100).toFixed(1)}%</b> · 流失 <span class="drop">-${fmt(s.drop)}</span>`:' · 首级基准'}`;
+}
+cv.addEventListener('mousemove',e=>{const r=cv.getBoundingClientRect();const i=hit(e.clientX-r.left,e.clientY-r.top);if(i!==hoverIdx){hoverIdx=i;if(i>=0)showTip(i);else tip.style.display='none';draw(animStart!==null?performance.now():undefined);updateDetail()}});
+cv.addEventListener('mouseleave',()=>{hoverIdx=-1;tip.style.display='none';draw();updateDetail()});
+function renderLegend(){
+  legendEl.innerHTML=stages.map(s=>`<button type="button" class="chip ${hidden.has(s.label)?'off':''}" data-l="${esc(s.label)}" aria-pressed="${!hidden.has(s.label)}"><i style="background:${stageColor(s.i)}"></i>${esc(s.label)}</button>`).join('')+'<span style="font-family:var(--mono);font-size:11px;color:var(--faint);margin-left:6px">点击显隐阶段</span>';
+}
+legendEl.addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const l=b.dataset.l;hidden.has(l)?hidden.delete(l):hidden.add(l);renderLegend();draw();updateDetail()});
+function setOn(el,on){el.classList.toggle('on',on);el.setAttribute('aria-pressed',String(on))}
+document.getElementById('cmodeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;colorMode=b.dataset.cmode;document.querySelectorAll('#cmodeSeg button').forEach(x=>setOn(x,x===b));renderLegend();draw()});
+document.getElementById('alignSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;align=b.dataset.align;document.querySelectorAll('#alignSeg button').forEach(x=>setOn(x,x===b));draw()});
+document.getElementById('finishSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;finish=b.dataset.finish;document.querySelectorAll('#finishSeg button').forEach(x=>setOn(x,x===b));draw()});
+document.getElementById('paletteSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;paletteKey=b.dataset.palette;document.documentElement.dataset.palette=paletteKey;document.querySelectorAll('#paletteSeg button').forEach(x=>setOn(x,x===b));renderLegend();draw()});
+document.getElementById('btnReplay').onclick=replay;
+document.getElementById('btnRate').onclick=e=>{showRate=!showRate;setOn(e.currentTarget,showRate);draw()};
+document.getElementById('btnWorst').onclick=e=>{highlightWorst=!highlightWorst;setOn(e.currentTarget,highlightWorst);draw();updateDetail()};
+document.getElementById('themeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.dataset.theme=b.dataset.theme;document.querySelectorAll('#themeSeg button').forEach(x=>setOn(x,x===b));renderLegend();draw()});
+document.querySelectorAll('#themeSeg button').forEach(b=>setOn(b,theme()===b.dataset.theme));
+renderLegend();draw();updateDetail();
+if(!reduced){animStart=performance.now();requestAnimationFrame(animLoop)}
+window.addEventListener('resize',draw);
+// @@SCRIPT2@@
+</script>
+</body>
+</html>
