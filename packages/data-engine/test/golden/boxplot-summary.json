@@ -1,0 +1,93 @@
+{
+ "case": "boxplot-summary",
+ "view": "boxplot",
+ "file": "examples/sample-boxplot-summary.csv",
+ "fn": "boxplot.to_boxplot",
+ "model": {
+  "mode": "summary",
+  "groups": [
+   {
+    "name": "一班",
+    "n": null,
+    "min": 58.0,
+    "q1": 71.0,
+    "med": 79.0,
+    "q3": 86.0,
+    "max": 97.0,
+    "mean": 78.2,
+    "outliers": [],
+    "values": []
+   },
+   {
+    "name": "二班",
+    "n": null,
+    "min": 52.0,
+    "q1": 68.0,
+    "med": 77.0,
+    "q3": 85.0,
+    "max": 99.0,
+    "mean": 76.2,
+    "outliers": [],
+    "values": []
+   },
+   {
+    "name": "三班",
+    "n": null,
+    "min": 61.0,
+    "q1": 74.0,
+    "med": 82.0,
+    "q3": 88.0,
+    "max": 96.0,
+    "mean": 80.2,
+    "outliers": [],
+    "values": []
+   },
+   {
+    "name": "四班",
+    "n": null,
+    "min": 49.0,
+    "q1": 66.0,
+    "med": 75.0,
+    "q3": 84.0,
+    "max": 95.0,
+    "mean": 73.8,
+    "outliers": [],
+    "values": []
+   },
+   {
+    "name": "五班",
+    "n": null,
+    "min": 63.0,
+    "q1": 76.0,
+    "med": 83.0,
+    "q3": 89.0,
+    "max": 98.0,
+    "mean": 81.8,
+    "outliers": [],
+    "values": []
+   }
+  ],
+  "counts": {
+   "groups": 5,
+   "mode": "summary",
+   "outliers": 0,
+   "vmin": 49.0,
+   "vmax": 99.0,
+   "n_total": null
+  },
+  "quality": {
+   "rows": 5,
+   "kept": 5,
+   "warnings": [],
+   "confidence": "high",
+   "mapping": {
+    "group": "class",
+    "q1": "q1",
+    "median": "median",
+    "q3": "q3",
+    "min": "min",
+    "max": "max"
+   }
+  }
+ }
+}

@@ -1,0 +1,558 @@
+{
+ "case": "report-md",
+ "view": "report",
+ "file": "examples/sample-report.md",
+ "fn": "docmd.build_doc",
+ "model": {
+  "title": "2026 年第三季度经营分析",
+  "source": "sample-report",
+  "blocks": [
+   {
+    "type": "heading",
+    "level": 1,
+    "text": "2026 年第三季度经营分析",
+    "id": "2026-年第三季度经营分析",
+    "is_title": true
+   },
+   {
+    "type": "quote",
+    "paras": [
+     "数据口径：截至 2026-09-30，财务数据未经审计。版本 v0.3。"
+    ]
+   },
+   {
+    "type": "heading",
+    "level": 2,
+    "text": "一、概述",
+    "id": "一-概述",
+    "is_title": false
+   },
+   {
+    "type": "p",
+    "text": "本季度整体营收稳步增长，核心指标均在计划区间内。"
+   },
+   {
+    "type": "list",
+    "items": [
+     {
+      "level": 0,
+      "ordered": false,
+      "text": "营收：12.5 亿元"
+     },
+     {
+      "level": 0,
+      "ordered": false,
+      "text": "同比增长 8.6%"
+     },
+     {
+      "level": 0,
+      "ordered": false,
+      "text": "订单量达到 1,200 万单"
+     },
+     {
+      "level": 0,
+      "ordered": false,
+      "text": "客单价：186 元"
+     }
+    ]
+   },
+   {
+    "type": "p",
+    "text": "本季度 DAU 为 3.2 万，较上季度下降 1.4%。"
+   },
+   {
+    "type": "heading",
+    "level": 2,
+    "text": "二、渠道表现",
+    "id": "二-渠道表现",
+    "is_title": false
+   },
+   {
+    "type": "p",
+    "text": "下表展示三大渠道的营收与占比。"
+   },
+   {
+    "type": "table",
+    "head": [
+     "渠道",
+     "营收（亿元）",
+     "占比",
+     "同比"
+    ],
+    "align": [
+     "",
+     "num",
+     "num",
+     "num"
+    ],
+    "rows": [
+     [
+      "线上商城",
+      "6.8",
+      "54%",
+      "+12.1%"
+     ],
+     [
+      "门店",
+      "3.9",
+      "31%",
+      "+3.4%"
+     ],
+     [
+      "第三方",
+      "1.8",
+      "15%",
+      "-2.7%"
+     ]
+    ]
+   },
+   {
+    "type": "heading",
+    "level": 3,
+    "text": "2.1 线上商城",
+    "id": "2-1-线上商城",
+    "is_title": false
+   },
+   {
+    "type": "p",
+    "text": "线上商城贡献最大，主要来自会员复购；退货率：3.2%，较上季度改善 0.5 个百分点。"
+   },
+   {
+    "type": "heading",
+    "level": 3,
+    "text": "2.2 门店",
+    "id": "2-2-门店",
+    "is_title": false
+   },
+   {
+    "type": "p",
+    "text": "门店客流回暖，坪效为 1.8 万元/平方米。"
+   },
+   {
+    "type": "heading",
+    "level": 2,
+    "text": "三、问题与风险",
+    "id": "三-问题与风险",
+    "is_title": false
+   },
+   {
+    "type": "list",
+    "items": [
+     {
+      "level": 0,
+      "ordered": true,
+      "text": "第三方渠道连续两个季度下滑，毛利率仅 18%。"
+     },
+     {
+      "level": 0,
+      "ordered": true,
+      "text": "库存周转天数 45 天，高于目标值。"
+     },
+     {
+      "level": 1,
+      "ordered": false,
+      "text": "其中滞销 SKU 占比 12%"
+     },
+     {
+      "level": 0,
+      "ordered": true,
+      "text": "数据口径变更需要复核。"
+     }
+    ]
+   },
+   {
+    "type": "heading",
+    "level": 2,
+    "text": "四、下一步计划",
+    "id": "四-下一步计划",
+    "is_title": false
+   },
+   {
+    "type": "list",
+    "items": [
+     {
+      "level": 0,
+      "ordered": true,
+      "text": "第四季度上线会员积分体系"
+     },
+     {
+      "level": 0,
+      "ordered": true,
+      "text": "第三方渠道做价格与履约复盘"
+     },
+     {
+      "level": 0,
+      "ordered": true,
+      "text": "库存目标压降至 40 天"
+     }
+    ]
+   },
+   {
+    "type": "code",
+    "lang": "python",
+    "text": "# 指标口径示例\nrevenue = orders * avg_price"
+   },
+   {
+    "type": "p",
+    "text": "延伸阅读：[数据口径说明](https://example.com/metrics)。"
+   },
+   {
+    "type": "p",
+    "text": "![营收趋势图](revenue-trend.png)"
+   }
+  ],
+  "headings": [
+   {
+    "type": "heading",
+    "level": 1,
+    "text": "2026 年第三季度经营分析",
+    "id": "2026-年第三季度经营分析",
+    "is_title": true
+   },
+   {
+    "type": "heading",
+    "level": 2,
+    "text": "一、概述",
+    "id": "一-概述",
+    "is_title": false
+   },
+   {
+    "type": "heading",
+    "level": 2,
+    "text": "二、渠道表现",
+    "id": "二-渠道表现",
+    "is_title": false
+   },
+   {
+    "type": "heading",
+    "level": 3,
+    "text": "2.1 线上商城",
+    "id": "2-1-线上商城",
+    "is_title": false
+   },
+   {
+    "type": "heading",
+    "level": 3,
+    "text": "2.2 门店",
+    "id": "2-2-门店",
+    "is_title": false
+   },
+   {
+    "type": "heading",
+    "level": 2,
+    "text": "三、问题与风险",
+    "id": "三-问题与风险",
+    "is_title": false
+   },
+   {
+    "type": "heading",
+    "level": 2,
+    "text": "四、下一步计划",
+    "id": "四-下一步计划",
+    "is_title": false
+   }
+  ],
+  "sections": [
+   {
+    "text": "一、概述",
+    "anchor": "一-概述",
+    "chars": 84
+   },
+   {
+    "text": "二、渠道表现",
+    "anchor": "二-渠道表现",
+    "chars": 131
+   },
+   {
+    "text": "三、问题与风险",
+    "anchor": "三-问题与风险",
+    "chars": 61
+   },
+   {
+    "text": "四、下一步计划",
+    "anchor": "四-下一步计划",
+    "chars": 78
+   }
+  ],
+  "metrics": [
+   {
+    "label": "营收",
+    "value_text": "12.5",
+    "unit": "亿元",
+    "value": 12.5,
+    "method": "explicit",
+    "section": "一、概述",
+    "anchor": "一-概述",
+    "source": "营收：12.5 亿元"
+   },
+   {
+    "label": "同比增长",
+    "value_text": "8.6",
+    "unit": "%",
+    "value": 8.6,
+    "method": "inferred",
+    "section": "一、概述",
+    "anchor": "一-概述",
+    "source": "同比增长 8.6%"
+   },
+   {
+    "label": "订单量",
+    "value_text": "1,200",
+    "unit": "万单",
+    "value": 1200.0,
+    "method": "inferred",
+    "section": "一、概述",
+    "anchor": "一-概述",
+    "source": "订单量达到 1,200 万单"
+   },
+   {
+    "label": "客单价",
+    "value_text": "186",
+    "unit": "元",
+    "value": 186.0,
+    "method": "explicit",
+    "section": "一、概述",
+    "anchor": "一-概述",
+    "source": "客单价：186 元"
+   },
+   {
+    "label": "本季度 DAU",
+    "value_text": "3.2",
+    "unit": "万",
+    "value": 3.2,
+    "method": "inferred",
+    "section": "一、概述",
+    "anchor": "一-概述",
+    "source": "本季度 DAU 为 3.2 万"
+   },
+   {
+    "label": "较上季度下降",
+    "value_text": "1.4",
+    "unit": "%",
+    "value": 1.4,
+    "method": "inferred",
+    "section": "一、概述",
+    "anchor": "一-概述",
+    "source": "较上季度下降 1.4%"
+   },
+   {
+    "label": "线上商城 · 营收（亿元）",
+    "value_text": "6.8",
+    "unit": "",
+    "value": 6.8,
+    "method": "table",
+    "section": "二、渠道表现",
+    "anchor": "二-渠道表现",
+    "source": "线上商城 | 营收（亿元） | 6.8"
+   },
+   {
+    "label": "线上商城 · 占比",
+    "value_text": "54",
+    "unit": "%",
+    "value": 54.0,
+    "method": "table",
+    "section": "二、渠道表现",
+    "anchor": "二-渠道表现",
+    "source": "线上商城 | 占比 | 54%"
+   },
+   {
+    "label": "线上商城 · 同比",
+    "value_text": "+12.1",
+    "unit": "%",
+    "value": 12.1,
+    "method": "table",
+    "section": "二、渠道表现",
+    "anchor": "二-渠道表现",
+    "source": "线上商城 | 同比 | +12.1%"
+   },
+   {
+    "label": "门店 · 营收（亿元）",
+    "value_text": "3.9",
+    "unit": "",
+    "value": 3.9,
+    "method": "table",
+    "section": "二、渠道表现",
+    "anchor": "二-渠道表现",
+    "source": "门店 | 营收（亿元） | 3.9"
+   },
+   {
+    "label": "门店 · 占比",
+    "value_text": "31",
+    "unit": "%",
+    "value": 31.0,
+    "method": "table",
+    "section": "二、渠道表现",
+    "anchor": "二-渠道表现",
+    "source": "门店 | 占比 | 31%"
+   },
+   {
+    "label": "门店 · 同比",
+    "value_text": "+3.4",
+    "unit": "%",
+    "value": 3.4,
+    "method": "table",
+    "section": "二、渠道表现",
+    "anchor": "二-渠道表现",
+    "source": "门店 | 同比 | +3.4%"
+   },
+   {
+    "label": "第三方 · 营收（亿元）",
+    "value_text": "1.8",
+    "unit": "",
+    "value": 1.8,
+    "method": "table",
+    "section": "二、渠道表现",
+    "anchor": "二-渠道表现",
+    "source": "第三方 | 营收（亿元） | 1.8"
+   },
+   {
+    "label": "第三方 · 占比",
+    "value_text": "15",
+    "unit": "%",
+    "value": 15.0,
+    "method": "table",
+    "section": "二、渠道表现",
+    "anchor": "二-渠道表现",
+    "source": "第三方 | 占比 | 15%"
+   },
+   {
+    "label": "第三方 · 同比",
+    "value_text": "-2.7",
+    "unit": "%",
+    "value": -2.7,
+    "method": "table",
+    "section": "二、渠道表现",
+    "anchor": "二-渠道表现",
+    "source": "第三方 | 同比 | -2.7%"
+   },
+   {
+    "label": "退货率",
+    "value_text": "3.2",
+    "unit": "%",
+    "value": 3.2,
+    "method": "explicit",
+    "section": "2.1 线上商城",
+    "anchor": "2-1-线上商城",
+    "source": "退货率：3.2%"
+   },
+   {
+    "label": "较上季度改善",
+    "value_text": "0.5",
+    "unit": "个百分点",
+    "value": 0.5,
+    "method": "inferred",
+    "section": "2.1 线上商城",
+    "anchor": "2-1-线上商城",
+    "source": "较上季度改善 0.5 个百分点"
+   },
+   {
+    "label": "坪效",
+    "value_text": "1.8",
+    "unit": "万元",
+    "value": 1.8,
+    "method": "inferred",
+    "section": "2.2 门店",
+    "anchor": "2-2-门店",
+    "source": "坪效为 1.8 万元/平方米"
+   },
+   {
+    "label": "毛利率",
+    "value_text": "18",
+    "unit": "%",
+    "value": 18.0,
+    "method": "inferred",
+    "section": "三、问题与风险",
+    "anchor": "三-问题与风险",
+    "source": "毛利率仅 18%"
+   },
+   {
+    "label": "库存周转天数",
+    "value_text": "45",
+    "unit": "天",
+    "value": 45.0,
+    "method": "inferred",
+    "section": "三、问题与风险",
+    "anchor": "三-问题与风险",
+    "source": "库存周转天数 45 天"
+   },
+   {
+    "label": "其中滞销 SKU 占比",
+    "value_text": "12",
+    "unit": "%",
+    "value": 12.0,
+    "method": "inferred",
+    "section": "三、问题与风险",
+    "anchor": "三-问题与风险",
+    "source": "其中滞销 SKU 占比 12%"
+   },
+   {
+    "label": "库存目标压降",
+    "value_text": "40",
+    "unit": "天",
+    "value": 40.0,
+    "method": "inferred",
+    "section": "四、下一步计划",
+    "anchor": "四-下一步计划",
+    "source": "库存目标压降至 40 天"
+   }
+  ],
+  "stats": {
+   "headings": 6,
+   "sections": 4,
+   "paragraphs": 7,
+   "lists": 3,
+   "tables": 1,
+   "quotes": 1,
+   "code": 1,
+   "images": 1,
+   "links": 1,
+   "chars": 388
+  },
+  "quality": {
+   "mode": "markdown",
+   "confidence": "medium",
+   "warnings": [
+    "10 个指标为推断识别（无冒号），请对照来源句复核",
+    "1 个图片引用未加载（离线产物），已显示为占位"
+   ],
+   "chips": [
+    [
+     "模式",
+     "markdown"
+    ],
+    [
+     "标题",
+     6
+    ],
+    [
+     "段落",
+     7
+    ],
+    [
+     "表格",
+     1
+    ],
+    [
+     "列表",
+     3
+    ],
+    [
+     "代码块",
+     1
+    ],
+    [
+     "图片",
+     "1 未加载"
+    ],
+    [
+     "指标",
+     22
+    ],
+    [
+     "推断",
+     10
+    ]
+   ]
+  }
+ }
+}

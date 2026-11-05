@@ -1,0 +1,235 @@
+{
+ "case": "gantt-basic",
+ "view": "gantt",
+ "file": "examples/sample-gantt.csv",
+ "fn": "gantt.to_gantt",
+ "model": {
+  "tasks": [
+   {
+    "i": 0,
+    "label": "需求梳理",
+    "group": "策划",
+    "s": 0,
+    "e": 4,
+    "dur": 4,
+    "progress": 1.0,
+    "status": "done",
+    "milestone": false,
+    "owner": "林",
+    "deps": []
+   },
+   {
+    "i": 1,
+    "label": "信息架构",
+    "group": "策划",
+    "s": 7,
+    "e": 11,
+    "dur": 4,
+    "progress": 1.0,
+    "status": "done",
+    "milestone": false,
+    "owner": "林",
+    "deps": [
+     0
+    ]
+   },
+   {
+    "i": 2,
+    "label": "视觉概念",
+    "group": "设计",
+    "s": 14,
+    "e": 25,
+    "dur": 11,
+    "progress": 0.8,
+    "status": "active",
+    "milestone": false,
+    "owner": "周",
+    "deps": [
+     1
+    ]
+   },
+   {
+    "i": 3,
+    "label": "设计系统",
+    "group": "设计",
+    "s": 21,
+    "e": 32,
+    "dur": 11,
+    "progress": 0.45,
+    "status": "active",
+    "milestone": false,
+    "owner": "周",
+    "deps": [
+     1
+    ]
+   },
+   {
+    "i": 4,
+    "label": "页面设计",
+    "group": "设计",
+    "s": 28,
+    "e": 46,
+    "dur": 18,
+    "progress": 0.2,
+    "status": "active",
+    "milestone": false,
+    "owner": "李",
+    "deps": [
+     2
+    ]
+   },
+   {
+    "i": 5,
+    "label": "设计评审",
+    "group": "设计",
+    "s": 46,
+    "e": 46,
+    "dur": 0,
+    "progress": null,
+    "status": null,
+    "milestone": true,
+    "owner": "",
+    "deps": [
+     4
+    ]
+   },
+   {
+    "i": 6,
+    "label": "前端搭建",
+    "group": "开发",
+    "s": 35,
+    "e": 53,
+    "dur": 18,
+    "progress": 0.1,
+    "status": "active",
+    "milestone": false,
+    "owner": "陈",
+    "deps": [
+     3
+    ]
+   },
+   {
+    "i": 7,
+    "label": "旧站兼容",
+    "group": "开发",
+    "s": 42,
+    "e": 65,
+    "dur": 23,
+    "progress": 0.35,
+    "status": "delayed",
+    "milestone": false,
+    "owner": "孙",
+    "deps": [
+     6
+    ]
+   },
+   {
+    "i": 8,
+    "label": "接口联调",
+    "group": "开发",
+    "s": 49,
+    "e": 67,
+    "dur": 18,
+    "progress": 0.0,
+    "status": "todo",
+    "milestone": false,
+    "owner": "陈",
+    "deps": [
+     4
+    ]
+   },
+   {
+    "i": 9,
+    "label": "内容迁移",
+    "group": "开发",
+    "s": 56,
+    "e": 74,
+    "dur": 18,
+    "progress": 0.0,
+    "status": "todo",
+    "milestone": false,
+    "owner": "赵",
+    "deps": [
+     6
+    ]
+   },
+   {
+    "i": 10,
+    "label": "内测修复",
+    "group": "测试",
+    "s": 70,
+    "e": 81,
+    "dur": 11,
+    "progress": 0.0,
+    "status": "todo",
+    "milestone": false,
+    "owner": "王",
+    "deps": [
+     8
+    ]
+   },
+   {
+    "i": 11,
+    "label": "灰度上线",
+    "group": "上线",
+    "s": 84,
+    "e": 88,
+    "dur": 4,
+    "progress": 0.0,
+    "status": "todo",
+    "milestone": false,
+    "owner": "赵",
+    "deps": [
+     10
+    ]
+   },
+   {
+    "i": 12,
+    "label": "正式上线",
+    "group": "上线",
+    "s": 88,
+    "e": 88,
+    "dur": 0,
+    "progress": null,
+    "status": null,
+    "milestone": true,
+    "owner": "王",
+    "deps": [
+     11
+    ]
+   }
+  ],
+  "groups": [
+   "策划",
+   "设计",
+   "开发",
+   "测试",
+   "上线"
+  ],
+  "base": "2026-03-02",
+  "baseOrd": 739677,
+  "span": 89,
+  "today": null,
+  "counts": {
+   "milestones": 2,
+   "delayed": 1,
+   "avg_progress": 0.35454545454545455,
+   "deps": 12
+  },
+  "quality": {
+   "rows": 13,
+   "kept": 13,
+   "warnings": [],
+   "confidence": "high",
+   "mapping": {
+    "task": "task",
+    "start": "start",
+    "end": "end",
+    "group": "group",
+    "progress": "progress",
+    "status": "status",
+    "deps": "deps"
+   }
+  }
+ }
+}

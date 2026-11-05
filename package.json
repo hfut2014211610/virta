@@ -3,14 +3,32 @@
   "private": true,
   "version": "0.0.0",
   "description": "Data in motion. Virta data-visualization toolkit.",
+  "type": "module",
   "workspaces": [
     "packages/*",
     "apps/*"
   ],
   "scripts": {
-    "typecheck": "tsc -b"
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots",
+    "test:perf": "vitest run --config vitest.perf.config.ts",
+    "packs:gen": "tsx scripts/packs/generate.ts",
+    "packs:check": "tsx scripts/packs/check.ts",
+    "golden:dump": "python scripts/golden/dump_legacy.py",
+    "gallery": "npm run virta -- gallery",
+    "virta": "tsx packages/cli/src/main.ts"
   },
   "devDependencies": {
-    "typescript": "5.9.2"
+    "@playwright/test": "1.64.1",
+    "@types/node": "26.6.6",
+    "@types/papaparse": "5.5.2",
+    "esbuild": "0.28.2",
+    "tsx": "4.23.15",
+    "typescript": "5.9.2",
+    "vitest": "4.1.12"
   }
 }

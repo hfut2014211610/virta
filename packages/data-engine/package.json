@@ -1,0 +1,16 @@
+{
+  "name": "@virta/data-engine",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./node": "./src/node/index.ts"
+  },
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@virta/contracts": "0.0.0",
+    "papaparse": "5.7.0",
+    "read-excel-file": "9.3.12"
+  }
+}

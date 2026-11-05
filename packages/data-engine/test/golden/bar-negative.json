@@ -1,0 +1,76 @@
+{
+ "case": "bar-negative",
+ "view": "bar",
+ "file": "examples/sample-negative.csv",
+ "fn": "barline.to_chart",
+ "model": {
+  "labels": [
+   "A",
+   "B",
+   "C",
+   "D",
+   "E",
+   "F"
+  ],
+  "series": [
+   {
+    "name": "线上",
+    "values": [
+     1400,
+     -450,
+     980,
+     0,
+     -700,
+     65
+    ]
+   },
+   {
+    "name": "线下",
+    "values": [
+     -300,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  ],
+  "quality": {
+   "rows": 8,
+   "mode": "long",
+   "mapping": {
+    "label": "分类",
+    "series": "渠道",
+    "value": "金额"
+   },
+   "numeric_columns": [
+    "金额"
+   ],
+   "missing": 1,
+   "invalid": 0,
+   "percent": 1,
+   "negative": 3,
+   "anchors": 0,
+   "unknown_types": 0,
+   "kind_conflicts": 0,
+   "type_column": "—",
+   "duplicate_pairs": 1,
+   "warnings": [
+    "「金额」含 1 个空值，已按 0 计",
+    "「金额」含百分号，数值按原刻度保留（10% = 10）",
+    "「金额」含 3 个负值；Pareto / 100%堆叠 / 3D 矩阵自动停用，分组/堆叠/瀑布保持可用",
+    "重复 label/series 组合 1 次，已求和"
+   ],
+   "confidence": "medium"
+  },
+  "kinds": [
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta"
+  ]
+ }
+}

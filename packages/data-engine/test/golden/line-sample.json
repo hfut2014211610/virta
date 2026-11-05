@@ -1,0 +1,114 @@
+{
+ "case": "line-sample",
+ "view": "line",
+ "file": "examples/sample-line.csv",
+ "fn": "barline.to_chart",
+ "model": {
+  "labels": [
+   "1月",
+   "2月",
+   "3月",
+   "4月",
+   "5月",
+   "6月",
+   "7月",
+   "8月",
+   "9月",
+   "10月",
+   "11月",
+   "12月"
+  ],
+  "series": [
+   {
+    "name": "消费",
+    "values": [
+     420,
+     460,
+     520,
+     510,
+     580,
+     620,
+     610,
+     660,
+     640,
+     700,
+     740,
+     780
+    ]
+   },
+   {
+    "name": "出行",
+    "values": [
+     300,
+     330,
+     310,
+     360,
+     390,
+     410,
+     430,
+     450,
+     470,
+     490,
+     520,
+     550
+    ]
+   },
+   {
+    "name": "政务",
+    "values": [
+     180,
+     200,
+     230,
+     250,
+     270,
+     290,
+     310,
+     330,
+     340,
+     360,
+     380,
+     400
+    ]
+   }
+  ],
+  "quality": {
+   "rows": 12,
+   "mode": "wide",
+   "mapping": {
+    "label": "label",
+    "series": "(每个数值列=一个系列)",
+    "value": "消费, 出行, 政务"
+   },
+   "numeric_columns": [
+    "消费",
+    "出行",
+    "政务"
+   ],
+   "missing": 0,
+   "invalid": 0,
+   "percent": 0,
+   "negative": 0,
+   "anchors": 0,
+   "unknown_types": 0,
+   "kind_conflicts": 0,
+   "type_column": "—",
+   "duplicate_pairs": 0,
+   "warnings": [],
+   "confidence": "high"
+  },
+  "kinds": [
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta"
+  ]
+ }
+}

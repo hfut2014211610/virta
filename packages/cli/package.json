@@ -1,0 +1,23 @@
+{
+  "name": "virta",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "virta": "./dist/cli.js",
+    "vt": "./dist/cli.js"
+  },
+  "exports": {
+    ".": "./src/main.ts"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "2.6.2",
+    "@virta/contracts": "0.0.0",
+    "@virta/design-system": "0.0.0",
+    "@virta/chart-core": "0.0.0",
+    "@virta/chart-skin": "0.0.0",
+    "@virta/charts": "0.0.0",
+    "@virta/data-engine": "0.0.0",
+    "@virta/viewer": "0.0.0"
+  }
+}

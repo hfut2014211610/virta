@@ -1,0 +1,24 @@
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run test:e2e
+      - name: Install CJK fonts and Playwright browser
+        run: |
+          sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
+          npx playwright install --with-deps chromium
+      # 视觉基线以 Linux 为准；M0 阶段允许暂无用例
+      - run: npx playwright test --pass-with-no-tests

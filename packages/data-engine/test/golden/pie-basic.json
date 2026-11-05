@@ -1,0 +1,96 @@
+{
+ "case": "pie-basic",
+ "view": "pie",
+ "file": "examples/sample.csv",
+ "fn": "pie.to_pie",
+ "model": {
+  "slices": [
+   {
+    "label": "北京",
+    "value": 482,
+    "share": 0.19310897435897437
+   },
+   {
+    "label": "上海",
+    "value": 468,
+    "share": 0.1875
+   },
+   {
+    "label": "广州",
+    "value": 312,
+    "share": 0.125
+   },
+   {
+    "label": "深圳",
+    "value": 298,
+    "share": 0.11939102564102565
+   },
+   {
+    "label": "成都",
+    "value": 276,
+    "share": 0.11057692307692307
+   },
+   {
+    "label": "杭州",
+    "value": 258,
+    "share": 0.10336538461538461
+   },
+   {
+    "label": "武汉",
+    "value": 214,
+    "share": 0.08573717948717949
+   },
+   {
+    "label": "西安",
+    "value": 188,
+    "share": 0.07532051282051282
+   }
+  ],
+  "grand": 2496,
+  "top": {
+   "label": "北京",
+   "value": 482,
+   "share": 0.19310897435897437
+  },
+  "mode": "single",
+  "mapping": {
+   "label": "label",
+   "series": "(单系列)",
+   "value": "value"
+  },
+  "series_n": 1,
+  "quality": {
+   "rows": 8,
+   "mode": "single",
+   "mapping": {
+    "label": "label",
+    "series": "(单系列)",
+    "value": "value"
+   },
+   "numeric_columns": [
+    "value"
+   ],
+   "missing": 0,
+   "invalid": 0,
+   "percent": 0,
+   "negative": 0,
+   "anchors": 0,
+   "unknown_types": 0,
+   "kind_conflicts": 0,
+   "type_column": "—",
+   "duplicate_pairs": 0,
+   "warnings": [],
+   "confidence": "high"
+  },
+  "kinds": [
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta"
+  ]
+ }
+}

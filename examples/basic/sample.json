@@ -1,0 +1,10 @@
+{
+  "data": [
+    {"label": "餐饮", "value": 86},
+    {"label": "出行", "value": 72},
+    {"label": "零售", "value": 68},
+    {"label": "政务", "value": 54},
+    {"label": "医疗", "value": 41},
+    {"label": "教育", "value": 33}
+  ]
+}

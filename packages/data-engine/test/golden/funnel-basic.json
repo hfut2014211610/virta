@@ -1,0 +1,100 @@
+{
+ "case": "funnel-basic",
+ "view": "funnel",
+ "file": "examples/sample-funnel.csv",
+ "fn": "funnel.to_funnel",
+ "model": {
+  "stages": [
+   {
+    "label": "曝光",
+    "value": 10000,
+    "step": null,
+    "cum": 1.0,
+    "drop": 0,
+    "drop_rate": 0,
+    "index": 0
+   },
+   {
+    "label": "点击",
+    "value": 3200,
+    "step": 0.32,
+    "cum": 0.32,
+    "drop": 6800,
+    "drop_rate": 0.68,
+    "index": 1
+   },
+   {
+    "label": "加购",
+    "value": 1200,
+    "step": 0.375,
+    "cum": 0.12,
+    "drop": 2000,
+    "drop_rate": 0.625,
+    "index": 2
+   },
+   {
+    "label": "下单",
+    "value": 560,
+    "step": 0.4666666666666667,
+    "cum": 0.056,
+    "drop": 640,
+    "drop_rate": 0.5333333333333333,
+    "index": 3
+   },
+   {
+    "label": "复购",
+    "value": 140,
+    "step": 0.25,
+    "cum": 0.014,
+    "drop": 420,
+    "drop_rate": 0.75,
+    "index": 4
+   }
+  ],
+  "top": 10000,
+  "bottom": 140,
+  "overall": 0.014,
+  "worst": {
+   "label": "复购",
+   "drop_rate": 0.75,
+   "drop": 420
+  },
+  "mode": "single",
+  "mapping": {
+   "label": "阶段",
+   "series": "(单系列)",
+   "value": "人数"
+  },
+  "series_n": 1,
+  "quality": {
+   "rows": 5,
+   "mode": "single",
+   "mapping": {
+    "label": "阶段",
+    "series": "(单系列)",
+    "value": "人数"
+   },
+   "numeric_columns": [
+    "人数"
+   ],
+   "missing": 0,
+   "invalid": 0,
+   "percent": 0,
+   "negative": 0,
+   "anchors": 0,
+   "unknown_types": 0,
+   "kind_conflicts": 0,
+   "type_column": "—",
+   "duplicate_pairs": 0,
+   "warnings": [],
+   "confidence": "high"
+  },
+  "kinds": [
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta"
+  ]
+ }
+}

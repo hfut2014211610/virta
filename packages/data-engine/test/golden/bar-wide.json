@@ -1,0 +1,94 @@
+{
+ "case": "bar-wide",
+ "view": "bar",
+ "file": "examples/sample-wide.csv",
+ "fn": "barline.to_chart",
+ "model": {
+  "labels": [
+   "北京",
+   "上海",
+   "广州",
+   "深圳",
+   "成都",
+   "杭州",
+   "武汉",
+   "西安"
+  ],
+  "series": [
+   {
+    "name": "消费",
+    "values": [
+     482,
+     468,
+     312,
+     298,
+     276,
+     258,
+     214,
+     188
+    ]
+   },
+   {
+    "name": "出行",
+    "values": [
+     310,
+     290,
+     240,
+     265,
+     210,
+     188,
+     150,
+     172
+    ]
+   },
+   {
+    "name": "政务",
+    "values": [
+     96,
+     88,
+     70,
+     64,
+     72,
+     58,
+     84,
+     76
+    ]
+   }
+  ],
+  "quality": {
+   "rows": 8,
+   "mode": "wide",
+   "mapping": {
+    "label": "label",
+    "series": "(每个数值列=一个系列)",
+    "value": "消费, 出行, 政务"
+   },
+   "numeric_columns": [
+    "消费",
+    "出行",
+    "政务"
+   ],
+   "missing": 0,
+   "invalid": 0,
+   "percent": 0,
+   "negative": 0,
+   "anchors": 0,
+   "unknown_types": 0,
+   "kind_conflicts": 0,
+   "type_column": "—",
+   "duplicate_pairs": 0,
+   "warnings": [],
+   "confidence": "high"
+  },
+  "kinds": [
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta"
+  ]
+ }
+}

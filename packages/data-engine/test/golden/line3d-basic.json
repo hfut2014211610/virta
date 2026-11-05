@@ -1,0 +1,124 @@
+{
+ "case": "line3d-basic",
+ "view": "line3d",
+ "file": "examples/sample-line3d.csv",
+ "fn": "line3d.to_line3d",
+ "model": {
+  "labels": [
+   "1月",
+   "2月",
+   "3月",
+   "4月",
+   "5月",
+   "6月",
+   "7月",
+   "8月",
+   "9月",
+   "10月",
+   "11月",
+   "12月"
+  ],
+  "series": [
+   {
+    "name": "消费",
+    "values": [
+     420,
+     460,
+     520,
+     510,
+     590,
+     640,
+     700,
+     730,
+     690,
+     760,
+     820,
+     880
+    ]
+   },
+   {
+    "name": "出行",
+    "values": [
+     300,
+     330,
+     310,
+     360,
+     390,
+     420,
+     455,
+     480,
+     460,
+     510,
+     560,
+     590
+    ]
+   },
+   {
+    "name": "政务",
+    "values": [
+     180,
+     200,
+     230,
+     250,
+     270,
+     260,
+     300,
+     320,
+     310,
+     340,
+     360,
+     380
+    ]
+   }
+  ],
+  "quality": {
+   "rows": 12,
+   "mode": "wide",
+   "mapping": {
+    "label": "月份",
+    "series": "(每个数值列=一个系列)",
+    "value": "消费, 出行, 政务"
+   },
+   "numeric_columns": [
+    "消费",
+    "出行",
+    "政务"
+   ],
+   "missing": 0,
+   "invalid": 0,
+   "percent": 0,
+   "negative": 0,
+   "anchors": 0,
+   "unknown_types": 0,
+   "kind_conflicts": 0,
+   "type_column": "—",
+   "duplicate_pairs": 0,
+   "warnings": [],
+   "confidence": "high"
+  },
+  "kinds": [
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta"
+  ],
+  "x_key": "月份",
+  "z_key": "数值",
+  "y_key": "系列",
+  "value_range": [
+   180,
+   880
+  ],
+  "temporal": true,
+  "n_labels": 12,
+  "n_series": 3
+ }
+}

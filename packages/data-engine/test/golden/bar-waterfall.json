@@ -1,0 +1,62 @@
+{
+ "case": "bar-waterfall",
+ "view": "bar",
+ "file": "examples/sample-waterfall.csv",
+ "fn": "barline.to_chart",
+ "model": {
+  "labels": [
+   "期初利润",
+   "营收增长",
+   "成本上升",
+   "费用控制",
+   "一次性减值",
+   "期末利润"
+  ],
+  "series": [
+   {
+    "name": "数值",
+    "values": [
+     1200,
+     320,
+     -180,
+     140,
+     -260,
+     1220
+    ]
+   }
+  ],
+  "quality": {
+   "rows": 6,
+   "mode": "single",
+   "mapping": {
+    "label": "阶段",
+    "series": "(单系列)",
+    "value": "金额"
+   },
+   "numeric_columns": [
+    "金额"
+   ],
+   "missing": 0,
+   "invalid": 0,
+   "percent": 0,
+   "negative": 2,
+   "anchors": 2,
+   "unknown_types": 0,
+   "kind_conflicts": 0,
+   "type_column": "类型",
+   "duplicate_pairs": 0,
+   "warnings": [
+    "「金额」含 2 个负值；Pareto / 100%堆叠 / 3D 矩阵自动停用，分组/堆叠/瀑布保持可用"
+   ],
+   "confidence": "high"
+  },
+  "kinds": [
+   "absolute",
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "absolute"
+  ]
+ }
+}

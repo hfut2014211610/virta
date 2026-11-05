@@ -1,0 +1,54 @@
+{
+ "case": "bar-sample-xlsx",
+ "view": "bar",
+ "file": "examples/sample.xlsx",
+ "fn": "barline.to_chart",
+ "model": {
+  "labels": [
+   "苹果",
+   "香蕉",
+   "橙子",
+   "葡萄"
+  ],
+  "series": [
+   {
+    "name": "数值",
+    "values": [
+     120,
+     95,
+     140,
+     88
+    ]
+   }
+  ],
+  "quality": {
+   "rows": 4,
+   "mode": "single",
+   "mapping": {
+    "label": "label",
+    "series": "(单系列)",
+    "value": "value"
+   },
+   "numeric_columns": [
+    "value"
+   ],
+   "missing": 0,
+   "invalid": 0,
+   "percent": 0,
+   "negative": 0,
+   "anchors": 0,
+   "unknown_types": 0,
+   "kind_conflicts": 0,
+   "type_column": "—",
+   "duplicate_pairs": 0,
+   "warnings": [],
+   "confidence": "high"
+  },
+  "kinds": [
+   "delta",
+   "delta",
+   "delta",
+   "delta"
+  ]
+ }
+}

@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/contracts" },
+    { "path": "packages/design-system" },
+    { "path": "packages/data-engine" },
+    { "path": "packages/chart-core" },
+    { "path": "packages/chart-skin" },
+    { "path": "packages/charts" },
+    { "path": "packages/viewer" },
+    { "path": "packages/cli" }
+  ]
+}

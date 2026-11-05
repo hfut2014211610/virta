@@ -1,0 +1,73 @@
+{
+ "case": "treemap-1d",
+ "view": "treemap",
+ "file": "examples/sample-treemap-1d.csv",
+ "fn": "treemap.to_treemap",
+ "model": {
+  "mode": "flat",
+  "total": 775.0,
+  "warnings": [],
+  "flat": [
+   {
+    "label": "手机",
+    "value": 320.0,
+    "share": 0.4129032258064516
+   },
+   {
+    "label": "笔记本",
+    "value": 210.0,
+    "share": 0.2709677419354839
+   },
+   {
+    "label": "平板",
+    "value": 90.0,
+    "share": 0.11612903225806452
+   },
+   {
+    "label": "耳机",
+    "value": 60.0,
+    "share": 0.07741935483870968
+   },
+   {
+    "label": "手表",
+    "value": 55.0,
+    "share": 0.07096774193548387
+   },
+   {
+    "label": "配件",
+    "value": 40.0,
+    "share": 0.05161290322580645
+   }
+  ],
+  "n_leaf": 6,
+  "top": {
+   "label": "手机",
+   "value": 320.0,
+   "share": 0.4129032258064516
+  },
+  "mapping": {
+   "label": "品类",
+   "value": "营收"
+  },
+  "quality": {
+   "rows": 6,
+   "mode": "single",
+   "mapping": {
+    "label": "品类",
+    "value": "营收"
+   },
+   "numeric_columns": [],
+   "missing": 0,
+   "invalid": 0,
+   "percent": 0,
+   "negative": 0,
+   "anchors": 0,
+   "unknown_types": 0,
+   "kind_conflicts": 0,
+   "type_column": "—",
+   "duplicate_pairs": 0,
+   "warnings": [],
+   "confidence": "high"
+  }
+ }
+}

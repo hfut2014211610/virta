@@ -1,0 +1,120 @@
+{
+ "case": "report-txt",
+ "view": "report",
+ "file": "examples/sample-note.txt",
+ "fn": "docmd.build_doc",
+ "model": {
+  "title": "sample-note",
+  "source": "sample-note",
+  "blocks": [
+   {
+    "type": "p",
+    "text": "2026 年 10 月运营备忘"
+   },
+   {
+    "type": "p",
+    "text": "本月新增注册用户 8.4 万人，活跃率达到 46%。"
+   },
+   {
+    "type": "p",
+    "text": "客服工单平均响应时间：2.5 小时。"
+   },
+   {
+    "type": "p",
+    "text": "下周需要复核库存口径，版本 v0.2 已发布。"
+   }
+  ],
+  "headings": [],
+  "sections": [],
+  "metrics": [
+   {
+    "label": "本月新增注册用户",
+    "value_text": "8.4",
+    "unit": "万人",
+    "value": 8.4,
+    "method": "inferred",
+    "section": "（开头）",
+    "anchor": "top",
+    "source": "本月新增注册用户 8.4 万人"
+   },
+   {
+    "label": "活跃率",
+    "value_text": "46",
+    "unit": "%",
+    "value": 46.0,
+    "method": "inferred",
+    "section": "（开头）",
+    "anchor": "top",
+    "source": "活跃率达到 46%"
+   },
+   {
+    "label": "客服工单平均响应时间",
+    "value_text": "2.5",
+    "unit": "小时",
+    "value": 2.5,
+    "method": "explicit",
+    "section": "（开头）",
+    "anchor": "top",
+    "source": "客服工单平均响应时间：2.5 小时"
+   }
+  ],
+  "stats": {
+   "headings": 0,
+   "sections": 0,
+   "paragraphs": 4,
+   "lists": 0,
+   "tables": 0,
+   "quotes": 0,
+   "code": 0,
+   "images": 0,
+   "links": 0,
+   "chars": 73
+  },
+  "quality": {
+   "mode": "text",
+   "confidence": "medium",
+   "warnings": [
+    "未检测到 # 标题，目录为空，内容按段落顺序呈现",
+    "2 个指标为推断识别（无冒号），请对照来源句复核"
+   ],
+   "chips": [
+    [
+     "模式",
+     "text"
+    ],
+    [
+     "标题",
+     0
+    ],
+    [
+     "段落",
+     4
+    ],
+    [
+     "表格",
+     0
+    ],
+    [
+     "列表",
+     0
+    ],
+    [
+     "代码块",
+     0
+    ],
+    [
+     "图片",
+     "0 未加载"
+    ],
+    [
+     "指标",
+     3
+    ],
+    [
+     "推断",
+     2
+    ]
+   ]
+  }
+ }
+}

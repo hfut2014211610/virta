@@ -1,0 +1,15 @@
+{
+  "name": "@virta/chart-skin",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@virta/contracts": "0.0.0",
+    "@virta/design-system": "0.0.0",
+    "@virta/chart-core": "0.0.0"
+  }
+}

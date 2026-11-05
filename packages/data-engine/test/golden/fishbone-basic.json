@@ -1,0 +1,131 @@
+{
+ "case": "fishbone-basic",
+ "view": "fishbone",
+ "file": "examples/sample-fishbone.csv",
+ "fn": "fishbone.to_fishbone",
+ "model": {
+  "cats": [
+   {
+    "name": "人",
+    "causes": [
+     {
+      "label": "新员工占比高",
+      "sub": "培训周期短",
+      "owner": "王芳"
+     },
+     {
+      "label": "夜班疲劳作业",
+      "sub": "",
+      "owner": "王芳"
+     },
+     {
+      "label": "检验标准理解不一",
+      "sub": "考核机制缺失",
+      "owner": ""
+     }
+    ]
+   },
+   {
+    "name": "机",
+    "causes": [
+     {
+      "label": "设备老化",
+      "sub": "主轴磨损超限",
+      "owner": "李强"
+     },
+     {
+      "label": "参数随温度漂移",
+      "sub": "",
+      "owner": "李强"
+     },
+     {
+      "label": "点检流于形式",
+      "sub": "点检表多年未更新",
+      "owner": ""
+     }
+    ]
+   },
+   {
+    "name": "料",
+    "causes": [
+     {
+      "label": "来料批次差异大",
+      "sub": "供应商混料",
+      "owner": "赵敏"
+     },
+     {
+      "label": "仓储受潮",
+      "sub": "",
+      "owner": "赵敏"
+     }
+    ]
+   },
+   {
+    "name": "法",
+    "causes": [
+     {
+      "label": "作业指导书过期",
+      "sub": "",
+      "owner": "陈晨"
+     },
+     {
+      "label": "换型流程繁琐",
+      "sub": "点检项目过多",
+      "owner": "陈晨"
+     }
+    ]
+   },
+   {
+    "name": "环",
+    "causes": [
+     {
+      "label": "车间温湿度波动大",
+      "sub": "",
+      "owner": "孙杰"
+     },
+     {
+      "label": "照明照度不足",
+      "sub": "",
+      "owner": ""
+     }
+    ]
+   },
+   {
+    "name": "测",
+    "causes": [
+     {
+      "label": "检具校准超期",
+      "sub": "",
+      "owner": "周洁"
+     },
+     {
+      "label": "抽检样本量不足",
+      "sub": "抽样方案老旧",
+      "owner": "周洁"
+     }
+    ]
+   }
+  ],
+  "counts": {
+   "cats": 6,
+   "causes": 14,
+   "subs": 7,
+   "owners": 11,
+   "maxK": 3,
+   "maxCat": "人",
+   "depth": 3
+  },
+  "quality": {
+   "rows": 14,
+   "kept": 14,
+   "warnings": [],
+   "confidence": "high",
+   "mapping": {
+    "category": "category",
+    "cause": "cause",
+    "sub": "sub",
+    "owner": "owner"
+   }
+  }
+ }
+}

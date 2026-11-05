@@ -1,0 +1,182 @@
+{
+ "case": "sunburst-basic",
+ "view": "sunburst",
+ "file": "examples/sample-sunburst.csv",
+ "fn": "sunburst.to_sunburst",
+ "model": {
+  "tree": {
+   "name": "全部",
+   "value": 16090.0,
+   "children": [
+    {
+     "name": "研发",
+     "value": 7700.0,
+     "children": [
+      {
+       "name": "人力",
+       "value": 6000.0,
+       "children": [
+        {
+         "name": "工程师薪酬",
+         "value": 5200.0,
+         "children": []
+        },
+        {
+         "name": "外包费用",
+         "value": 800.0,
+         "children": []
+        }
+       ]
+      },
+      {
+       "name": "设备",
+       "value": 1700.0,
+       "children": [
+        {
+         "name": "服务器",
+         "value": 1400.0,
+         "children": []
+        },
+        {
+         "name": "测试仪器",
+         "value": 300.0,
+         "children": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "市场",
+     "value": 4050.0,
+     "children": [
+      {
+       "name": "投放",
+       "value": 3000.0,
+       "children": [
+        {
+         "name": "线上广告",
+         "value": 2100.0,
+         "children": []
+        },
+        {
+         "name": "线下活动",
+         "value": 900.0,
+         "children": []
+        }
+       ]
+      },
+      {
+       "name": "品牌",
+       "value": 1050.0,
+       "children": [
+        {
+         "name": "公关传播",
+         "value": 600.0,
+         "children": []
+        },
+        {
+         "name": "内容制作",
+         "value": 450.0,
+         "children": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "行政",
+     "value": 2640.0,
+     "children": [
+      {
+       "name": "办公",
+       "value": 1680.0,
+       "children": [
+        {
+         "name": "场地租金",
+         "value": 1500.0,
+         "children": []
+        },
+        {
+         "name": "日常用品",
+         "value": 180.0,
+         "children": []
+        }
+       ]
+      },
+      {
+       "name": "差旅",
+       "value": 960.0,
+       "children": [
+        {
+         "name": "国内差旅",
+         "value": 640.0,
+         "children": []
+        },
+        {
+         "name": "国际差旅",
+         "value": 320.0,
+         "children": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "运营",
+     "value": 1700.0,
+     "children": [
+      {
+       "name": "人力",
+       "value": 1100.0,
+       "children": [
+        {
+         "name": "客服团队",
+         "value": 1100.0,
+         "children": []
+        }
+       ]
+      },
+      {
+       "name": "工具",
+       "value": 600.0,
+       "children": [
+        {
+         "name": "SaaS订阅",
+         "value": 380.0,
+         "children": []
+        },
+        {
+         "name": "数据分析",
+         "value": 220.0,
+         "children": []
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "level_names": [
+   "dept",
+   "category",
+   "item"
+  ],
+  "counts": {
+   "levels": 3,
+   "leaves": 15,
+   "depth": 3,
+   "total": 16090.0
+  },
+  "quality": {
+   "rows": 15,
+   "kept": 15,
+   "warnings": [],
+   "confidence": "high",
+   "mapping": {
+    "levels": "dept / category / item",
+    "value": "amount"
+   }
+  }
+ }
+}

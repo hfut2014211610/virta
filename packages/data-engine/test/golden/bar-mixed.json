@@ -1,0 +1,72 @@
+{
+ "case": "bar-mixed",
+ "view": "bar",
+ "file": "examples/sample-mixed.csv",
+ "fn": "barline.to_chart",
+ "model": {
+  "labels": [
+   "北京",
+   "上海",
+   "广州",
+   "深圳",
+   "杭州"
+  ],
+  "series": [
+   {
+    "name": "线上",
+    "values": [
+     1970.5,
+     1065,
+     0,
+     0,
+     2100.5
+    ]
+   },
+   {
+    "name": "线下",
+    "values": [
+     1300,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  ],
+  "quality": {
+   "rows": 9,
+   "mode": "long",
+   "mapping": {
+    "label": "分类",
+    "series": "渠道",
+    "value": "金额"
+   },
+   "numeric_columns": [
+    "金额"
+   ],
+   "missing": 1,
+   "invalid": 1,
+   "percent": 1,
+   "negative": 0,
+   "anchors": 0,
+   "unknown_types": 0,
+   "kind_conflicts": 0,
+   "type_column": "—",
+   "duplicate_pairs": 3,
+   "warnings": [
+    "数值列「金额」含 1 个无法解析值，已按 0 计：abc",
+    "「金额」含 1 个空值，已按 0 计",
+    "「金额」含百分号，数值按原刻度保留（10% = 10）",
+    "重复 label/series 组合 3 次，已求和"
+   ],
+   "confidence": "low"
+  },
+  "kinds": [
+   "delta",
+   "delta",
+   "delta",
+   "delta",
+   "delta"
+  ]
+ }
+}

@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+  },
+  "include": ["src/**/*.ts"],
+  "references": [
+    { "path": "../contracts" },
+    { "path": "../design-system" },
+    { "path": "../data-engine" },
+    { "path": "../chart-core" },
+    { "path": "../chart-skin" },
+    { "path": "../charts" }
+  ]
+}

@@ -5,3 +5,13 @@ Thumbs.db
 node_modules/
 dist/
 *.tsbuildinfo
+
+# build & test artifacts (Phase 2)
+/out/
+coverage/
+playwright-report/
+test-results/
+.cache/
+
+# accidental shell artifact (npm warnings redirected by `2> nul` under bash)
+/nul

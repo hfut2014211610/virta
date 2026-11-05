@@ -1,0 +1,183 @@
+{
+ "case": "pie3d-basic",
+ "view": "pie3d",
+ "file": "examples/sample-pie3d.csv",
+ "fn": "pie3d.to_pie3d",
+ "model": {
+  "mode": "grouped",
+  "layers": [
+   {
+    "name": "Q4",
+    "value": 880.0,
+    "share": 0.290141773821299,
+    "slices": [
+     {
+      "label": "手机",
+      "value": 420.0,
+      "share": 0.4772727272727273
+     },
+     {
+      "label": "笔记本",
+      "value": 260.0,
+      "share": 0.29545454545454547
+     },
+     {
+      "label": "平板",
+      "value": 95.0,
+      "share": 0.10795454545454546
+     },
+     {
+      "label": "耳机",
+      "value": 60.0,
+      "share": 0.06818181818181818
+     },
+     {
+      "label": "配件",
+      "value": 45.0,
+      "share": 0.05113636363636364
+     }
+    ]
+   },
+   {
+    "name": "Q3",
+    "value": 800.0,
+    "share": 0.26376524892845365,
+    "slices": [
+     {
+      "label": "手机",
+      "value": 380.0,
+      "share": 0.475
+     },
+     {
+      "label": "笔记本",
+      "value": 240.0,
+      "share": 0.3
+     },
+     {
+      "label": "平板",
+      "value": 85.0,
+      "share": 0.10625
+     },
+     {
+      "label": "耳机",
+      "value": 55.0,
+      "share": 0.06875
+     },
+     {
+      "label": "配件",
+      "value": 40.0,
+      "share": 0.05
+     }
+    ]
+   },
+   {
+    "name": "Q2",
+    "value": 718.0,
+    "share": 0.23672931091328717,
+    "slices": [
+     {
+      "label": "手机",
+      "value": 340.0,
+      "share": 0.4735376044568245
+     },
+     {
+      "label": "笔记本",
+      "value": 220.0,
+      "share": 0.3064066852367688
+     },
+     {
+      "label": "平板",
+      "value": 75.0,
+      "share": 0.10445682451253482
+     },
+     {
+      "label": "耳机",
+      "value": 48.0,
+      "share": 0.06685236768802229
+     },
+     {
+      "label": "配件",
+      "value": 35.0,
+      "share": 0.04874651810584958
+     }
+    ]
+   },
+   {
+    "name": "Q1",
+    "value": 635.0,
+    "share": 0.2093636663369601,
+    "slices": [
+     {
+      "label": "手机",
+      "value": 300.0,
+      "share": 0.47244094488188976
+     },
+     {
+      "label": "笔记本",
+      "value": 200.0,
+      "share": 0.31496062992125984
+     },
+     {
+      "label": "平板",
+      "value": 65.0,
+      "share": 0.10236220472440945
+     },
+     {
+      "label": "耳机",
+      "value": 40.0,
+      "share": 0.06299212598425197
+     },
+     {
+      "label": "配件",
+      "value": 30.0,
+      "share": 0.047244094488188976
+     }
+    ]
+   }
+  ],
+  "grand": 3033.0,
+  "n_layers": 4,
+  "categories": [
+   "手机",
+   "笔记本",
+   "平板",
+   "耳机",
+   "配件"
+  ],
+  "n_categories": 5,
+  "peak": {
+   "label": "手机",
+   "value": 420.0,
+   "share": 0.4772727272727273,
+   "layer": "Q4"
+  },
+  "mapping": {
+   "group": "季度",
+   "label": "品类",
+   "value": "营收"
+  },
+  "quality": {
+   "rows": 20,
+   "mode": "grouped",
+   "mapping": {
+    "group": "季度",
+    "label": "品类",
+    "value": "营收"
+   },
+   "numeric_columns": [
+    "营收"
+   ],
+   "missing": 0,
+   "invalid": 0,
+   "percent": 0,
+   "negative": 0,
+   "anchors": 0,
+   "unknown_types": 0,
+   "kind_conflicts": 0,
+   "type_column": "—",
+   "duplicate_pairs": 0,
+   "warnings": [],
+   "confidence": "high"
+  }
+ }
+}

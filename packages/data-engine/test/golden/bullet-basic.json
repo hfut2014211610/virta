@@ -1,0 +1,116 @@
+{
+ "case": "bullet-basic",
+ "view": "bullet",
+ "file": "examples/sample-bullet.csv",
+ "fn": "bullet.to_bullet",
+ "model": {
+  "items": [
+   {
+    "label": "新客增长",
+    "actual": 68.0,
+    "target": 80.0,
+    "poor": 50.0,
+    "good": 65.0,
+    "max": 108.0,
+    "ratio": 0.85,
+    "gap": -12.0,
+    "status": "watch"
+   },
+   {
+    "label": "客户满意度",
+    "actual": 91.0,
+    "target": 90.0,
+    "poor": 65.0,
+    "good": 85.0,
+    "max": 108.0,
+    "ratio": 1.011111111111111,
+    "gap": 1.0,
+    "status": "hit"
+   },
+   {
+    "label": "续约率",
+    "actual": 78.0,
+    "target": 85.0,
+    "poor": 55.0,
+    "good": 75.0,
+    "max": 108.0,
+    "ratio": 0.9176470588235294,
+    "gap": -7.0,
+    "status": "watch"
+   },
+   {
+    "label": "支付准时率",
+    "actual": 92.0,
+    "target": 90.0,
+    "poor": 70.0,
+    "good": 88.0,
+    "max": 108.0,
+    "ratio": 1.0222222222222221,
+    "gap": 2.0,
+    "status": "hit"
+   },
+   {
+    "label": "交付SLA",
+    "actual": 88.0,
+    "target": 95.0,
+    "poor": 59.400000000000006,
+    "good": 85.0,
+    "max": 108.0,
+    "ratio": 0.9263157894736842,
+    "gap": -7.0,
+    "status": "watch"
+   },
+   {
+    "label": "续签意愿",
+    "actual": 74.0,
+    "target": 80.0,
+    "poor": 50.0,
+    "good": 70.0,
+    "max": 108.0,
+    "ratio": 0.925,
+    "gap": -6.0,
+    "status": "watch"
+   }
+  ],
+  "scale": 108.0,
+  "hits": 2,
+  "rows": 6,
+  "avg_ratio": 0.9420493636050912,
+  "under_08": 0,
+  "mapping": {
+   "label": "指标",
+   "series": "(actual/target)",
+   "value": "实际 / 目标"
+  },
+  "quality": {
+   "rows": 6,
+   "mode": "bullet",
+   "mapping": {
+    "label": "指标",
+    "series": "(actual/target)",
+    "value": "实际 / 目标"
+   },
+   "numeric_columns": [
+    "实际",
+    "目标",
+    "较差线",
+    "良好线",
+    "量程"
+   ],
+   "missing": 1,
+   "invalid": 0,
+   "percent": 0,
+   "negative": 0,
+   "anchors": 0,
+   "unknown_types": 0,
+   "kind_conflicts": 0,
+   "type_column": "—",
+   "duplicate_pairs": 0,
+   "warnings": [
+    "指标含 1 个空值/缺失，已按 0 计"
+   ],
+   "confidence": "medium",
+   "duplicate_labels": 0
+  }
+ }
+}

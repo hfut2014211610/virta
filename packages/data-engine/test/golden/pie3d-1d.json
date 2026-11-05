@@ -1,0 +1,91 @@
+{
+ "case": "pie3d-1d",
+ "view": "pie3d",
+ "file": "examples/sample-pie3d-1d.csv",
+ "fn": "pie3d.to_pie3d",
+ "model": {
+  "mode": "flat",
+  "layers": [
+   {
+    "name": null,
+    "value": 1170.0,
+    "share": 1.0,
+    "slices": [
+     {
+      "label": "手机",
+      "value": 520.0,
+      "share": 0.4444444444444444
+     },
+     {
+      "label": "笔记本",
+      "value": 340.0,
+      "share": 0.2905982905982906
+     },
+     {
+      "label": "平板",
+      "value": 120.0,
+      "share": 0.10256410256410256
+     },
+     {
+      "label": "耳机",
+      "value": 85.0,
+      "share": 0.07264957264957266
+     },
+     {
+      "label": "配件",
+      "value": 60.0,
+      "share": 0.05128205128205128
+     },
+     {
+      "label": "手表",
+      "value": 45.0,
+      "share": 0.038461538461538464
+     }
+    ]
+   }
+  ],
+  "grand": 1170.0,
+  "n_layers": 1,
+  "categories": [
+   "手机",
+   "笔记本",
+   "平板",
+   "耳机",
+   "配件",
+   "手表"
+  ],
+  "n_categories": 6,
+  "peak": {
+   "label": "手机",
+   "value": 520.0,
+   "share": 0.4444444444444444,
+   "layer": null
+  },
+  "mapping": {
+   "label": "品类",
+   "value": "营收"
+  },
+  "quality": {
+   "rows": 6,
+   "mode": "flat",
+   "mapping": {
+    "label": "品类",
+    "value": "营收"
+   },
+   "numeric_columns": [
+    "营收"
+   ],
+   "missing": 0,
+   "invalid": 0,
+   "percent": 0,
+   "negative": 0,
+   "anchors": 0,
+   "unknown_types": 0,
+   "kind_conflicts": 0,
+   "type_column": "—",
+   "duplicate_pairs": 0,
+   "warnings": [],
+   "confidence": "high"
+  }
+ }
+}
