@@ -10,6 +10,7 @@ export {
   ADAPTERS, ADAPTED_VIEWS, DOC_ADAPTER, TO_MODEL, makeAdapter, projectQuality, tableToRaw,
 } from './families/index.js';
 export type { FamilyAdapter, ScoreResult } from './families/types.js';
+export type { BarlineModel, BarlineSeries, Raw } from './families/barline.js';
 
 import type { Row, SourceMeta, Table } from '@virta/contracts';
 import type { Raw } from './families/barline.js';

@@ -1,2 +1,9 @@
-// @virta/chart-core · Scene 图元、比例尺、文字度量、SVG/Canvas 渲染器、命中测试、补间、标签避让（M3 实现）
-export {};
+// @virta/chart-core · Scene/比例尺/文字度量/toSVG/drawCanvas/命中/标签避让
+export * from './scene.js';
+export * from './scales.js';
+export * from './measure.js';
+export * from './svg.js';
+export * from './canvas.js';
+export * from './hit.js';
+export * from './labels.js';
+export * from './interpolate.js';

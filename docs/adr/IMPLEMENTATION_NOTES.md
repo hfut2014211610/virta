@@ -72,3 +72,26 @@
 - 别名总表收口 `src/aliases.ts`（含 gantt/heatmap/fishbone/boxplot/sankey 私有别名），`legacy-core.ts` 只做解析/统计/质量骨架。
 - `families/index.ts` 的 `makeAdapter` 统一接 `score.ts`（§5.1 表序 SCORERS）、`insights.ts`（中文模板+importance 降序≤8）、`counts.ts`；`validate.ts` 按契约 roles/options 产出 ValidateReceipt（歧义/越界给 `--set`/`--unset` 可执行建议）。
 - 同构层无 Node API：`read.ts`（papaparse/JSON/ECharts 透传/嗅探）+ `node/index.ts`（fs、GB18030 回退 >1% 替换字符、read-excel-file readSheet、stdin/--data 嗅探）。
+
+## M3 备忘（渲染栈纵切）
+
+- **架构**：layout 产平台无关 Scene（色值已在 layout 解析）；`toSVG` 确定性（坐标 2 位小数、属性序固定）；
+  `drawCanvas` 同 Scene 消费；PNG = resvg 光栅化 SVG（字体 = design-system 3 个 TTF + `--font-file` + 系统字体）。
+- **字体族名对齐**：`FONTS` 栈同时含 @font-face 别名（VirDisplay/VirMono）与 TTF 内部族名
+  （Fraunces/JetBrains Mono），否则 resvg fontdb 匹配不到内嵌字体（§0.3 记录）。
+- **字体回退检测**：resvg 渲染固定中文串「中文字形探测」，像素全空 → receipt `warnings` 加
+  `FONT_FALLBACK` 并提示 `--font-file`。
+- **viewer 单文件**：HTML 内联首屏 SVG（SSR 首屏即图）+ `window.__VIRTA__` payload + esbuild
+  iife 运行期（`packages/viewer/dist/<view>.js`，CLI 渲染时按需现打）。运行期做
+  adapt→layout→toSVG 重渲染、图例开关、编辑抽屉（contract.options 自动生成）、hash `#s=` 同步、
+  复制 spec、PNG/SVG/CSV/spec 导出、方向键导航、ResizeObserver 自适应。
+- **bundle 预算**：当前 `<view>.js` ≈157KB（min），略高于 150KB 目标——因 ADAPTERS 全量注册
+  （所有图族 to_* 都被打进）。M4 图族逐个落地时再按视图切 slim bundle；已记 §0.3。
+- **CLI 语义**：`--set` 点号路径合并优先级 `--set`>专用参数>`--spec`>默认；退出码按 §4.5；
+  `render -` 读 stdin（`--format` 指定解析）；`--data` 内联 JSON；docText 输入暂报
+  UNSUPPORTED_FORMAT（report 管线 M4 接）。
+- **frameStatic**：输出外层 scene + plot 矩形；图例在 layout 前由 model.series 先算（静态图例进卡片框）。
+- **scaleLinear**：niceTicks 外扩域（测试断言用 `s.domain` 端点，不要用原域端点）。
+- **Table.rows 是对象行**（非数组）：viewer/CSV 导出按 `columns` 取值。
+- **视觉**：`test/visual/bar-line.spec.ts` 首屏断言 chart 底边 ≤800px@1280×800 + toHaveScreenshot
+  基线（`snapshots/bar-line.spec.ts/`）+ 新旧并排 `snapshots/compare/{bar,line}-{legacy,new}.png`。

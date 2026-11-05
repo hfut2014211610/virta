@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./families": "./src/families/index.ts",
     "./node": "./src/node/index.ts"
   },
   "types": "./src/index.ts",

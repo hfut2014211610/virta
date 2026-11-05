@@ -53,7 +53,8 @@ const CN_STACK = '"PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Source Han
 
 /** 字体角色：display=Fraunces(仅拉丁子集)，body=中文系统栈，mono=JetBrains Mono。 */
 export const FONTS = {
-  display: `"VirDisplay",Georgia,${CN_STACK},serif`,
+  // 浏览器 @font-face 用别名（VirDisplay/VirMono）；栈内同时保留 TTF 内部族名（Fraunces/JetBrains Mono）供 resvg fontdb 匹配
+  display: `"VirDisplay",Fraunces,Georgia,${CN_STACK},serif`,
   body: `${CN_STACK},sans-serif`,
   mono: `"VirMono","JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,${CN_STACK},monospace`,
 } as const;

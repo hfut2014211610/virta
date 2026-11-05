@@ -49,7 +49,7 @@ npm run gallery        # 生成画廊
 - [x] M0 基线收口与工程脚手架
 - [x] M1 契约与设计系统（20 视图 ChartContract + ViewSpec JSON Schema + tokens/色板/OKLCH 色阶/buildCss + 子集字体管线）
 - [x] M2 数据引擎（同构读取 CSV/JSON/XLSX + GB18030 回退；17 图族 legacy 适配器 32/32 golden 对拍；画像 profile + §5.1 打分表推荐 top5 + 契约校验 validate + 中文洞察 insights/counts；5 个场景包 + edge-cases 由 `npm run packs:gen` 确定性生成、`packs:check` 比对；doc 管线 buildDoc）
-- [ ] M3 渲染栈纵切（bar + line）
+- [x] M3 渲染栈纵切（chart-core Scene/比例尺/度量/toSVG/drawCanvas/命中/补间/避让 + chart-skin 轴/网格/图例/标注/数字格式/卡片框 + charts bar 全变体×11表面×9形状×伪3D + line 全部组合 + viewer 单文件 HTML（抽屉/hash/导出/键盘/响应式）+ cli 全命令 + resvg PNG 含字体与回退检测 + 视觉基线与 snapshots/compare 新旧并排）
 - [ ] M4 legacy 图族迁移（B1/B2/B3）
 - [ ] M5 Agent 能力收尾与组合页
 - [ ] M6 T1 新图表与分面
