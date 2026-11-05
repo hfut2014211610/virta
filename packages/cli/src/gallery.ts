@@ -44,6 +44,18 @@ const MERGE_3D: Partial<Record<ViewId, ViewId>> = { matrix3d: 'bar', line3d: 'li
 export async function familyExamples(packs: PackJson[]): Promise<Map<string, GalleryItem>> {
   const out = new Map<string, GalleryItem>();
   const take = (v: string, it: GalleryItem) => { if (!out.has(v)) out.set(v, it); };
+  // 精修样例优先：showcase-* 数据集为该图族定制，代表性高于 pack/basic 兜底
+  const EXEMPLARS: Partial<Record<string, { file: string }>> = {
+    pie: { file: 'showcase-pie.csv' },
+    sankey: { file: 'showcase-sankey.csv' },
+    network: { file: 'showcase-network.csv' },
+    tree: { file: 'showcase-tree.csv' },
+  };
+  for (const [v, e] of Object.entries(EXEMPLARS)) {
+    if (existsSync(join(BASIC_DIR, e.file))) {
+      take(v, { key: `v-${v}`, title: e.file, sub: 'examples/basic', view: v, file: e.file, dir: BASIC_DIR, spec: { version: 1, view: v as ViewId } });
+    }
+  }
   // report：优先富排版示例 showcase-report.md（先于 pack 图表占坑，保证文档组呈现富排版）
   if (existsSync(join(BASIC_DIR, 'showcase-report.md'))) {
     take('report', { key: 'v-report', title: 'showcase-report.md', sub: 'examples/basic', view: 'report', file: 'showcase-report.md', dir: BASIC_DIR, doc: true });
