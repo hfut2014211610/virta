@@ -49,8 +49,8 @@ describe('contract 覆盖 legacy 模板', () => {
     for (const [view, c] of Object.entries(CONTRACTS)) {
       expect(c!.view).toBe(view);
       expect(c!.version).toBe(1);
-      // grid 的 dims/values 二选一，无必选 role；其余图族须至少一个 required
-      if (view !== 'grid') expect(c!.roles.some((r) => r.required), view).toBe(true);
+      // grid 的 dims/values 二选一、tree 的 id+parent / level 二选一，可无必选 role；其余图族须至少一个 required
+      if (view !== 'grid' && view !== 'tree') expect(c!.roles.some((r) => r.required), view).toBe(true);
       expect(c!.roles.length, view).toBeGreaterThan(0);
       for (const o of c!.options) {
         if (o.type === 'enum') {

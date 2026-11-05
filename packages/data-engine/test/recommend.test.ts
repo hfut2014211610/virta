@@ -49,6 +49,13 @@ const EXPECT: Record<string, { view: string; variant?: string; mode?: string }> 
   'sample-kpi.csv': { view: 'bullet' },
   'sample-compare.csv': { view: 'compare' },
   'sample-cohort.csv': { view: 'cohort' },
+  // T2（M7）：id+parent → tree；有环流网络 → network；date+value+n → control；
+  // ≥4 度量长表 → parallel；level 形态归 sunburst（tree 要显式 --view）
+  'sample-tree.csv': { view: 'tree' },
+  'sample-network.csv': { view: 'network' },
+  'sample-control.csv': { view: 'control' },
+  'sample-parallel.csv': { view: 'parallel' },
+  'sample-tree-levels.csv': { view: 'sunburst' },
 };
 
 const DOC_FILES = new Set(['sample-report.md', 'sample-note.txt']);

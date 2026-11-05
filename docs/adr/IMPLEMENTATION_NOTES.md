@@ -166,3 +166,28 @@
   并入 generate.ts，CRLF 经 packs:gen 归一 LF）。
 - **渲染细节**：compare 两端标签做贪心垂直避让；histogram 分组图例由 render.ts 从
   `model.groups` 提取（此前只认 model.series）。
+
+## M7 · T2 新图表（§0.3 决策）
+
+- **T2 四视图**：tree（tidy/org/mindmap/indented 四变体）、network（force/circular）、
+  control（I 图 + WE 规则 1/2 失控标记）、parallel（多轴折线 + 分组着色）。
+  契约各 1 个、适配器集中在 `families/t2.ts`、渲染器集中在 `charts/src/t2.ts`。
+- **tree 双输入形态**：`id+parent`（行内层级）与 `level1..N`（多列层级）二选一，
+  契约 roles 全 optional——`coverage.test.ts` 的"每图族至少一个 required role"断言
+  把 tree 与 grid 并列为例外（两种形态互斥，无法静态声明必选角色）。levels 形态
+  节点键 = 路径 `join('/')`，逐级前缀汇总 value。
+- **network 确定性力导**：velocity Verlet + 库仑斥力/弹簧/向心力，`seed(42)` 固定
+  初始环位 + 抖动，300 步预迭代后按包围盒归一化铺满绘图区（§5.4 的"预迭代 300 步
+  并固定种子"；Barnes–Hut 为可选项未实现）。circular 按 flow 降序圆周均布。
+- **control**：series 分组各算 3σ 控制限；`r1` 单点超限、`r2` 3 点中 2 点同侧超 2σ
+  分别标红点/橙点；多系列时 UCL/LCL 标签带系列名防碰撞。打分 0.9 限定"时序维 +
+  度量 + 可选样本量/限值列"语义（combo 已限单维宽表，不再抢控制图数据）。
+- **parallel**：各轴独立线性尺度（`state.axisOrder` 持久化轴序）；打分 0.75 限定
+  ≥4 度量列（sensor_batches 5 度量 → parallel；2–3 度量仍归 scatter/radar）。
+- **indented 变体**：纯文本树补了层级引导竖线 + 展开三角 marker path + 行级命中区
+  （此前该变体 SVG 无 rect/path/circle/line，视觉断言"图元数 >3"失败，且命中区为空）。
+- **打分微调**：sControl/sTree/sNetwork/sParallel 按 §5.1 阈值实校准；sample-tree-levels
+  与 effort_tree/expense_tree 这类多列层级数据归 sunburst/treemap（tree 家族只认领
+  id+parent 显式层级），与 §8 pack 期望一致。
+- **交互边界**：renderer 声明 `drill`/`drag-node`/`brush` 能力，viewer runtime 目前
+  只实现 tooltip 命中；点击下钻、节点拖拽、轴刷选留 M8 打磨（与 M4 起的既有口径一致）。

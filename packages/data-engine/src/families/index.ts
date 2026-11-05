@@ -23,6 +23,7 @@ import { toSunburst } from './sunburst.js';
 import { toTreemap } from './treemap.js';
 import { buildDoc } from './docmd.js';
 import { toCohort, toCompare, toHistogram, toKpi, toRank } from './t1.js';
+import { toControl, toNetwork, toParallel, toTree } from './t2.js';
 import { scoreView } from '../score.js';
 import { insights as familyInsights } from '../insights.js';
 import { counts as familyCounts } from '../counts.js';
@@ -36,6 +37,8 @@ export const TO_MODEL: Partial<Record<ViewId, (raw: Raw) => unknown>> = {
   // T1（M6）：combo 复用 barline 模型（标签+多系列），渲染层决定左右轴
   combo: toChart,
   rank: toRank, histogram: toHistogram, kpi: toKpi, compare: toCompare, cohort: toCohort,
+  // T2（M7）
+  tree: toTree, network: toNetwork, control: toControl, parallel: toParallel,
 };
 
 /** Table.rows → legacy Raw（含 ECharts 透传）。 */

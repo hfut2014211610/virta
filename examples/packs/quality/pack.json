@@ -33,7 +33,8 @@
         "version": 1,
         "view": "control"
       },
-      "expectTop": "control"
+      "expectTop": "control",
+      "expectInsight": "outlier"
     },
     {
       "id": "shift",
@@ -82,7 +83,9 @@
       "spec": {
         "version": 1,
         "view": "parallel"
-      }
+      },
+      "expectTop": "parallel",
+      "expectInsight": "concentration"
     }
   ]
 }

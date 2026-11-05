@@ -27,6 +27,10 @@ import { CONTRACT_COMPARE } from './compare.js';
 import { CONTRACT_HISTOGRAM } from './histogram.js';
 import { CONTRACT_KPI } from './kpi.js';
 import { CONTRACT_RANK } from './rank.js';
+import { CONTRACT_TREE } from './tree.js';
+import { CONTRACT_NETWORK } from './network.js';
+import { CONTRACT_CONTROL } from './control.js';
+import { CONTRACT_PARALLEL } from './parallel.js';
 
 export const CONTRACTS: Readonly<Partial<Record<ViewId, ChartContract>>> = Object.freeze({
   bar: CONTRACT_BAR,
@@ -55,6 +59,10 @@ export const CONTRACTS: Readonly<Partial<Record<ViewId, ChartContract>>> = Objec
   kpi: CONTRACT_KPI,
   compare: CONTRACT_COMPARE,
   cohort: CONTRACT_COHORT,
+  tree: CONTRACT_TREE,
+  network: CONTRACT_NETWORK,
+  control: CONTRACT_CONTROL,
+  parallel: CONTRACT_PARALLEL,
 });
 
 export function getContract(view: ViewId): ChartContract | undefined {

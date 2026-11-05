@@ -94,3 +94,14 @@ export const COMPARE_FROM_ALIAS = n(['from', 'a', '前期', '上期', '去年', 
 export const COMPARE_TO_ALIAS = n(['to', 'b', '后期', '本期', '今年', '下半年', 'after', 'new']);
 export const COHORT_KEY_ALIAS = n(['cohort', '批次', '群', '组', '月份', 'month']);
 export const COHORT_PERIOD_ALIAS = n(['period', '期', '第几期', '期数', 'week', 'n']);
+
+// ---- T2 新视图（M7）----
+export const TREE_ID_ALIAS = n(['id', '编号', 'code', '节点', 'node', 'nid']);
+export const TREE_PARENT_ALIAS = n(['parent', 'pid', '父', '父级', '上级', 'parentid', '父节点', '上级id']);
+export const TREE_NAME_ALIAS = n(['name', '名称', '部门', '节点名', 'label', '标题']);
+export const CONTROL_DATE_ALIAS = n(['date', 'day', '日期', '时间', '月份', 'time', '批次', '周']);
+export const CONTROL_N_ALIAS = n(['n', '样本量', '样本数', '样本大小', 'size', 'count']);
+export const CONTROL_UCL_ALIAS = n(['ucl', '控制上限', '上限', 'upperlimit']);
+export const CONTROL_LCL_ALIAS = n(['lcl', '控制下限', '下限', 'lowerlimit']);
+export const CONTROL_GROUP_ALIAS = n(['group', '产线', '系列', '分组', '班组', '车间']);
+export const PARALLEL_GROUP_ALIAS = n(['group', '系列', '类别', '分组', '产线', '版本', '渠道']);

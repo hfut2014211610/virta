@@ -31,6 +31,9 @@ export type {
   CohortModel, CohortRow, CompareItem, CompareModel, HistBin, HistGroup,
   HistogramModel, KpiItem, KpiModel, RankModel,
 } from './families/t1.js';
+export type {
+  ControlLine, ControlModel, ControlPoint, NetworkModel, ParallelModel, TreeModel, TreeNode,
+} from './families/t2.js';
 
 import type { Row, SourceMeta, Table } from '@virta/contracts';
 import type { Raw } from './families/barline.js';

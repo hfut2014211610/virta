@@ -980,8 +980,8 @@ npm run test:visual                                         # 包含首屏断言
 
 ### M7 T2 新图表
 
-- [ ] tree、network、control、parallel：每个都要完成 contract、adapter、score、insights、layout、视觉基线、文档。
-- [ ] 启用场景包中对应条目的 `expectTop` 和 `expectInsight`。
+- [x] tree、network、control、parallel：每个都要完成 contract、adapter、score、insights、layout、视觉基线、文档。
+- [x] 启用场景包中对应条目的 `expectTop` 和 `expectInsight`。
 
 **DoD**：4 个 T2 视图出现在 `virta list`；推荐和洞察测试通过；双主题静态导出和视觉基线测试通过。
 

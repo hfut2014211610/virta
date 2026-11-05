@@ -41,6 +41,15 @@ const CASES: [string, string, string?, string?][] = [
   ['compare', 'sample-compare.csv'],
   ['compare', 'sample-compare.csv', 'dumbbell'],
   ['cohort', 'sample-cohort.csv'],
+  // T2（M7）
+  ['tree', 'sample-tree.csv'],
+  ['tree', 'sample-tree.csv', 'org', 'org'],
+  ['tree', 'sample-tree.csv', 'mindmap', 'mindmap'],
+  ['tree', 'sample-tree-levels.csv', 'indented', 'indented'],
+  ['network', 'sample-network.csv'],
+  ['network', 'sample-network.csv', 'circular', 'circular'],
+  ['control', 'sample-control.csv'],
+  ['parallel', 'sample-parallel.csv'],
 ];
 
 test.beforeAll(() => {

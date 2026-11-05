@@ -19,6 +19,7 @@ import type { Pie3dModel } from './families/pie3d.js';
 import type { Line3dModel } from './families/line3d.js';
 import type { DocModel } from './families/docmd.js';
 import type { CohortModel, CompareModel, HistogramModel, KpiModel, RankModel } from './families/t1.js';
+import type { ControlModel, NetworkModel, ParallelModel, TreeModel } from './families/t2.js';
 
 const fmt = (v: number) => {
   const r = Math.round(v * 100) / 100;
@@ -331,6 +332,68 @@ function comboInsights(m: BarlineModel): Insight[] {
   return out;
 }
 
+function treeInsights(m: TreeModel): Insight[] {
+  const out: Insight[] = [];
+  const depth = Math.max(0, ...m.nodes.map((n) => n.depth));
+  out.push(ins('distribution', `${m.nodes.length} 个节点、${m.roots.length} 棵根、最深 ${depth + 1} 层`, 0.9));
+  const lvl1 = m.nodes.filter((n) => n.depth === 1 && n.value !== undefined);
+  if (lvl1.length) {
+    const big = lvl1.reduce((a, b) => ((b.value ?? 0) > (a.value ?? 0) ? b : a));
+    const total = m.nodes.filter((n) => n.depth === 0).reduce((a, n) => a + (n.value ?? 0), 0);
+    if (total > 0) out.push(ins('concentration', `最大分支：${big.name}（占比 ${pct((big.value ?? 0) / total)}）`, 0.8));
+  }
+  return out;
+}
+
+function networkInsights(m: NetworkModel): Insight[] {
+  const out: Insight[] = [
+    ins('distribution', `${m.nodes.length} 个节点、${m.links.length} 条边${m.cyclic ? '（含环）' : '（DAG）'}`, 0.9),
+  ];
+  const hub = m.nodes.reduce((a, b) => (b.flow > a.flow ? b : a), m.nodes[0]);
+  if (hub) out.push(ins('concentration', `枢纽节点：${hub.id}（流量 ${fmt(hub.flow)}）`, 0.85));
+  const top = m.links.reduce((a, b) => (b.value > a.value ? b : a), m.links[0]);
+  if (top) out.push(ins('peak', `最强边：${top.source} → ${top.target}（${fmt(top.value)}）`, 0.75));
+  return out;
+}
+
+function controlInsights(m: ControlModel): Insight[] {
+  const out: Insight[] = [];
+  for (const ln of m.lines) {
+    const r1 = ln.points.filter((p) => p.flag === 'r1');
+    const r2 = ln.points.filter((p) => p.flag === 'r2');
+    const tag = ln.name ? `${ln.name} ` : '';
+    if (r1.length) {
+      out.push(ins('outlier', `${tag}${r1.length} 点失控（超 3σ），首点 ${r1[0].x}`, 0.95));
+      const peak = r1.reduce((a, b) => (Math.abs(b.v - ln.cl) > Math.abs(a.v - ln.cl) ? b : a));
+      out.push(ins('peak', `${tag}最大偏离：${peak.x}（${fmt(peak.v)}，限 ${fmt(ln.lcl)}–${fmt(ln.ucl)}）`, 0.85));
+    }
+    if (r2.length) out.push(ins('outlier', `${tag}${r2.length} 点同侧异常（3 点中 2 点超 2σ）`, 0.7));
+    if (!r1.length && !r2.length) out.push(ins('target', `${tag}过程受控（${ln.points.length} 点均在限内）`, 0.5));
+  }
+  return out;
+}
+
+function parallelInsights(m: ParallelModel): Insight[] {
+  const out: Insight[] = [
+    ins('distribution', `${m.rows.length} 行 × ${m.axes.length} 轴`, 0.9),
+  ];
+  // 相邻轴皮尔逊相关（最强一对）
+  let best: { a: string; b: string; r: number } | null = null;
+  for (let i = 0; i + 1 < m.axes.length; i++) {
+    const xs = m.rows.map((r) => r.vals[i]), ys = m.rows.map((r) => r.vals[i + 1]);
+    const mx = xs.reduce((a, b) => a + b, 0) / xs.length, my = ys.reduce((a, b) => a + b, 0) / ys.length;
+    let sxy = 0, sx = 0, sy = 0;
+    xs.forEach((x, j) => { sxy += (x - mx) * (ys[j] - my); sx += (x - mx) ** 2; sy += (ys[j] - my) ** 2; });
+    const r = sxy / (Math.sqrt(sx * sy) || 1);
+    if (!best || Math.abs(r) > Math.abs(best.r)) best = { a: m.axes[i].key, b: m.axes[i + 1].key, r };
+  }
+  if (best && Math.abs(best.r) >= 0.5) out.push(ins('correlation', `${best.a} 与 ${best.b} 呈${best.r > 0 ? '正' : '负'}相关（r=${best.r.toFixed(2)}）`, 0.8));
+  const gs = new Map<string, number>();
+  for (const r of m.rows) gs.set(r.group, (gs.get(r.group) ?? 0) + 1);
+  if (gs.size > 1 && m.group_key) out.push(ins('concentration', `${gs.size} 个分组（${m.group_key}）`, 0.6));
+  return out;
+}
+
 const INSIGHTERS: Partial<Record<ViewId, (m: never) => Insight[]>> = {
   bar: barlineInsights as never, matrix3d: barlineInsights as never,
   line: lineInsights as never, line3d: line3dInsights as never,
@@ -345,6 +408,8 @@ const INSIGHTERS: Partial<Record<ViewId, (m: never) => Insight[]>> = {
   combo: comboInsights as never, rank: rankInsights as never,
   histogram: histogramInsights as never, kpi: kpiInsights as never,
   compare: compareInsights as never, cohort: cohortInsights as never,
+  tree: treeInsights as never, network: networkInsights as never,
+  control: controlInsights as never, parallel: parallelInsights as never,
 };
 
 export function insights(view: ViewId, model: unknown, _spec?: ViewSpec): Insight[] {

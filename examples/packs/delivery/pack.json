@@ -32,7 +32,8 @@
         "version": 1,
         "view": "network"
       },
-      "expectTop": "network"
+      "expectTop": "network",
+      "expectInsight": "concentration"
     },
     {
       "id": "effort",
@@ -42,7 +43,8 @@
         "version": 1,
         "view": "treemap"
       },
-      "expectTop": "sunburst"
+      "expectTop": "sunburst",
+      "expectInsight": "concentration"
     },
     {
       "id": "reqfunnel",
@@ -72,7 +74,8 @@
         "version": 1,
         "view": "network"
       },
-      "expectTop": "network"
+      "expectTop": "network",
+      "expectInsight": "concentration"
     },
     {
       "id": "org",
@@ -82,7 +85,8 @@
         "version": 1,
         "view": "tree"
       },
-      "expectTop": "tree"
+      "expectTop": "tree",
+      "expectInsight": "distribution"
     },
     {
       "id": "density",

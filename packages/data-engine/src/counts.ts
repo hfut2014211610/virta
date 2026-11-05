@@ -27,6 +27,10 @@ const COUNTERS: Record<string, (m: Any) => Record<string, number>> = {
   kpi: (m) => ({ items: arr(m['items']), hits: m['hits'] as number ?? 0 }),
   compare: (m) => ({ items: arr(m['items']), reversed: m['reversed'] as number ?? 0 }),
   cohort: (m) => ({ cohorts: arr(m['rows']), periods: arr(m['periods']) }),
+  tree: (m) => ({ nodes: arr(m['nodes']), roots: arr(m['roots']) }),
+  network: (m) => ({ nodes: arr(m['nodes']), links: arr(m['links']) }),
+  control: (m) => ({ lines: arr(m['lines']), outOfControl: (m['lines'] as Any[] ?? []).reduce((a, l) => a + ((l['points'] as Any[] ?? []).filter((p) => p['flag'] === 'r1').length), 0) }),
+  parallel: (m) => ({ axes: arr(m['axes']), rows: arr(m['rows']) }),
 };
 
 const BARLINE_VIEWS = new Set(['bar', 'line', 'matrix3d', 'combo']);
@@ -36,6 +40,7 @@ const VIEW_COUNTER: Partial<Record<ViewId, string>> = {
   pie3d: 'pie3d', radar: 'radar', sankey: 'sankey', scatter: 'scatter',
   scatter3d: 'scatter', sunburst: 'sunburst', treemap: 'treemap', report: 'report',
   rank: 'rank', histogram: 'histogram', kpi: 'kpi', compare: 'compare', cohort: 'cohort',
+  tree: 'tree', network: 'network', control: 'control', parallel: 'parallel',
 };
 
 export function counts(view: ViewId, model: unknown): Record<string, number> {

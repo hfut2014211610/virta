@@ -12,6 +12,7 @@ import {
   GANTT_TASK_ALIAS, GANTT_START_ALIAS, GANTT_END_ALIAS, GANTT_DUR_ALIAS,
   FISH_CAT_ALIAS, FISH_CAUSE_ALIAS,
   HEAT_X_ALIAS, HEAT_Y_ALIAS, HEAT_DATE_ALIAS,
+  CONTROL_N_ALIAS, CONTROL_UCL_ALIAS, CONTROL_LCL_ALIAS,
 } from './aliases.js';
 import { toSankey } from './families/sankey.js';
 import type { Raw } from './families/barline.js';
@@ -163,9 +164,21 @@ const sNetwork: Scorer = (p, t) => {
 const sControl: Scorer = (p) => {
   const date = p.columns.find((c) => c.type === 'date');
   const v = measureCols(p)[0];
-  const lim = p.columns.find((c) => ['ucl', 'lcl', 'cl', '上限', '下限', '控制上限', '控制下限', '样本量', 'n'].includes(normKey(c.name)));
-  return date && v && lim
-    ? { score: 0.85, reason: '日期 + 测量值 + 控制限/样本量列', mapping: { date: date.name, value: v.name, limit: lim.name }, missingRoles: [] } : no();
+  if (!date || !v) return no();
+  const nCol = hit(p, CONTROL_N_ALIAS);
+  const ucl = hit(p, CONTROL_UCL_ALIAS);
+  const lcl = hit(p, CONTROL_LCL_ALIAS);
+  if (!nCol && !ucl && !lcl) return no();
+  const group = dimCols(p).find((c) => c !== date);
+  return {
+    score: 0.9, reason: '日期 + 测量值 + 控制限/样本量列',
+    mapping: {
+      date: date.name, value: v.name,
+      ...(nCol ? { n: nCol.name } : {}), ...(ucl ? { ucl: ucl.name } : {}), ...(lcl ? { lcl: lcl.name } : {}),
+      ...(group ? { group: group.name } : {}),
+    },
+    missingRoles: [],
+  };
 };
 
 const FUNNEL_STAGE_NAMES = ['stage', 'funnel', 'phase', 'step', '环节', '阶段', '步骤', '漏斗', '流程', 'level'];
@@ -355,7 +368,7 @@ const sKpi: Scorer = (p) => {
 
 const sParallel: Scorer = (p) =>
   measureCols(p).length >= 4 && p.rows >= 20
-    ? { score: 0.6, reason: '≥4 个度量、≥20 行', mapping: { values: measureCols(p).map((m) => m.name) }, missingRoles: [] } : no();
+    ? { score: 0.75, reason: '≥4 个度量、≥20 行', mapping: { values: measureCols(p).map((m) => m.name) }, missingRoles: [] } : no();
 
 const sPie: Scorer = (p, t) => {
   const l = labelCol(p), v = measureCols(p)[0];
