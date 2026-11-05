@@ -3,7 +3,7 @@ import sys
 from collections import OrderedDict
 from pathlib import Path
 from ..core import (
-    _add_group, _finish_quality, _first_key, _kind_map, _new_quality, _numeric_keys, _numeric_stats, esc, is_doc_template, js_json, LABEL_ALIASES, NUM_RATIO, parse_number, read_raw, SERIES_ALIAS, TEMPLATES, THEME_TOKEN_HTML, TYPE_ALIAS, VALUE_ALIAS,
+    _add_group, _finish_quality, _first_key, _kind_map, _new_quality, _numeric_keys, _numeric_stats, esc, is_doc_template, js_json, LABEL_ALIASES, NUM_RATIO, parse_number, read_raw, SERIES_ALIAS, SHARED_CSS, TEMPLATES, THEME_TOKEN_HTML, TYPE_ALIAS, VALUE_ALIAS,
 )
 from docrender import render_doc
 
@@ -174,6 +174,7 @@ def render(template, input_path, out_path, theme, title):
     html_text = (tdir / "template.html").read_text(encoding="utf-8")
     html_text = html_text.replace("__THEME__", esc(theme))
     html_text = html_text.replace("__THEME_UPPER__", THEME_TOKEN_HTML)
+    html_text = html_text.replace("__SHARED_CSS__", SHARED_CSS)
     html_text = html_text.replace("__TITLE__", esc(title or p.stem))
     html_text = html_text.replace("__SOURCE__", esc(p.name))
     html_text = html_text.replace("__LABELS__", str(len(chart["labels"])))
@@ -201,11 +202,11 @@ CONTRACT = {
     "summary": "通用 label+series 表格模型；单系列、长表、宽表、ECharts 风格 JSON 均可",
     "columns": {
         "required": [
-            {"name": "label", "aliases": ["label", "name", "category", "x", "分类", "类别", "标签", "名称"], "note": "缺省取第一列"},
-            {"name": "value", "aliases": ["value", "count", "amount", "y", "数值", "数量", "金额", "销量"], "note": "宽表时除 label 外每个数值列即一个系列"},
+            {"name": "label", "aliases": ["label", "name", "category", "x", "分类", "类别", "标签", "名称", "阶段", "指标"], "note": "缺省取第一列"},
+            {"name": "value", "aliases": ["value", "count", "amount", "y", "数值", "数量", "金额", "销量", "营收", "增减"], "note": "宽表时除 label 外每个数值列即一个系列"},
         ],
         "optional": [
-            {"name": "series", "aliases": ["series", "group", "系列", "分组", "渠道", "门店"], "note": "长表分组列"},
+            {"name": "series", "aliases": ["series", "group", "系列", "分组", "渠道", "门店", "城市", "部门"], "note": "长表分组列"},
             {"name": "type", "aliases": ["type", "kind", "阶段类型", "类型"], "note": "瀑布/矩阵模式：absolute|delta"},
         ],
     },

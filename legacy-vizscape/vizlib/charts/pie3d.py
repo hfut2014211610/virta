@@ -9,7 +9,7 @@ import sys
 from collections import OrderedDict
 from pathlib import Path
 from ..core import (
-    _fmt_num, esc, is_doc_template, js_json, parse_number, read_raw, TEMPLATES, THEME_TOKEN_HTML,
+    _fmt_num, esc, is_doc_template, js_json, parse_number, read_raw, SHARED_CSS, TEMPLATES, THEME_TOKEN_HTML,
 )
 from .treemap import _detect_treemap_columns
 
@@ -193,6 +193,7 @@ def render_pie3d(template, input_path, out_path, theme, title):
     summary = "".join(f'<span class="sum-card"><b>{esc(v)}</b>{esc(k)}</span>' for k, v in cards)
     html_text = html_text.replace("__THEME__", esc(theme))
     html_text = html_text.replace("__THEME_UPPER__", THEME_TOKEN_HTML)
+    html_text = html_text.replace("__SHARED_CSS__", SHARED_CSS)
     html_text = html_text.replace("__TITLE__", esc(title or p.stem))
     html_text = html_text.replace("__SOURCE__", esc(p.name))
     html_text = html_text.replace("__LAYERS_N__", str(data["n_layers"]))
@@ -223,11 +224,11 @@ CONTRACT = {
     "summary": "每一层是一层饼（该行各分类占比），同类别跨层同色；真三维投影，占比不扭曲",
     "columns": {
         "required": [
-            {"name": "label", "aliases": ["label", "name", "category", "分类", "类别", "标签"], "note": "占比扇区"},
-            {"name": "value", "aliases": ["value", "count", "amount", "数值", "数量", "金额"], "note": "每层求和后取占比"},
+            {"name": "label", "aliases": ["label", "name", "category", "x", "分类", "类别", "标签", "名称", "阶段", "指标"], "note": "占比扇区"},
+            {"name": "value", "aliases": ["value", "count", "amount", "y", "数值", "数量", "金额", "销量", "营收", "增减"], "note": "每层求和后取占比"},
         ],
         "optional": [
-            {"name": "group", "aliases": ["group", "大区", "区域", "季度", "分组", "group_field"], "note": "分层列（缺省=单层）"},
+            {"name": "group", "aliases": ["大区", "区域", "地区", "大类", "一级", "父类", "部门", "板块", "分组", "group", "category2", "region", "area"], "note": "分层列（缺省=单层；无别名时按基数最少的文本列自动判断）"},
         ],
     },
     "inference": ["group+label+value → 多层；label+value → 单层厚环；基数最少的文本列当分层", "每层占比 <3% 的扇区并入「其他」", "负值/0 值剔除并警告；层按总值降序（最大层在最下）"],

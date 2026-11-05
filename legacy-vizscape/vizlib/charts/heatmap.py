@@ -2,7 +2,7 @@
 import datetime, re, sys
 from pathlib import Path
 from ..core import (
-    _first_key, _fmt_num, esc, js_json, norm_key, parse_gantt_date, parse_number, read_raw, TEMPLATES, THEME_TOKEN_HTML, VALUE_ALIAS,
+    _first_key, _fmt_num, esc, js_json, norm_key, parse_gantt_date, parse_number, read_raw, SHARED_CSS, TEMPLATES, THEME_TOKEN_HTML, VALUE_ALIAS,
 )
 
 HEAT_X_ALIAS = tuple(norm_key(x) for x in ("x", "col", "column", "列", "横轴", "weekday", "星期", "时段", "类目x"))
@@ -224,6 +224,7 @@ def render_heatmap(template, input_path, out_path, theme, title):
     summary = "".join(f'<span class="sum-card"><b>{esc(v)}</b>{esc(k)}</span>' for k, v in cards)
     html_text = html_text.replace("__THEME__", esc(theme))
     html_text = html_text.replace("__THEME_UPPER__", THEME_TOKEN_HTML)
+    html_text = html_text.replace("__SHARED_CSS__", SHARED_CSS)
     html_text = html_text.replace("__TITLE__", esc(effect))
     html_text = html_text.replace("__SOURCE__", esc(p.name))
     html_text = html_text.replace("__ARIA_DESC__", aria)
@@ -250,8 +251,8 @@ CONTRACT = {
     "summary": "有 date 列 → 日历年视图；否则 x+y+value → 矩阵",
     "columns": {
         "required": [
-            {"name": "date（日历模式）", "aliases": ["date", "day", "日期", "时间"], "note": "有它即日历模式"},
-            {"name": "x + y（矩阵模式）", "aliases": ["x/列/横轴/星期/时段", "y/行/纵轴/小时"], "note": "两个维度列"},
+            {"name": "date（日历模式）", "aliases": ["date", "day", "日期", "时间", "time", "dt", "dayord"], "note": "有它即日历模式"},
+            {"name": "x + y（矩阵模式）", "aliases": ["x", "col", "column", "列", "横轴", "weekday", "星期", "时段", "类目x", "y", "row", "行", "纵轴", "hour", "小时", "类目y"], "note": "两个维度列"},
             {"name": "value", "aliases": ["全量数值别名"], "note": "缺省取首个 ≥80% 数值列"},
         ],
         "optional": [],

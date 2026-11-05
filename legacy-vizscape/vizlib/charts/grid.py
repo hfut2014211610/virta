@@ -3,7 +3,7 @@
 import math, sys
 from pathlib import Path
 from ..core import (
-    _fmt_num, _new_quality, _numeric_stats, esc, js_json, NUM_RATIO, parse_number, read_raw, TEMPLATES, THEME_TOKEN_HTML,
+    _fmt_num, _new_quality, _numeric_stats, esc, js_json, NUM_RATIO, parse_number, read_raw, SHARED_CSS, TEMPLATES, THEME_TOKEN_HTML,
 )
 
 MAX_ROWS = 5000  # 超出截断并警告（单文件体积与前端聚合性能）
@@ -107,6 +107,7 @@ def render_grid(template, input_path, out_path, theme, title, default_mode=None)
     html_text = (tdir / "template.html").read_text(encoding="utf-8")
     html_text = html_text.replace("__THEME__", esc(theme))
     html_text = html_text.replace("__THEME_UPPER__", THEME_TOKEN_HTML)
+    html_text = html_text.replace("__SHARED_CSS__", SHARED_CSS)
     html_text = html_text.replace("__TITLE__", esc(title or p.stem))
     html_text = html_text.replace("__DATA_JSON__", js_json(data))
     html_text = html_text.replace("__TABLE_HTML__", build_grid_table(data))

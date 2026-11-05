@@ -3,14 +3,10 @@ import sys
 from collections import OrderedDict
 from pathlib import Path
 from ..core import (
-    _first_key, _fmt_num, _numeric_keys, _numeric_stats, _row_label, esc, js_json, norm_key, NUM_RATIO, parse_number, read_raw, SERIES_ALIAS, SIZE_ALIAS, TEMPLATES, THEME_TOKEN_HTML, X_ALIAS, Y_ALIAS,
+    _first_key, _fmt_num, _numeric_keys, _numeric_stats, _row_label, esc, js_json, norm_key, NUM_RATIO, parse_number, read_raw, SERIES_ALIAS, SHARED_CSS, SIZE_ALIAS, TEMPLATES, THEME_TOKEN_HTML, X_ALIAS, Y_ALIAS,
 )
 
 SC_LABEL_ALIAS = tuple(norm_key(x) for x in ("label", "category", "分类", "类别", "标签"))
-
-SCATTER_X = ("投放入", "成本", "投入", "x", "横轴", "自变量")
-
-SCATTER_Y = ("转化", "收益", "产出", "y", "纵轴", "因变量")
 
 def _corr(xs, ys):
     n = len(xs)
@@ -213,6 +209,7 @@ def render_scatter(template, input_path, out_path, theme, title):
     summary = "".join(f'<span class="sum-card"><b>{esc(v)}</b>{esc(k)}</span>' for k, v in stats_cards)
     html_text = html_text.replace("__THEME__", esc(theme))
     html_text = html_text.replace("__THEME_UPPER__", THEME_TOKEN_HTML)
+    html_text = html_text.replace("__SHARED_CSS__", SHARED_CSS)
     html_text = html_text.replace("__TITLE__", esc(title or p.stem))
     html_text = html_text.replace("__SOURCE__", esc(p.name))
     html_text = html_text.replace("__X_KEY__", esc(chart["x_key"]))
@@ -243,12 +240,12 @@ CONTRACT = {
     "summary": "x+y 两列数值看相关性；可选 size 列变气泡图，group 列上色分组",
     "columns": {
         "required": [
-            {"name": "x", "aliases": ["x", "x值", "横轴", "自变量", "投入", "成本"], "note": "数值列；缺省取第一个数值列"},
+            {"name": "x", "aliases": ["x", "x值", "横轴", "自变量", "投入", "投放入", "成本"], "note": "数值列；缺省取第一个数值列"},
             {"name": "y", "aliases": ["y", "y值", "纵轴", "因变量", "转化", "收益", "产出"], "note": "数值列；缺省取第二个数值列"},
         ],
         "optional": [
-            {"name": "size", "aliases": ["size", "气泡", "规模", "权重"], "note": "气泡面积"},
-            {"name": "group", "aliases": ["group", "series", "分组", "系列"], "note": "分组着色"},
+            {"name": "size", "aliases": ["size", "气泡", "气泡大小", "规模", "权重"], "note": "气泡面积"},
+            {"name": "group", "aliases": ["group", "series", "分组", "系列", "渠道", "门店", "城市", "部门"], "note": "分组着色"},
             {"name": "label", "aliases": ["label", "category", "分类", "类别", "标签"], "note": "悬浮点名"},
         ],
     },

@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 from ..core import (
-    _first_key, _fmt_num, esc, js_json, parse_number, read_raw, TEMPLATES, THEME_TOKEN_HTML, VALUE_ALIAS,
+    _first_key, _fmt_num, esc, js_json, parse_number, read_raw, SHARED_CSS, TEMPLATES, THEME_TOKEN_HTML, VALUE_ALIAS,
 )
 
 def to_sunburst(raw):
@@ -148,6 +148,7 @@ def render_sunburst(template, input_path, out_path, theme, title):
     summary = "".join(f'<span class="sum-card"><b>{esc(v)}</b>{esc(k)}</span>' for k, v in cards)
     html_text = html_text.replace("__THEME__", esc(theme))
     html_text = html_text.replace("__THEME_UPPER__", THEME_TOKEN_HTML)
+    html_text = html_text.replace("__SHARED_CSS__", SHARED_CSS)
     html_text = html_text.replace("__TITLE__", esc(effect))
     html_text = html_text.replace("__SOURCE__", esc(p.name))
     html_text = html_text.replace("__ARIA_DESC__", f"{c['levels']} 层 {c['leaves']} 个叶子，总量 {_fmt_num(c['total'])}")

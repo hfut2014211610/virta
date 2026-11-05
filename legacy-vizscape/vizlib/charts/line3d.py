@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from .barline import build_table, to_chart
 from ..core import (
-    _fmt_num, esc, is_doc_template, js_json, read_raw, TEMPLATES, TEMPORAL_RE, THEME_TOKEN_HTML,
+    _fmt_num, esc, is_doc_template, js_json, read_raw, SHARED_CSS, TEMPLATES, TEMPORAL_RE, THEME_TOKEN_HTML,
 )
 
 def _is_temporal(labels):
@@ -92,6 +92,7 @@ def render_line3d(template, input_path, out_path, theme, title):
     summary = "".join(f'<span class="sum-card"><b>{esc(v)}</b>{esc(k)}</span>' for k, v in cards)
     html_text = html_text.replace("__THEME__", esc(theme))
     html_text = html_text.replace("__THEME_UPPER__", THEME_TOKEN_HTML)
+    html_text = html_text.replace("__SHARED_CSS__", SHARED_CSS)
     html_text = html_text.replace("__TITLE__", esc(title or p.stem))
     html_text = html_text.replace("__SOURCE__", esc(p.name))
     html_text = html_text.replace("__LABELS_N__", str(chart["n_labels"]))
@@ -124,11 +125,11 @@ CONTRACT = {
     "summary": "多系列沿深度轴排列的真三维折线；X=分类/时间，Y=系列深度，Z=数值高度",
     "columns": {
         "required": [
-            {"name": "label", "aliases": ["label", "name", "分类", "类别", "标签", "名称", "月份"], "note": "分类/时间轴（≥2 项）"},
-            {"name": "value", "aliases": ["value", "数值", "数量", "金额", "营收", "销量", "增减"], "note": "宽表=多个数值列各一条系列；长表=系列列+数值列"},
+            {"name": "label", "aliases": ["label", "name", "category", "x", "分类", "类别", "标签", "名称", "阶段", "指标"], "note": "分类/时间轴（≥2 项）；缺省取第一列，月份等时间格式自动标记为时间轴"},
+            {"name": "value", "aliases": ["value", "count", "amount", "y", "数值", "数量", "金额", "销量", "营收", "增减"], "note": "宽表=多个数值列各一条系列；长表=系列列+数值列"},
         ],
         "optional": [
-            {"name": "series", "aliases": ["series", "group", "系列", "分组", "渠道", "门店"], "note": "深度轴（每条系列一根带状折线）"},
+            {"name": "series", "aliases": ["series", "group", "系列", "分组", "渠道", "门店", "城市", "部门"], "note": "深度轴（每条系列一根带状折线）"},
         ],
     },
     "inference": ["缺省：宽表每个数值列=一个系列；长表按系列列分组；xAxis/series 的 ECharts JSON 也支持", "所有系列共用同一 Z 刻度；拖拽旋转 + 滚轮缩放（页内交互）"],

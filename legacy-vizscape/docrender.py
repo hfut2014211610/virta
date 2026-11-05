@@ -154,7 +154,9 @@ def render_doc(tdir, input_path, out_path, theme, title):
         sys.exit(f"✗ 输入文件不存在：{p}")
     doc = build_doc(read_text(p), p.stem)
     st = doc["stats"]
+    shared_css_path = tdir.parent / "_shared.css"
     values = {
+        "__SHARED_CSS__": shared_css_path.read_text(encoding="utf-8") if shared_css_path.exists() else "",
         "__THEME__": _esc(theme),
         "__THEME_UPPER__": _THEME_TOKEN_HTML,
         "__TITLE__": _esc(title or doc["title"]),

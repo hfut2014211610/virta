@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 from ..core import (
-    _first_key, _fmt_num, _new_quality, _row_label, ACTUAL_ALIAS, esc, GOOD_ALIAS, LABEL_ALIASES, MAX_ALIAS, parse_number, POOR_ALIAS, read_raw, TARGET_ALIAS, TEMPLATES, THEME_TOKEN_HTML,
+    _first_key, _fmt_num, _new_quality, _row_label, ACTUAL_ALIAS, esc, GOOD_ALIAS, LABEL_ALIASES, MAX_ALIAS, parse_number, POOR_ALIAS, read_raw, SHARED_CSS, TARGET_ALIAS, TEMPLATES, THEME_TOKEN_HTML,
 )
 
 def to_bullet(raw):
@@ -158,6 +158,7 @@ def render_bullet(template, input_path, out_path, theme, title):
     summary = "".join(f'<span class="sum-card"><b>{esc(v)}</b>{esc(k)}</span>' for k, v in cards)
     html_text = html_text.replace("__THEME__", esc(theme))
     html_text = html_text.replace("__THEME_UPPER__", THEME_TOKEN_HTML)
+    html_text = html_text.replace("__SHARED_CSS__", SHARED_CSS)
     html_text = html_text.replace("__TITLE__", esc(title or p.stem))
     html_text = html_text.replace("__SOURCE__", esc(p.name))
     html_text = html_text.replace("__SUMMARY_CARDS__", summary)
@@ -182,13 +183,13 @@ CONTRACT = {
     "summary": "actual vs target 的达成度条，带较差/良好阈值带与量程",
     "columns": {
         "required": [
-            {"name": "label", "aliases": ["label", "name", "指标", "名称", "类别"], "note": "缺省取第一列"},
+            {"name": "label", "aliases": ["label", "name", "category", "x", "分类", "类别", "标签", "名称", "阶段", "指标"], "note": "缺省取第一列"},
             {"name": "actual", "aliases": ["actual", "value", "实际", "实际值", "本期值", "完成值"], "note": "数值列"},
             {"name": "target", "aliases": ["target", "goal", "目标", "目标值", "计划值", "plan"], "note": "数值列，与 actual 成对"},
         ],
         "optional": [
-            {"name": "poor / good", "aliases": ["poor/差/较差线", "good/好/良好线"], "note": "阈值带；缺省按量程 55%/80%"},
-            {"name": "max", "aliases": ["max", "scale", "上限", "量程"], "note": "参与量程估计；全图统一量程"},
+            {"name": "poor / good", "aliases": ["poor", "low", "bad", "差", "较差线", "较差上限", "good", "high", "ok", "好", "良好线", "良好下限"], "note": "阈值带；缺省按量程 55%/80%"},
+            {"name": "max", "aliases": ["max", "scale", "upper", "上限", "量程"], "note": "参与量程估计；全图统一量程"},
         ],
     },
     "inference": ["达成度 = actual/target 自动判定状态色", "poor/good 缺省按量程 55%/80%"],

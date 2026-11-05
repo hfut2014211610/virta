@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 from ..core import (
-    _first_key, _fmt_num, esc, js_json, norm_key, parse_number, read_raw, TEMPLATES, THEME_TOKEN_HTML, VALUE_ALIAS,
+    _first_key, _fmt_num, esc, js_json, norm_key, parse_number, read_raw, SHARED_CSS, TEMPLATES, THEME_TOKEN_HTML, VALUE_ALIAS,
 )
 
 SANKEY_SOURCE_ALIAS = tuple(norm_key(x) for x in ("source", "from", "src", "源", "来源", "起点", "上游", "fromnode"))
@@ -185,6 +185,7 @@ def render_sankey(template, input_path, out_path, theme, title):
     summary = "".join(f'<span class="sum-card"><b>{esc(v)}</b>{esc(k)}</span>' for k, v in cards)
     html_text = html_text.replace("__THEME__", esc(theme))
     html_text = html_text.replace("__THEME_UPPER__", THEME_TOKEN_HTML)
+    html_text = html_text.replace("__SHARED_CSS__", SHARED_CSS)
     html_text = html_text.replace("__TITLE__", esc(effect))
     html_text = html_text.replace("__SOURCE__", esc(p.name))
     html_text = html_text.replace("__ARIA_DESC__", f"{c['nodes']} 节点 {c['links']} 条流带，{c['layers']} 层")
@@ -211,8 +212,8 @@ CONTRACT = {
     "summary": "source+target+value 边表；强制 DAG，自环剔除、成环去最弱边并警告",
     "columns": {
         "required": [
-            {"name": "source", "aliases": ["source", "from", "src", "源", "来源", "起点", "上游"], "note": ""},
-            {"name": "target", "aliases": ["target", "to", "dst", "目标", "去向", "终点", "下游"], "note": ""},
+            {"name": "source", "aliases": ["source", "from", "src", "源", "来源", "起点", "上游", "fromnode"], "note": ""},
+            {"name": "target", "aliases": ["target", "to", "dst", "目标", "去向", "终点", "下游", "tonode"], "note": ""},
             {"name": "value", "aliases": ["全量数值别名"], "note": "流量"},
         ],
         "optional": [],

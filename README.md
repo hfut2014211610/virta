@@ -15,7 +15,7 @@
 
 ```text
 legacy-vizscape/         # 上一代 Python 实现（vizscape）：可运行的参考实现
-packages/contracts/      # 公共类型契约（Series / ChartData / ViewSpec / ViewState / VizError）
+packages/contracts/      # 公共类型契约（Series / ChartData / ViewSpec / ViewState / VizError），tsc 可构建
 packages/data-engine/    # 数据模型、normalize、transform、aggregation、adapter
 packages/chart-core/     # 几何、scale、layout、hit-testing、渲染管线
 packages/design-system/  # token 值、主题、icon、视觉基元
@@ -47,3 +47,5 @@ python vizscape.py schema                             # 图族输入契约（给
 ```
 
 新骨架按包边界从 legacy 迁移：解析与数据模型 → `data-engine`，几何与渲染 → `chart-core`，主题与图表皮肤 → `design-system` / `chart-skin`；公共类型集中在 `contracts/`，契约级变更记录到 `docs/adr/`。
+
+Monorepo 底座已落地：npm workspaces（`packages/*`、`apps/*`）+ `tsconfig.base.json` 严格基线；`@virta/contracts` 已可 `npm run typecheck` 构建出 `dist/`。其余包仍是占位 README，待从 legacy 迁移实现。

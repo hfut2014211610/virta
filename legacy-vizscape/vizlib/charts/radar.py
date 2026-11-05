@@ -3,7 +3,7 @@ import math, sys
 from pathlib import Path
 from .barline import to_chart
 from ..core import (
-    _fmt_num, _new_quality, esc, js_json, parse_number, read_raw, TEMPLATES, THEME_TOKEN_HTML,
+    _fmt_num, _new_quality, esc, js_json, parse_number, read_raw, SHARED_CSS, TEMPLATES, THEME_TOKEN_HTML,
 )
 
 def to_radar(raw):
@@ -170,6 +170,7 @@ def render_radar(template, input_path, out_path, theme, title):
     summary = "".join(f'<span class="sum-card"><b>{esc(v)}</b>{esc(k)}</span>' for k, v in cards)
     html_text = html_text.replace("__THEME__", esc(theme))
     html_text = html_text.replace("__THEME_UPPER__", THEME_TOKEN_HTML)
+    html_text = html_text.replace("__SHARED_CSS__", SHARED_CSS)
     html_text = html_text.replace("__TITLE__", esc(title or p.stem))
     html_text = html_text.replace("__SOURCE__", esc(p.name))
     html_text = html_text.replace("__AXES_N__", str(data["nax"]))
@@ -201,7 +202,7 @@ CONTRACT = {
             {"name": "label/item", "aliases": ["label", "name", "item", "类别", "名称", "对比项"], "note": "宽表取第一列；长表为对比项列"},
             {"name": "value", "aliases": ["value", "数值"], "note": "宽表：其余数值列各为一轴；长表：axis+item+value 三列"},
         ],
-        "optional": [{"name": "axis", "aliases": ["axis", "dimension", "维度", "指标"], "note": "长表模式专用"}],
+        "optional": [{"name": "axis + item", "aliases": ["结构性识别：单系列 + ≥2 文本列时自动按 (维度, 对比项) 展开成长表模式"], "note": "不靠列名匹配"}],
     },
     "inference": ["宽表优先；检测到 axis/item/value 结构自动转长表模式", "轴数 <3 拒绝", "各轴独立归一"],
     "example_csv": "车型,动力,油耗,舒适,操控\nA款,8,6,9,7\nB款,6,8,7,8",

@@ -2,7 +2,7 @@
 import datetime, re, sys
 from pathlib import Path
 from ..core import (
-    _first_key, esc, js_json, LABEL_ALIASES, norm_key, parse_gantt_date, parse_number, read_raw, TEMPLATES, THEME_TOKEN_HTML, TYPE_ALIAS,
+    _first_key, esc, js_json, LABEL_ALIASES, norm_key, parse_gantt_date, parse_number, read_raw, SHARED_CSS, TEMPLATES, THEME_TOKEN_HTML, TYPE_ALIAS,
 )
 
 GANTT_TASK_ALIAS = tuple(norm_key(x) for x in ("task", "任务", "事项", "工作", "工作项", "活动", "label", "name", "名称"))
@@ -283,6 +283,7 @@ def render_gantt(template, input_path, out_path, theme, title):
     summary = "".join(f'<span class="sum-card"><b>{esc(v)}</b>{esc(k)}</span>' for k, v in cards)
     html_text = html_text.replace("__THEME__", esc(theme))
     html_text = html_text.replace("__THEME_UPPER__", THEME_TOKEN_HTML)
+    html_text = html_text.replace("__SHARED_CSS__", SHARED_CSS)
     html_text = html_text.replace("__TITLE__", esc(title or p.stem))
     html_text = html_text.replace("__SOURCE__", esc(p.name))
     html_text = html_text.replace("__TASKS_N__", str(len(data["tasks"])))
@@ -311,17 +312,17 @@ CONTRACT = {
     "summary": "task+start 必需；end/duration 二选一，都缺则为里程碑◆",
     "columns": {
         "required": [
-            {"name": "task", "aliases": ["task", "任务", "事项", "工作项", "活动", "名称"], "note": ""},
-            {"name": "start", "aliases": ["start", "begin", "开始", "开始日期", "开始时间"], "note": "日期或相对天数（D+n）"},
+            {"name": "task", "aliases": ["task", "任务", "事项", "工作", "工作项", "活动", "label", "name", "名称"], "note": ""},
+            {"name": "start", "aliases": ["start", "begin", "startdate", "开始", "开始日期", "开始时间", "启动"], "note": "日期或相对天数（D+n）"},
         ],
         "optional": [
-            {"name": "end", "aliases": ["end", "finish", "结束", "结束日期", "截止日期"], "note": "与 duration 二选一"},
-            {"name": "duration", "aliases": ["duration", "days", "工期", "时长", "天数"], "note": "数值"},
-            {"name": "group", "aliases": ["phase", "lane", "泳道", "阶段", "分组", "模块"], "note": "泳道分组"},
-            {"name": "progress", "aliases": ["progress", "pct", "进度", "完成度"], "note": "0-100"},
+            {"name": "end", "aliases": ["end", "finish", "enddate", "due", "deadline", "结束", "结束日期", "截止日期", "完成日期"], "note": "与 duration 二选一"},
+            {"name": "duration", "aliases": ["duration", "days", "dur", "工期", "时长", "天数"], "note": "数值"},
+            {"name": "group", "aliases": ["phase", "lane", "swimlane", "module", "泳道", "阶段", "分组", "模块", "部门", "group", "项目"], "note": "泳道分组"},
+            {"name": "progress", "aliases": ["progress", "pct", "percent", "进度", "完成度", "完成率"], "note": "0-100"},
             {"name": "status", "aliases": ["status", "state", "状态"], "note": "done/active/delayed/todo"},
-            {"name": "owner", "aliases": ["owner", "assignee", "负责人"], "note": ""},
-            {"name": "deps", "aliases": ["deps", "depends", "依赖", "前置", "前置任务"], "note": "依赖任务名，肘形连线"},
+            {"name": "owner", "aliases": ["owner", "assignee", "负责人", "成员", "责任人"], "note": ""},
+            {"name": "deps", "aliases": ["deps", "depends", "dependson", "predecessor", "predecessors", "依赖", "前置", "前置任务", "前置依赖"], "note": "依赖任务名，肘形连线"},
             {"name": "type", "aliases": ["type", "类型"], "note": "=milestone 强制里程碑"},
         ],
     },

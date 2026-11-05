@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 from ..core import (
-    _first_key, _fmt_num, esc, js_json, norm_key, parse_number, read_raw, TEMPLATES, THEME_TOKEN_HTML, VALUE_ALIAS,
+    _first_key, _fmt_num, esc, js_json, norm_key, parse_number, read_raw, SHARED_CSS, TEMPLATES, THEME_TOKEN_HTML, VALUE_ALIAS,
 )
 
 BOX_GROUP_ALIAS = tuple(norm_key(x) for x in ("group", "category", "类别", "组", "分组", "产线", "批次", "班级", "组别"))
@@ -201,6 +201,7 @@ def render_boxplot(template, input_path, out_path, theme, title):
     summary = "".join(f'<span class="sum-card"><b>{esc(v)}</b>{esc(k)}</span>' for k, v in cards)
     html_text = html_text.replace("__THEME__", esc(theme))
     html_text = html_text.replace("__THEME_UPPER__", THEME_TOKEN_HTML)
+    html_text = html_text.replace("__SHARED_CSS__", SHARED_CSS)
     html_text = html_text.replace("__TITLE__", esc(effect))
     html_text = html_text.replace("__SOURCE__", esc(p.name))
     html_text = html_text.replace("__ARIA_DESC__", f"{c['groups']} 个分组，{c['outliers']} 个离群点")
@@ -227,12 +228,12 @@ CONTRACT = {
     "summary": "group+value 原始观测自动聚五数；或直接给 min/q1/median/q3/max 汇总列",
     "columns": {
         "required": [
-            {"name": "group", "aliases": ["group", "category", "类别", "组", "产线", "批次"], "note": "缺省取第一列"},
+            {"name": "group", "aliases": ["group", "category", "类别", "组", "分组", "产线", "批次", "班级", "组别"], "note": "缺省取第一列"},
             {"name": "value（观测模式）", "aliases": ["全量数值别名"], "note": "有 q1+median+q3 列时走汇总模式"},
         ],
         "optional": [
-            {"name": "q1 / median / q3", "aliases": ["q1/下四分位/p25", "median/中位数/p50", "q3/上四分位/p75"], "note": "汇总模式必需"},
-            {"name": "min / max", "aliases": ["min/最小值/下限", "max/最大值/上限"], "note": "缺省以 Q1/Q3 代替并警告"},
+            {"name": "q1 / median / q3", "aliases": ["q1", "下四分位", "p25", "median", "med", "中位数", "p50", "q3", "上四分位", "p75"], "note": "汇总模式必需"},
+            {"name": "min / max", "aliases": ["min", "最小值", "下限", "low", "max", "最大值", "上限", "high"], "note": "缺省以 Q1/Q3 代替并警告"},
         ],
     },
     "inference": ["type-7 分位数", "须线 = Q1∓1.5·IQR 界内最值", "界外离群空心圆", "组内 n<5 警告"],

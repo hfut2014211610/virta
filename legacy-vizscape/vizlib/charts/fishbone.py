@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 from .gantt import GANTT_OWNER_ALIAS
 from ..core import (
-    _first_key, esc, js_json, norm_key, read_raw, TEMPLATES, THEME_TOKEN_HTML,
+    _first_key, esc, js_json, norm_key, read_raw, SHARED_CSS, TEMPLATES, THEME_TOKEN_HTML,
 )
 
 FISH_CAT_ALIAS = tuple(norm_key(x) for x in ("category", "cat", "dimension", "类别", "类目", "维度", "大骨", "分类", "分组", "group", "方面"))
@@ -130,6 +130,7 @@ def render_fishbone(template, input_path, out_path, theme, title):
     data["effect"] = effect
     html_text = html_text.replace("__THEME__", esc(theme))
     html_text = html_text.replace("__THEME_UPPER__", THEME_TOKEN_HTML)
+    html_text = html_text.replace("__SHARED_CSS__", SHARED_CSS)
     html_text = html_text.replace("__TITLE__", esc(effect))
     html_text = html_text.replace("__SOURCE__", esc(p.name))
     html_text = html_text.replace("__CATS_N__", str(c["cats"]))
@@ -158,12 +159,12 @@ CONTRACT = {
     "summary": "category+cause 必需；鱼头取 --title 或文件名",
     "columns": {
         "required": [
-            {"name": "category", "aliases": ["category", "cat", "dimension", "类别", "维度", "大骨", "方面"], "note": "大骨"},
-            {"name": "cause", "aliases": ["cause", "reason", "原因", "小骨", "因素", "问题点", "根因"], "note": "小骨"},
+            {"name": "category", "aliases": ["category", "cat", "dimension", "类别", "类目", "维度", "大骨", "分类", "分组", "group", "方面"], "note": "大骨"},
+            {"name": "cause", "aliases": ["cause", "reason", "原因", "小骨", "因子", "因素", "问题点", "根因", "label", "name", "事项", "原因描述"], "note": "小骨"},
         ],
         "optional": [
-            {"name": "sub", "aliases": ["sub", "subcause", "子原因", "孙骨", "二级原因"], "note": "45° 孙骨"},
-            {"name": "owner", "aliases": ["owner", "负责人"], "note": "悬浮显示"},
+            {"name": "sub", "aliases": ["sub", "subcause", "子原因", "子因", "孙骨", "二级原因", "细分"], "note": "45° 孙骨"},
+            {"name": "owner", "aliases": ["owner", "assignee", "负责人", "成员", "责任人"], "note": "悬浮显示"},
         ],
     },
     "inference": ["去重 + 空 cause 跳过", "类间失衡警告", "图例点击显隐并重排"],

@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 from .scatter import to_scatter
 from ..core import (
-    _first_key, _fmt_num, _numeric_keys, _numeric_stats, esc, js_json, norm_key, parse_number, read_raw, TEMPLATES, THEME_TOKEN_HTML,
+    _first_key, _fmt_num, _numeric_keys, _numeric_stats, esc, js_json, norm_key, parse_number, read_raw, SHARED_CSS, TEMPLATES, THEME_TOKEN_HTML,
 )
 
 RAW_Z_ALIAS = ("z", "z值", "竖轴", "深轴", "高度", "深度", "z轴", "利润", "评分", "数量", "金额", "销量", "权重")
@@ -144,6 +144,7 @@ def render_scatter3d(template, input_path, out_path, theme, title):
     summary = "".join(f'<span class="sum-card"><b>{esc(v)}</b>{esc(k)}</span>' for k, v in cards)
     html_text = html_text.replace("__THEME__", esc(theme))
     html_text = html_text.replace("__THEME_UPPER__", THEME_TOKEN_HTML)
+    html_text = html_text.replace("__SHARED_CSS__", SHARED_CSS)
     html_text = html_text.replace("__TITLE__", esc(title or p.stem))
     html_text = html_text.replace("__SOURCE__", esc(p.name))
     html_text = html_text.replace("__X_KEY__", esc(chart["x_key"]))
@@ -178,11 +179,11 @@ CONTRACT = {
         "required": [
             {"name": "x", "aliases": ["x", "x值", "横轴"], "note": "数值列"},
             {"name": "y", "aliases": ["y", "y值", "纵轴"], "note": "数值列"},
-            {"name": "z", "aliases": ["z", "z值", "竖轴", "深轴", "高度", "深度"], "note": "数值列"},
+            {"name": "z", "aliases": ["z", "z值", "竖轴", "深轴", "高度", "深度", "z轴", "利润", "评分", "数量", "金额", "销量", "权重"], "note": "数值列"},
         ],
         "optional": [
-            {"name": "group", "aliases": ["group", "series", "分组", "系列"], "note": "分组着色"},
-            {"name": "size", "aliases": ["size", "气泡", "规模"], "note": "气泡面积"},
+            {"name": "group", "aliases": ["group", "series", "分组", "系列", "渠道", "门店", "城市", "部门"], "note": "分组着色"},
+            {"name": "size", "aliases": ["size", "气泡", "气泡大小", "规模", "权重"], "note": "气泡面积"},
         ],
     },
     "inference": ["x/y/z 缺省 = 前三个数值列", "拖拽旋转 + 滚轮缩放（页内交互）"],

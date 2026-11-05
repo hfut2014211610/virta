@@ -97,6 +97,10 @@ THEME_TOKEN_HTML = (
     'html[data-theme="dark"] .eb-th-l{display:none}</style>'
 )
 
+# 模板共享样式片段（templates/_shared.css），模板 <style> 内 __SHARED_CSS__ 处注入
+_shared_css_path = TEMPLATES / "_shared.css"
+SHARED_CSS = _shared_css_path.read_text(encoding="utf-8") if _shared_css_path.exists() else ""
+
 def parse_number(v):
     """返回 (number, status, unit)
     status: ok | percent | missing | invalid

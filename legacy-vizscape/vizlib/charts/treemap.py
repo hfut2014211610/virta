@@ -4,7 +4,7 @@ from collections import OrderedDict
 from pathlib import Path
 from .radar import _is_numeric_col
 from ..core import (
-    _first_key, _fmt_num, _new_quality, esc, js_json, norm_key, parse_number, read_raw, TEMPLATES, THEME_TOKEN_HTML, VALUE_ALIAS,
+    _first_key, _fmt_num, _new_quality, esc, js_json, norm_key, parse_number, read_raw, SHARED_CSS, TEMPLATES, THEME_TOKEN_HTML, VALUE_ALIAS,
 )
 
 RAW_TREEMAP_GROUP_ALIAS = ("大区", "区域", "地区", "大类", "一级", "父类", "部门", "板块", "分组", "group", "category2", "region", "area")
@@ -296,6 +296,7 @@ def render_treemap(template, input_path, out_path, theme, title):
     summary = "".join(f'<span class="sum-card"><b>{esc(v)}</b>{esc(k)}</span>' for k, v in cards)
     html_text = html_text.replace("__THEME__", esc(theme))
     html_text = html_text.replace("__THEME_UPPER__", THEME_TOKEN_HTML)
+    html_text = html_text.replace("__SHARED_CSS__", SHARED_CSS)
     html_text = html_text.replace("__TITLE__", esc(title or p.stem))
     html_text = html_text.replace("__SOURCE__", esc(p.name))
     html_text = html_text.replace("__MODE__", esc(data["mode"]))
@@ -323,10 +324,10 @@ CONTRACT = {
     "summary": "面积 ∝ 数值；有 group 列走两层（分区+组内 squarify），无则一维平铺",
     "columns": {
         "required": [
-            {"name": "label", "aliases": ["label", "name", "category", "分类", "类别", "标签", "名称"], "note": "叶子名"},
-            {"name": "value", "aliases": ["value", "count", "amount", "数值", "数量", "金额"], "note": "数值列"},
+            {"name": "label", "aliases": ["label", "name", "category", "x", "分类", "类别", "标签", "名称", "阶段", "指标"], "note": "叶子名"},
+            {"name": "value", "aliases": ["value", "count", "amount", "y", "数值", "数量", "金额", "销量", "营收", "增减"], "note": "数值列"},
         ],
-        "optional": [{"name": "group", "aliases": ["group", "大区", "区域", "大类", "一级", "父类", "部门", "板块"], "note": "有即两层模式"}],
+        "optional": [{"name": "group", "aliases": ["大区", "区域", "地区", "大类", "一级", "父类", "部门", "板块", "分组", "group", "category2", "region", "area"], "note": "有即两层模式"}],
     },
     "inference": ["负值/0 值剔除并警告", "同组同名子项合并", "点击下钻 / 面包屑返回（页内交互）"],
     "example_csv": "大区,城市,销售额\n华东,上海,120\n华东,杭州,80",

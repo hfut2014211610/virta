@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 from .barline import to_chart
 from ..core import (
-    _fmt_num, esc, js_json, read_raw, TEMPLATES, THEME_TOKEN_HTML,
+    _fmt_num, esc, js_json, read_raw, SHARED_CSS, TEMPLATES, THEME_TOKEN_HTML,
 )
 
 FUNNEL_MIN_STEP = 0  # 单级流失绝对值提示阈值（0=不提示）
@@ -119,6 +119,7 @@ def render_funnel(template, input_path, out_path, theme, title):
     summary = "".join(f'<span class="sum-card"><b>{esc(v)}</b>{esc(k)}</span>' for k, v in cards)
     html_text = html_text.replace("__THEME__", esc(theme))
     html_text = html_text.replace("__THEME_UPPER__", THEME_TOKEN_HTML)
+    html_text = html_text.replace("__SHARED_CSS__", SHARED_CSS)
     html_text = html_text.replace("__TITLE__", esc(title or p.stem))
     html_text = html_text.replace("__SOURCE__", esc(p.name))
     html_text = html_text.replace("__STAGES_N__", str(len(stages)))
@@ -146,10 +147,10 @@ CONTRACT = {
     "summary": "label+value 按行序作阶段，看逐级转化与最大流失点",
     "columns": {
         "required": [
-            {"name": "label", "aliases": ["label", "name", "阶段", "category"], "note": "行顺序 = 阶段顺序"},
-            {"name": "value", "aliases": ["value", "count", "amount", "数值", "数量"], "note": "数值列"},
+            {"name": "label", "aliases": ["label", "name", "category", "x", "分类", "类别", "标签", "名称", "阶段", "指标"], "note": "行顺序 = 阶段顺序"},
+            {"name": "value", "aliases": ["value", "count", "amount", "y", "数值", "数量", "金额", "销量", "营收", "增减"], "note": "数值列"},
         ],
-        "optional": [{"name": "series", "aliases": ["series", "group", "系列", "分组"], "note": "多漏斗对比"}],
+        "optional": [{"name": "series", "aliases": ["series", "group", "系列", "分组", "渠道", "门店", "城市", "部门"], "note": "多漏斗对比"}],
     },
     "inference": ["转化率/流失率自动计算", "最大流失级红色标注", "阶段数 <2 拒绝"],
     "example_csv": "阶段,人数\n访问,10000\n注册,3200\n付费,860",
