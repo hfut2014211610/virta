@@ -5,3 +5,5 @@ export * from "./spec.js";
 export * from "./quality.js";
 export * from "./receipts.js";
 export * from "./legacy.js";
+export * from "./families/index.js";
+export * from "./spec-schema.js";

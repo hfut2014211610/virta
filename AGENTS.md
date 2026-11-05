@@ -47,7 +47,7 @@ npm run gallery        # 生成画廊
 ## 里程碑状态
 
 - [x] M0 基线收口与工程脚手架
-- [ ] M1 契约与设计系统
+- [x] M1 契约与设计系统（20 视图 ChartContract + ViewSpec JSON Schema + tokens/色板/OKLCH 色阶/buildCss + 子集字体管线）
 - [ ] M2 数据引擎
 - [ ] M3 渲染栈纵切（bar + line）
 - [ ] M4 legacy 图族迁移（B1/B2/B3）

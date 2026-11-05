@@ -32,3 +32,27 @@
 - 问题：`to_chart` 同一函数服务 bar/line/matrix3d 三视图，cases.json 需要一个 id 区分。
 - 选择：case id 形如 `bar-sample`/`matrix3d-multi`，同一样例可对应多个 case id 指向同一导出 fn；导出的 model 本身与视图无关。
 - 理由：显式映射表语义不变，对拍端按 case 粒度比较。
+
+## 2026-11-05 · M1 token 与色板偏离 legacy 的两处取值
+
+- 问题：计划要求 `faint` 在 `paper` 上对比度 ≥3.0，但 legacy 原值 `#9a9d96` 仅 2.70；同时语义色表列了 `panel`/`pos`/`warn`，legacy 变量里没有对应项。
+- 选择：`faint` light 调深为 `#8e928a`（3.11）；dark `#5e6450` 已达标不动。`panel=paper`，`pos`/`warn` 取 bullet 模板的 `--good`/`--watch`（light #0f766e/#c69a4a，dark #c6f13f/#ffb224）。
+- 理由：语义色只要求"初值取自 legacy"，对比度门禁优先；panel/pos/warn 取已有同源色值最贴近原设计。
+
+## 2026-11-05 · 迁移色板的 ΔE76 例外对
+
+- 问题：DoD 要求每套 palette 前 6 色两两 CIE76 ΔE ≥15，但 6 对同族相邻色为 11.3–14.1（patina/light #386641-#588157、blueprint/light #2f5fd0-#3b82f6、blueprint/dark #7dd3fc-#38bdf8 与 #7dd3fc-#93c5fd、dunhuang/dark #7fc7a3-#81b29a、aurora/dark #5eead4-#6ee7b7）。
+- 选择：色板"原样迁移"不改色值（保证 M4 视觉对拍），这 6 对在 `tokens.test.ts` 的 `PAIR_MIN_OVERRIDES` 里降级为 ≥10 兜底；mono/inkwash/morandi 按计划整组豁免。
+- 理由：ΔE 11+ 仍属可辨（JND≈2.3），两条计划条款冲突时视觉对拍可测试性优先。
+
+## 2026-11-05 · 字体与测试基建三则
+
+- vitest：`@resvg/resvg-js` napi 模块在 Windows forks 池初始化即崩（native OOM），`vitest.config.ts` 全局 `pool:"threads"`（vitest 历史默认池）。
+- resvg 2.6.2：`fontBuffers` 运行时有效（README 记录，2.5.0+）但 d.ts 未声明；字体测试用已声明的 `fontFiles` 达到同等验证，CLI 侧如需 buffer 加载再局部断言类型。
+- metrics.json 已知缺字形：Fraunces 子集缺 U+201B/U+2190–2193/U+FFE5，JetBrains Mono 缺 U+FFE5（字体本身无此字形，subset 阶段已按保留范围输出）；`fonts.test.ts` 的 `KNOWN_MISSING` 登记，其余码点全覆盖。
+
+## 2026-11-05 · options 覆盖口径与 grid roles
+
+- 问题：DoD"options 数量 ≥ 非主题按钮组数"中，variant（如 bar 五种模式）是否计入 options 不明。
+- 选择：从严口径——只数 `contract.options`（variant/mode 不算），为此给 fishbone+`legend`、grid+`density`/`showTotals`、heatmap+`weekStart`、pie+`centerLabel`、sunburst+`equalAngle`（均为真实能力选项，非凑数）；`coverage.test.ts` 按模板 `class="label"` 计数强制断言。grid 的 dims/values 二选一均无 required，同样由该测试覆盖。
+- 理由：variant 走 spec.variant 通道是 §4.3 既定结构；从严口径对 DoD 更稳。
