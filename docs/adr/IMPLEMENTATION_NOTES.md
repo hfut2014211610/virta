@@ -120,3 +120,24 @@
   sankey 流带透明度 0.22（legacy 近似）；line3d/scatter3d 地框仅简线。均无数据正确性问题。
 - **视觉基线**：`test/visual/families.spec.ts` 20 用例（19 视图 + boxplot-summary 变体 + heatmap-calendar），
   每例断言浏览器内联运行期产 SVG、图元 >3、首屏底边 ≤820px，截图基线 `snapshots/families.spec.ts/`。
+
+## M5 · Agent 能力收尾与组合页（§0.3 决策）
+
+- **compose.json 面板两种写法**（文档未明确）：`{chart: "<id>"}` 引用同目录 pack.json 的
+  charts 条目（file+spec+question 自动带出），或 `{file, spec}` 直接内联。`links` 位于顶层。
+- **grid 尺寸**：12 栏，面板宽 w/12、高 h×130px（h 默认 4）；story 全宽、高 h×150+60。
+  面板内卡片 = 圆角矩形 + question/title/首条洞察 + 内层 Scene（无卡片框二次扣区）。
+- **联动实现**：runtime-compose `bootCompose(payload, views)`；点击图元后取
+  `datum.series/label/value` 中落在链接列值域者写入 `filter[col]`；筛选只作用于含该列的面板。
+  HTML 首屏 svg 为占位（浏览器 boot 后即按真实尺寸重渲）；静态 svg/png 为服务端合并 Scene。
+- **recommend.mapping 键名与 contract roles 对齐**（e2e 暴露的不一致）：
+  sunburst `level`（原 `levels`）、treemap `label`+`group`、radar `value`（原 `values`）。
+  打分/推荐层从此与 validate 的角色检查同名，Agent 可直接把 candidate.mapping 写进 spec。
+- **validate 修正**：必需角色缺失时跳过 adapter 数据质量检查（别名解析独立于 spec.mapping，
+  未绑角色时跑 to_* 只会产出误导性崩溃）；`projectQuality` 对 undefined 输入容错。
+- **render 前置校验**：`mapping.*` 指向不存在列 → MISSING_COLUMN；必需角色多列歧义 →
+  AMBIGUOUS_MAPPING（这两个 ErrorCode 此前在 CLI 没有触发点）。stdin `readInline` 包 try，
+  JSON 语法错误正确映射 PARSE_ERROR。
+- **e2e 注意**：`--set mapping.X=["a","b"]` 的数组引号会被 shell 吃掉——传数组 mapping
+  一律用 `--spec` 文件（SKILL.md 已写明）。`compose`/`demo`/`gallery` 占位回执需经
+  `args.values['json']` 判定输出形态。

@@ -74,15 +74,14 @@ export function validate(table: Table, spec: ViewSpec): ValidateReceipt {
     issues.push({ code: 'VARIANT_DISABLED', level: 'error', message: `变体 ${spec.variant} 未声明（可选 ${contract.variants.map((v) => v.id).join('/')}）` });
   }
 
-  // adapter 数据质量（映射补全后仍跑 to_*，其 quality 作为数据问题来源）
+  // adapter 数据质量（映射补全后仍跑 to_*，其 quality 作为数据问题来源；角色缺失时跳过——反正无法适配）
   let mode: string | undefined;
   const toModel = TO_MODEL[view];
-  if (toModel) {
+  if (toModel && !missingRoles.length) {
     try {
       const model = toModel(tableToRaw(table)) as { quality?: { warnings?: string[]; mode?: string } };
       mode = model?.quality?.mode;
-      const qr = projectQuality(model?.quality);
-      issues.push(...qr.issues);
+      if (model?.quality) issues.push(...projectQuality(model.quality).issues);
     } catch (e) {
       issues.push({ code: 'INVALID_NUMBERS', level: 'error', message: (e as Error).message });
     }

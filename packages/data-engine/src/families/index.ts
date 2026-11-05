@@ -48,7 +48,7 @@ interface LiteQuality {
 
 /** legacy 各图族质量 dict → 契约 QualityReport（LiteQuality 与 LegacyQuality 两种形状）。 */
 export function projectQuality(q: unknown): QualityReport {
-  const qq = q as LiteQuality & Partial<LegacyQuality>;
+  const qq = (q ?? {}) as LiteQuality & Partial<LegacyQuality>;
   const warnings = qq.warnings ?? [];
   const legacy: LegacyQuality = {
     rows: qq.rows ?? 0, mode: qq.mode ?? '',

@@ -882,7 +882,7 @@ examples/packs/<id>/
 
 ## 10. 里程碑计划
 
-每个里程碑的结束条件 = 任务清单全部勾选 + DoD 命令通过 + 更新 `AGENTS.md` + 本地提交。
+每个里程碑的结束条件 = 任务清单全部勾选 + DoD 命令通过 + 更新 `docs/adr/IMPLEMENTATION_NOTES.md` + 本地提交。
 
 ### M0 基线收口与工程脚手架
 

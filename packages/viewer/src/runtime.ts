@@ -1,6 +1,6 @@
 // viewer 运行期：单文件 HTML 内嵌本模块（esbuild 打成 <view>.js）。
 // 负责：adapt+layout+SVG 渲染、图例开关、tooltip、编辑抽屉、hash 同步、导出。
-import { hitTest, toSVG } from '@virta/chart-core';
+import { hitTest, toSVG, type Scene } from '@virta/chart-core';
 import { getContract, THEMES, paletteColors, PALETTE_IDS } from './deps.js';
 import type { ViewSpec, Table } from '@virta/contracts';
 
@@ -28,7 +28,7 @@ export interface RuntimeDeps {
   /** 文档原文 → DocModel（report 等文档视图） */
   buildDoc?: (text: string, name: string) => unknown;
   /** 图族 renderer */
-  renderer: { layout: (model: never, ctx: never) => unknown } | undefined;
+  renderer: { layout: (model: never, ctx: never) => Scene } | undefined;
 }
 
 export function boot(payload: Payload, deps: RuntimeDeps): void {
@@ -71,7 +71,7 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
       variant: spec.variant, mode: spec.mode,
       options: spec.options ?? {}, state: spec.state,
       format: spec.format, annotations: spec.annotations, text: spec.text,
-    });
+    } as never);
     return sc;
   }
 

@@ -39,7 +39,7 @@ const multi = (args: PV, k: string) => (Array.isArray(args.values[k]) ? args.val
 /** --set k=v：dotted path；值尝试 JSON.parse。 */
 function applySet(spec: ViewSpec, kv: string): void {
   const eq = kv.indexOf('=');
-  if (eq < 1) fail('INVALID_OPTION', `--set 需要 key=value 形式：${kv}`);
+  if (eq < 1) fail('INVALID_OPTION', `--set 需要 key=value 形式：${kv}`, '例如 --set state.sort=desc');
   const path = kv.slice(0, eq).split('.');
   let val: unknown = kv.slice(eq + 1);
   try { val = JSON.parse(val as string); } catch { /* 字符串 */ }
@@ -61,22 +61,26 @@ async function loadTable(args: PV): Promise<{ table: Table; docText?: string; in
   if (pos === '-') {
     const buf = readFileSync(0);
     const text = new TextDecoder('utf-8').decode(buf);
-    loaded = { result: readInline(text, fmt === 'json' ? 'json' : fmt === 'csv' ? 'csv' : undefined), source: { name: 'stdin', format: fmt ?? 'csv', rows: 0 } };
+    try {
+      loaded = { result: readInline(text, fmt === 'json' ? 'json' : fmt === 'csv' ? 'csv' : undefined), source: { name: 'stdin', format: fmt ?? 'csv', rows: 0 } };
+    } catch (e) {
+      fail('PARSE_ERROR', (e as Error).message, '--format csv|json');
+    }
   } else {
     try {
       loaded = await readInput(pos, { format: fmt, sheet: v(args, 'sheet') });
     } catch (e) {
       const m = (e as Error).message;
-      if (/不存在|ENOENT|not found/i.test(m)) fail('INPUT_NOT_FOUND', `输入文件不存在：${pos}`);
-      if (/format|格式|unsupported/i.test(m)) fail('UNSUPPORTED_FORMAT', m);
-      fail('PARSE_ERROR', m);
+      if (/不存在|ENOENT|not found/i.test(m)) fail('INPUT_NOT_FOUND', `输入文件不存在：${pos}`, '检查路径；stdin 用 -');
+      if (/format|格式|unsupported/i.test(m)) fail('UNSUPPORTED_FORMAT', m, '--format csv|json');
+      fail('PARSE_ERROR', m, '--format csv|json；xlsx 用 --sheet');
     }
   }
   if (loaded!.docText !== undefined) return { table: undefined as unknown as Table, docText: loaded!.docText, input: pos! };
   const res = loaded!.result;
-  if (!res) fail('EMPTY_DATA', '输入数据为空');
+  if (!res) fail('EMPTY_DATA', '输入数据为空', '检查文件内容是否为空');
   const table = rawToTable(res!.raw as never, loaded!.source);
-  if (!table.rows.length) fail('EMPTY_DATA', '输入数据为空（0 行）');
+  if (!table.rows.length) fail('EMPTY_DATA', '输入数据为空（0 行）', '检查分隔符与 --format');
   return { table, docText: undefined, input: pos! };
 }
 
@@ -86,7 +90,7 @@ function buildSpec(args: PV, table?: Table): ViewSpec {
   if (specArg) {
     const txt = existsSync(specArg) ? readFileSync(specArg, 'utf8') : specArg;
     try { spec = { ...spec, ...(JSON.parse(txt) as ViewSpec) }; }
-    catch { fail('INVALID_SPEC', '--spec 不是合法 JSON 或可读文件'); }
+    catch { fail('INVALID_SPEC', '--spec 不是合法 JSON 或可读文件', 'virta schema <view> 查看契约'); }
   }
   const theme = v(args, 'theme'); if (theme) spec.theme = theme as never;
   const pal = v(args, 'palette'); if (pal) spec.palette = pal as never;
@@ -175,8 +179,18 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
     }
     const view = spec.view as ViewId;
     if (docText === undefined && !ADAPTERS[view]) return outErr('render', { code: 'UNKNOWN_VIEW', message: `视图 ${view} 暂不支持`, hint: 'virta list', recoverable: true }, json);
+    // mapping 前置校验：列不存在 → MISSING_COLUMN；必需角色多列歧义 → AMBIGUOUS_MAPPING（§4.5 DATA 类）
+    if (docText === undefined) {
+      const rec = validate(table, spec);
+      const miss = rec.issues.find((i) => i.code === 'MISSING_VALUES' && i.level === 'error' && /不存在/.test(i.message));
+      if (miss) return outErr('render', { code: 'MISSING_COLUMN', message: miss.message, hint: rec.suggestions[0] ?? 'virta inspect 查看可用列', recoverable: true }, json);
+      if (rec.ambiguous.length && rec.missingRoles.length) {
+        const a = rec.ambiguous[0] as { role: string; columns: string[] };
+        return outErr('render', { code: 'AMBIGUOUS_MAPPING', message: `角色 ${a.role} 匹配到多列：${a.columns.join('、')}`, hint: rec.suggestions[0] ?? `--set mapping.${a.role}=<列名>`, recoverable: true }, json);
+      }
+    }
     const formats = (v(args, 'export') ?? 'html').split(',').map((s) => s.trim()) as ('html' | 'svg' | 'png')[];
-    for (const f of formats) if (!['html', 'svg', 'png'].includes(f)) return outErr('render', { code: 'UNSUPPORTED_EXPORT', message: `不支持导出 ${f}`, recoverable: true }, json);
+    for (const f of formats) if (!['html', 'svg', 'png'].includes(f)) return outErr('render', { code: 'UNSUPPORTED_EXPORT', message: `不支持导出 ${f}`, hint: '支持 html,svg,png', recoverable: true }, json);
     const outArg = v(args, 'out') ?? './out';
     const job = {
       table: docText !== undefined ? { columns: [], rows: [], source: { name: stemOf(input), format: 'md' as const, rows: 0 } } : table,
@@ -223,9 +237,31 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
     else console.log(txt);
     return 0;
   },
-  async compose() { return outErr('compose', { code: 'INTERNAL', message: 'compose 计划在 M5 落地', hint: '本期 M3 先支持单图 render', recoverable: true }, false); },
-  async demo() { return outErr('demo', { code: 'INTERNAL', message: 'demo 计划在 M8 落地', recoverable: true }, false); },
-  async gallery() { return outErr('gallery', { code: 'INTERNAL', message: 'gallery 计划在 M8 落地', recoverable: true }, false); },
+  async compose(args) {
+    const json = Boolean(args.values['json']);
+    const f = args.positionals[0];
+    if (!f) return outErr('compose', { code: 'INVALID_SPEC', message: '缺少 compose.json 路径', hint: 'virta compose <compose.json>', recoverable: true }, json);
+    const formats = (v(args, 'export') ?? 'html,png').split(',').map((s) => s.trim()) as ('html' | 'svg' | 'png')[];
+    for (const fm of formats) if (!['html', 'svg', 'png'].includes(fm)) return outErr('compose', { code: 'UNSUPPORTED_EXPORT', message: `不支持导出 ${fm}`, hint: '支持 html,svg,png', recoverable: true }, json);
+    try {
+      const { runCompose } = await import('./compose.js');
+      const r = await runCompose({
+        file: f, formats,
+        out: v(args, 'out') ?? './out',
+        scale: Number(v(args, 'scale') ?? 2),
+        fontFiles: multi(args, 'font-file'),
+      });
+      const receipt = { title: r.payload.title, layout: r.payload.layout, panels: r.panels, views: r.views, links: r.payload.links, files: r.files, summaryMd: `${r.payload.title ?? '组合页'} · ${r.payload.layout} · ${r.panels} 面板 → ${r.files.map((x) => x.format).join('/')}` };
+      if (!json) for (const x of r.files) console.log(`✓ 生成 ${x.path}`);
+      out('compose', receipt, json);
+      return 0;
+    } catch (e) {
+      if (e instanceof CliError) return outErr('compose', e.viz, json);
+      return outErr('compose', { code: 'RENDER_FAILED', message: (e as Error).message, recoverable: false }, json);
+    }
+  },
+  async demo(args) { return outErr('demo', { code: 'INTERNAL', message: 'demo 计划在 M8 落地', hint: '本期 M5 可用 compose', recoverable: true }, Boolean(args.values['json'])); },
+  async gallery(args) { return outErr('gallery', { code: 'INTERNAL', message: 'gallery 计划在 M8 落地', hint: '本期 M5 可用 compose', recoverable: true }, Boolean(args.values['json'])); },
 };
 
 async function main(): Promise<number> {

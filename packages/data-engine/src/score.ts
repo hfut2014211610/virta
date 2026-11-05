@@ -256,7 +256,7 @@ const sRank: Scorer = (p) => {
     ? { score: 0.65, reason: '标签 + 单度量 ≥12 行', mapping: { label: l.name, value: ms[0].name }, missingRoles: [] } : no();
 };
 
-function hierScore(p: TableProfile): { t: number; s: number; reason: string; mapping: Record<string, string | string[]> } | null {
+function hierScore(p: TableProfile): { t: number; s: number; reason: string; levels: string[]; value: string } | null {
   const ms = measureCols(p);
   // treemap/sunburst 是单度量图；且维度需沿列序 distinct 递增（树形），
   // 交叉/长表（label×series、id×group、source×target）distinct 不递增 → 排除
@@ -268,13 +268,23 @@ function hierScore(p: TableProfile): { t: number; s: number; reason: string; map
   const v = ms[0];
   const depth = Math.min(ds.length, 4);
   const leafN = ds[ds.length - 1].distinct;
-  const mapping = { levels: ds.slice(0, 4).map((c) => c.name), value: v.name };
-  if (depth >= 3) return { t: 0.7, s: 0.75, mapping, reason: `层级深度 ${depth} → sunburst 优先` };
-  if (depth === 2 && leafN > 20) return { t: 0.75, s: 0.7, mapping, reason: '层级深度 2 且叶子 >20 → treemap 优先' };
-  return { t: 0.7, s: 0.7, mapping, reason: '层级 + 度量' };
+  const levels = ds.slice(0, 4).map((c) => c.name);
+  if (depth >= 3) return { t: 0.7, s: 0.75, levels, value: v.name, reason: `层级深度 ${depth} → sunburst 优先` };
+  if (depth === 2 && leafN > 20) return { t: 0.75, s: 0.7, levels, value: v.name, reason: '层级深度 2 且叶子 >20 → treemap 优先' };
+  return { t: 0.7, s: 0.7, levels, value: v.name, reason: '层级 + 度量' };
 }
-const sTreemap: Scorer = (p) => { const r = hierScore(p); return r ? { score: r.t, reason: r.reason, mapping: r.mapping, missingRoles: [] } : no(); };
-const sSunburst: Scorer = (p) => { const r = hierScore(p); return r ? { score: r.s, reason: r.reason, mapping: r.mapping, missingRoles: [] } : no(); };
+// 推荐 mapping 必须与 contract roles 同名（validate 按契约角色检查）
+const sTreemap: Scorer = (p) => {
+  const r = hierScore(p);
+  if (!r) return no();
+  const mapping: Record<string, string | string[]> = { label: r.levels[r.levels.length - 1], value: r.value };
+  if (r.levels.length > 1) mapping['group'] = r.levels[0];
+  return { score: r.t, reason: r.reason, mapping, missingRoles: [] };
+};
+const sSunburst: Scorer = (p) => {
+  const r = hierScore(p);
+  return r ? { score: r.s, reason: r.reason, mapping: { level: r.levels, value: r.value }, missingRoles: [] } : no();
+};
 
 const sScatter: Scorer = (p) => {
   const ms = measureCols(p);
@@ -322,7 +332,7 @@ const sRadar: Scorer = (p) => {
   if (!(hi / lo < 10)) return no();
   // 首列名像"维度/指标/能力/评价"时雷达略胜柱状（决胜微调，记 IMPLEMENTATION_NOTES）
   const axisLike = ['维度', '指标', '能力', '评价', '维度项', '评分项'].includes(normKey(l.name));
-  return { score: 0.6 + (axisLike ? 0.02 : 0), reason: `宽表 ${p.rows} 行 × ${ms.length} 个同量级度量`, mapping: { label: l.name, values: ms.map((m) => m.name) }, missingRoles: [] };
+  return { score: 0.6 + (axisLike ? 0.02 : 0), reason: `宽表 ${p.rows} 行 × ${ms.length} 个同量级度量`, mapping: { label: l.name, value: ms.map((m) => m.name) }, missingRoles: [] };
 };
 
 const KPI_LABEL_NAMES = ['指标', 'kpi', 'metric', '指标名', '指标名称', '度量', '度量名', '度量值'];
