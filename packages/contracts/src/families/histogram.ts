@@ -17,12 +17,6 @@ export const CONTRACT_HISTOGRAM: ChartContract = {
     { id: 'cumulative', label: '累计', description: '箱柱 + 累计 % 曲线' },
   ],
   options: [
-    { key: 'bins', label: '分箱数', type: 'number', group: 'view', static: true, default: 0, min: 0, max: 50,
-      description: '0 = Freedman–Diaconis 自动' },
-    { key: 'normalize', label: '各组归一', type: 'boolean', group: 'view', static: true, default: true,
-      description: '多组时各组按各自总量归一（避免组量差压扁小组）' },
-    { key: 'rug', label: '分布条', type: 'boolean', group: 'display', static: true, default: false,
-      description: '底部显示原始点分布条' },
   ],
   inference: [
     '分箱数 = FD 规则（IQR / ∛n），上限 40',

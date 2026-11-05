@@ -14,7 +14,6 @@ export const CONTRACT_PIE3D: ChartContract = {
   ],
   variants: [],
   options: [
-    { key: 'floorGrid', label: '地面网格', type: 'boolean', group: 'display', static: true, default: true },
     { key: 'layerLabels', label: '层标签', type: 'boolean', group: 'display', static: true, default: true },
     { key: 'sliceLabels', label: '扇区标签', type: 'boolean', group: 'display', static: true, default: true },
   ],

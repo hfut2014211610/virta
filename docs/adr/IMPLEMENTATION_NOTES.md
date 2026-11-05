@@ -221,3 +221,44 @@
   视图的双主题×配色组合，除 control 标签裁切外未见碰撞/溢出/对比度问题。
 - **perf**：`test/perf/budgets.test.ts`——10k 散点 HTML / 100k grid HTML 计时预算 +
   per-view bundle ≤150KB（dist 缺失时跳过，build 命令另行把关）。
+
+## M8 返工轮 · 画廊改版 / 死选项清理 / 真 3D / 质感扩展（§0.3 决策）
+
+走查驱动的系统返工：契约声明 options 但渲染器不消费（"死选项"）共 52 个 key 分布 20
+族——全部接线或下线（下线均记入下列条目）。UI 统一为旧版顶部工具栏：变体/配色 seg +
+导出组 + 选项/全屏按钮，砍掉右侧抽屉。
+
+- **死选项清理**：接线 pie(ringRatio/labelMode/collapseOther/centerLabel)、
+  bullet(sort/scale/gapLabels/onlyBehind)、heatmap(scale=diverging/calmap/weekStart/
+  valueLabels/density)、treemap(groupBg)、sunburst(equalAngle/arcLabels/innerLabels)、
+  sankey(labelMode/flowGradient/density)、boxplot(mean/rawPoints/sort)、radar(全四项)、
+  gantt(density/weekendShading/deps/todayLine/progress/colorBy)、fishbone(direction/
+  legend)、grid(pageSize/density/showTotals/zebra 新增)、scatter(logX/logY/ellipse/
+  trendline/bubble/marker/labelMode/dotSize/meanLines)、funnel(finish/colorMode/align/
+  gap/labelMode/minPct)、histogram(cumulative 变体已有)、line(fill/lineStyle/hatch/
+  marker)、grid(report fontSize/wide)；下线 matrix3d 4 项不可接线项、gantt groupBy、
+  boxplot orient、fishbone density、grid agg、line3d wall、pie3d floorGrid、bullet
+  layout。grid 新增 `zebra` 开关补覆盖断言。
+- **matrix3d 按旧版补齐**：负值空态守卫（地板在 z=0）、景深雾化、接触软阴影、
+  高度/视角/自动旋转选项接线；柱底改为**正方形**（min(格宽,格深)×0.66）+ 高度默认
+  `0`=按格距自适应 ~1.6×（旧版 heightScale≈2.6 观感），侧/顶面用柱色明暗阶而非灰片。
+- **3D 运行期交互**：runtime 接线拖拽旋转（azimuth/tilt）、滚轮缩放（zoom）、
+  autoRotate 定时器；state 写回 spec 并同步 hash；`deps.adapt` 签名扩为
+  `(table, spec)`，分面同样传 spec。interactions 声明补 `zoom`。
+- **line3d curve 变体**（契约级）：`x/y/z` 数值列 → 三维空间轨迹（投影线+落影+三轴
+  刻度）；`toLine3dCurve` 注册 `view-map.json` 新字段 `toModelCurve`，
+  `scripts/build.mjs` 与 `packages/cli/src/render.ts` 两份入口模板同步 spec 感知
+  adapt——注意两处模板历史上漂移过一次，改动须同步。
+- **bar `colorBy` 选项**（契约级）：`value` 时按 |值| 映射 sequential ramp
+  （finish/paint 仍生效，仅填色换色阶）；waterfall 保持语义色优先。
+- **funnel 改版**：圆角矩形 + 旧版左标签/右徽章三栏布局（左对齐/流失徽章/主值）；
+  finish/colorMode/align/gap/labelMode/minPct 全部接线。
+- **画廊改版**：分组简→繁（FAMILY_ORDER）+ 文档报告排最后；MERGE_3D 把
+  matrix3d/line3d/scatter3d/pie3d 并入基类组（26 组）；场景卡按变体去重
+  （显式变体 1 张、无变体 ≤2）；变体/风格卡经试 adapt 过滤不兼容项；
+  STYLE_CARDS 支持 `file`/`variant`——柱风格演示改用 sample-multi.csv + grouped
+  （瀑布语义色会盖掉 finish/colorBy，此前风格卡渲染成同一瀑布图）；缓存键扩到
+  spec/options/palette；showcase-report.md 优先入文档组（KPI/标题/段落/表格/
+  列表/引用/代码/图片全块覆盖）。
+- **配色响应**：装饰性 `t.acc` → `accentFor(palette, theme)`（瀑布汇总柱、bullet
+  装饰、scatter 拟合线、grid 表头、3D 点缀等），html[data-palette] 同步。

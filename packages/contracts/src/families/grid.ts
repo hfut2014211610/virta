@@ -16,11 +16,6 @@ export const CONTRACT_GRID: ChartContract = {
     { id: 'pivot', label: '透视', description: '行列维度交叉聚合；≥2 维度列且有数值列时默认' },
   ],
   options: [
-    { key: 'agg', label: '聚合', type: 'enum', group: 'data', static: true, default: 'sum',
-      values: [
-        { value: 'sum', label: '求和' }, { value: 'count', label: '计数' }, { value: 'avg', label: '均值' },
-        { value: 'min', label: '最小' }, { value: 'max', label: '最大' },
-      ], description: 'pivot 单元格聚合方式' },
     { key: 'pageSize', label: '每页行数', type: 'number', group: 'display', static: false, default: 50, min: 10, max: 500,
       description: '明细/透视分页大小' },
     { key: 'density', label: '密度', type: 'enum', group: 'style', static: true, default: 'comfort',
@@ -28,6 +23,8 @@ export const CONTRACT_GRID: ChartContract = {
       description: '行高' },
     { key: 'showTotals', label: '合计', type: 'boolean', group: 'display', static: true, default: true,
       description: '透视模式显示行/列合计' },
+    { key: 'zebra', label: '斑马纹', type: 'boolean', group: 'style', static: true, default: true,
+      description: '隔行底纹' },
   ],
   inference: [
     '数值列 = 解析率 ≥80%',

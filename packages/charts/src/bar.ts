@@ -3,7 +3,7 @@ import type { ViewId } from '@virta/contracts';
 import type { Node, Paint, Scene } from '@virta/chart-core';
 import { g, scaleBand, scaleLinear, scene } from '@virta/chart-core';
 import { annotationNodes, axisTitle, formatNumber, xAxisBand, yAxis, type LegendItem } from '@virta/chart-skin';
-import { paletteColors } from '@virta/design-system';
+import { paletteColors, accentFor, rampSequential } from '@virta/design-system';
 import type { BarlineModel } from '@virta/data-engine';
 import type { FamilyRenderer, LayoutContext } from './types.js';
 
@@ -144,6 +144,11 @@ export const barRenderer: FamilyRenderer<BarlineModel> = {
     };
 
     const shape = String(ctx.options?.['shape'] ?? 'round');
+    // 色阶：按数值给每根柱上色（|值| 越大越饱和），瀑布图保持涨跌语义色
+    const colorBy = String(ctx.options?.['colorBy'] ?? 'series');
+    const ramp = colorBy === 'value' ? rampSequential(ctx.palette, ctx.theme) : null;
+    const vabs = Math.max(1e-9, ...visSeries.flatMap((s) => s.values.map((v) => Math.abs(v))));
+    const rampC = (dv: number) => ramp![Math.min(ramp!.length - 1, Math.floor((Math.abs(dv) / vabs) * ramp!.length))];
     const depth3d = Boolean(ctx.options?.['depth3d']) && ['round', 'rect'].includes(shape) && ['grouped', 'stacked', 'pct'].includes(effVariant);
     const valueLabels = Boolean(ctx.options?.['valueLabels']);
     const perGroup = stacked || effVariant === 'waterfall' ? 1 : visSeries.length;
@@ -167,16 +172,18 @@ export const barRenderer: FamilyRenderer<BarlineModel> = {
           y0 = Math.min(y(Math.max(0, dv)), z);
           h = Math.abs(y(dv) - z);
         }
+        const barC = ramp ? rampC(dv) : swatch;
         const color = effVariant === 'waterfall'
-          ? (m0.kinds?.[li] === 'absolute' ? t.acc : dv < 0 ? t.neg : t.pos)
-          : swatch;
-        const fill = effVariant === 'waterfall' ? color : p.fill;
+          ? (m0.kinds?.[li] === 'absolute' ? accentFor(ctx.palette, ctx.theme) : dv < 0 ? t.neg : t.pos)
+          : barC;
+        const fill = effVariant === 'waterfall' ? color : ramp ? barC : p.fill;
+        const strokeC = ramp ? barC : p.stroke;
         const datum = { kind: 'bar', index: li, series: s.name, label: lab, value: dv, tooltip: { title: lab, rows: [{ swatch: color, name: s.name, value: fmt(dv) }] } };
         const d = shapePath(x0, y0, w, h, shape);
         const r = shape === 'pill' ? w / 2 : shape === 'round' ? Math.min(4, w / 2) : 0;
         const node: Node = d
-          ? { type: 'path', d, fill: fill as never, stroke: p.stroke, strokeWidth: p.stroke ? 1.6 : undefined, opacity: p.opacity, datum }
-          : { type: 'rect', x: x0, y: y0, w, h, r, fill: fill as never, stroke: p.stroke, strokeWidth: p.stroke ? 1.6 : undefined, opacity: p.opacity, datum };
+          ? { type: 'path', d, fill: fill as never, stroke: strokeC, strokeWidth: p.stroke ? 1.6 : undefined, opacity: p.opacity, datum }
+          : { type: 'rect', x: x0, y: y0, w, h, r, fill: fill as never, stroke: strokeC, strokeWidth: p.stroke ? 1.6 : undefined, opacity: p.opacity, datum };
         nodes.push(node);
         if (depth3d) {
           const dx = Math.min(7, w * 0.3), dy = -dx * 0.62;
@@ -207,7 +214,7 @@ export const barRenderer: FamilyRenderer<BarlineModel> = {
       const pctY = scaleLinear([0, 100], [plot.y + plot.h, plot.y]);
       let acc = 0;
       const pts = labels.map((_, i) => { acc += tot[i]; return { x: band(labels[i]) + band.bandwidth / 2, y: pctY((acc / grand) * 100) }; });
-      nodes.push({ type: 'path', d: pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' '), fill: 'none', stroke: t.acc, strokeWidth: 1.8 });
+      nodes.push({ type: 'path', d: pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' '), fill: 'none', stroke: accentFor(ctx.palette, ctx.theme), strokeWidth: 1.8 });
       nodes.push({ type: 'line', x1: plot.x, y1: pctY(80), x2: plot.x + plot.w, y2: pctY(80), stroke: t.warn, strokeWidth: 1, dash: [4, 4] });
       nodes.push({ type: 'text', x: plot.x + plot.w + 6, y: pctY(80), text: '80%', font: 'mono', size: 10, baseline: 'middle', fill: t.warn });
     }

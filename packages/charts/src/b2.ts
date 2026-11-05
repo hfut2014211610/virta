@@ -3,7 +3,7 @@ import type { ViewId } from '@virta/contracts';
 import type { Node, Scene } from '@virta/chart-core';
 import { g, measureText, scaleLinear, scene } from '@virta/chart-core';
 import { annotationNodes, formatNumber, yAxis, type LegendItem } from '@virta/chart-skin';
-import { paletteColors, rampSequential } from '@virta/design-system';
+import { paletteColors, rampDiverging, rampSequential } from '@virta/design-system';
 import type { BoxplotModel, HeatmapModel, RadarModel, SankeyModel, SunburstModel, TreemapModel } from '@virta/data-engine';
 import type { FamilyRenderer, LayoutContext } from './types.js';
 
@@ -14,8 +14,17 @@ export const heatmapRenderer: FamilyRenderer<HeatmapModel> = {
   view: 'heatmap' as ViewId,
   layout(m: HeatmapModel, ctx: LayoutContext): Scene {
     const t = ctx.tokens;
-    const ramp = rampSequential(ctx.palette, ctx.theme);
-    const color = (v: number) => ramp[Math.min(ramp.length - 1, Math.max(0, Math.round(((v - m.vmin) / Math.max(1e-9, m.vmax - m.vmin)) * (ramp.length - 1))))];
+    const diverging = String(ctx.options?.['scale'] ?? 'sequential') === 'diverging';
+    const ramp = diverging ? rampDiverging(ctx.palette, ctx.theme) : rampSequential(ctx.palette, ctx.theme);
+    // 发散色带以 0 为中点，顺序色带以值域线性归一
+    const mid = Math.max(Math.abs(m.vmin), Math.abs(m.vmax));
+    const color = (v: number) => {
+      const u = diverging ? (v / Math.max(1e-9, mid) + 1) / 2 : (v - m.vmin) / Math.max(1e-9, m.vmax - m.vmin);
+      return ramp[Math.min(ramp.length - 1, Math.max(0, Math.round(u * (ramp.length - 1))))];
+    };
+    const valueLabels = ctx.options?.['valueLabels'] === true;
+    const weekStart = String(ctx.options?.['weekStart'] ?? 'monday') === 'monday' ? 1 : 0;
+    const gap = String(ctx.options?.['density'] ?? 'comfort') === 'compact' ? 0.5 : 1;
     const nodes: Node[] = [];
     const hits: Scene['hits'] = [];
     const f = fmt(ctx);
@@ -30,7 +39,8 @@ export const heatmapRenderer: FamilyRenderer<HeatmapModel> = {
       for (const c of m.cells) {
         const v = c.v;
         const datum = { kind: 'cell', index: 0, label: `${m.xs[c.x]}/${m.ys[c.y]}`, value: v, tooltip: { title: `${m.xs[c.x]} × ${m.ys[c.y]}`, rows: [{ swatch: color(v), name: '值', value: f(v) }] } };
-        nodes.push({ type: 'rect', x: plot.x + c.x * cw + 0.5, y: plot.y + c.y * ch + 0.5, w: cw - 1, h: ch - 1, r: Math.min(3, cw / 4), fill: color(v), datum });
+        nodes.push({ type: 'rect', x: plot.x + c.x * cw + gap / 2, y: plot.y + c.y * ch + gap / 2, w: cw - gap, h: ch - gap, r: Math.min(3, cw / 4), fill: color(v), datum });
+        if (valueLabels && cw > 34 && ch > 18) nodes.push({ type: 'text', x: plot.x + c.x * cw + cw / 2, y: plot.y + c.y * ch + ch / 2, text: f(v), font: 'mono', size: 9.5, anchor: 'middle', baseline: 'middle', fill: t.paper });
         hits.push({ shape: { type: 'rect', x: plot.x + c.x * cw, y: plot.y + c.y * ch, w: cw, h: ch }, datum });
       }
     } else if (m.years) {
@@ -42,11 +52,11 @@ export const heatmapRenderer: FamilyRenderer<HeatmapModel> = {
         const ox = ctx.plot.x + 50, oy = ctx.plot.y + 20 + yi * (7 * cellW + 30);
         nodes.push({ type: 'text', x: ctx.plot.x + 6, y: oy + 3.5 * cellW, text: yr, font: 'mono', size: 11, anchor: 'start', baseline: 'middle', fill: t.muted });
         const jan1 = Math.floor(Date.UTC(+yr, 0, 1) / 86400000) + 719163;
-        const jan1Dow = new Date((jan1 - 719163) * 86400000).getUTCDay();
+        const jan1Dow = (new Date((jan1 - 719163) * 86400000).getUTCDay() - weekStart + 7) % 7;
         for (const [od, v] of yrMap[yr]) {
           const week = Math.floor((od - jan1 + jan1Dow) / 7);
-          const dow = new Date((od - 719163) * 86400000).getUTCDay();
-          nodes.push({ type: 'rect', x: ox + week * cellW, y: oy + dow * cellW, w: cellW - 1.5, h: cellW - 1.5, r: 2, fill: v > 0 ? color(v) : t.grid, opacity: v > 0 ? 1 : 0.4 });
+          const dow = (new Date((od - 719163) * 86400000).getUTCDay() - weekStart + 7) % 7;
+          nodes.push({ type: 'rect', x: ox + week * cellW, y: oy + dow * cellW, w: cellW - (gap ? 1.5 : 1), h: cellW - (gap ? 1.5 : 1), r: 2, fill: v > 0 ? color(v) : t.grid, opacity: v > 0 ? 1 : 0.4 });
         }
       });
     }
@@ -92,6 +102,9 @@ export const treemapRenderer: FamilyRenderer<TreemapModel> = {
     const nodes: Node[] = [];
     const hits: Scene['hits'] = [];
     const f = fmt(ctx);
+    const showLabels = ctx.options?.['showLabels'] !== false;
+    const showValues = ctx.options?.['showValues'] !== false;
+    const groupBg = ctx.options?.['groupBg'] !== false;
     const rects: { label: string; value: number; group?: string; x: number; y: number; w: number; h: number }[] = [];
     if (m.mode === 'grouped' && m.groups) {
       const gmap = new Map<string, number>();
@@ -100,7 +113,8 @@ export const treemapRenderer: FamilyRenderer<TreemapModel> = {
       squarify(m.groups.map((gp) => ({ label: gp.name, value: gp.value, share: gp.share })), plot.x, plot.y, plot.w, plot.h, gRects);
       gRects.forEach((gr) => {
         const gi = gmap.get(gr.label)!;
-        nodes.push({ type: 'rect', x: gr.x, y: gr.y, w: gr.w, h: gr.h, fill: 'none', stroke: t.ink, strokeWidth: 1.2 });
+        if (groupBg) nodes.push({ type: 'rect', x: gr.x, y: gr.y, w: gr.w, h: gr.h, fill: colors[gi % colors.length], opacity: 0.12, stroke: colors[gi % colors.length], strokeWidth: 1.2 });
+        else nodes.push({ type: 'rect', x: gr.x, y: gr.y, w: gr.w, h: gr.h, fill: 'none', stroke: t.ink, strokeWidth: 1.2 });
         nodes.push({ type: 'text', x: gr.x + 4, y: gr.y + 3, text: gr.label, font: 'mono', size: 10.5, baseline: 'top', fill: t.ink });
         squarify(m.groups![gi].children.map((c) => ({ ...c, group: gr.label })), gr.x + 1, gr.y + 16, gr.w - 2, gr.h - 17, rects);
       });
@@ -112,7 +126,7 @@ export const treemapRenderer: FamilyRenderer<TreemapModel> = {
       const c = colors[(gi < 0 ? i : gi) % colors.length];
       const datum = { kind: 'tile', index: i, label: r.label, value: r.value, tooltip: { title: r.label, rows: [{ swatch: c, name: '值', value: f(r.value) }] } };
       nodes.push({ type: 'rect', x: r.x, y: r.y, w: r.w, h: r.h, r: 2, fill: c, opacity: 0.85, stroke: t.paper, strokeWidth: 1.5, datum });
-      if (r.w > 46 && r.h > 16) nodes.push({ type: 'text', x: r.x + 4, y: r.y + r.h / 2, text: `${r.label} ${f(r.value)}`, font: 'body', size: 10.5, baseline: 'middle', fill: '#fff', datum });
+      if (showLabels && r.w > 46 && r.h > 16) nodes.push({ type: 'text', x: r.x + 4, y: r.y + r.h / 2, text: showValues ? `${r.label} ${f(r.value)}` : r.label, font: 'body', size: 10.5, baseline: 'middle', fill: '#fff', datum });
       hits.push({ shape: { type: 'rect', x: r.x, y: r.y, w: r.w, h: r.h }, datum });
     });
     const sc = scene(ctx.width, ctx.height, [g(nodes)]);
@@ -134,6 +148,8 @@ export const sunburstRenderer: FamilyRenderer<SunburstModel> = {
     const nodes: Node[] = [];
     const hits: Scene['hits'] = [];
     const f = fmt(ctx);
+    const arcLabels = ctx.options?.['arcLabels'] !== false;
+    const equalAngle = ctx.options?.['equalAngle'] === true;
     const arc = (r0: number, r1: number, a0: number, a1: number) => {
       const p = (r: number, a: number) => `${(cx + r * Math.cos(a)).toFixed(2)} ${(cy + r * Math.sin(a)).toFixed(2)}`;
       const lg = a1 - a0 > Math.PI ? 1 : 0;
@@ -145,11 +161,11 @@ export const sunburstRenderer: FamilyRenderer<SunburstModel> = {
         const datum = { kind: 'sector', index: lv, label: n.name, value: n.value, tooltip: { title: n.name, rows: [{ swatch: c, name: '值', value: f(n.value) }] } };
         nodes.push({ type: 'path', d: arc(lv * ringW, (lv + 1) * ringW - 1.5, a0, a1), fill: c, opacity: 0.55 + 0.4 * (lv / depth), datum });
         const am = (a0 + a1) / 2, rr = (lv + 0.5) * ringW;
-        if (a1 - a0 > 0.09) nodes.push({ type: 'text', x: cx + rr * Math.cos(am), y: cy + rr * Math.sin(am), text: n.name, font: 'body', size: 10, anchor: 'middle', baseline: 'middle', rotate: ((am * 180) / Math.PI + (am > Math.PI / 2 || am < -Math.PI / 2 ? 180 : 0)), fill: t.paper });
+        if (arcLabels && a1 - a0 > 0.09) nodes.push({ type: 'text', x: cx + rr * Math.cos(am), y: cy + rr * Math.sin(am), text: n.name, font: 'body', size: 10, anchor: 'middle', baseline: 'middle', rotate: ((am * 180) / Math.PI + (am > Math.PI / 2 || am < -Math.PI / 2 ? 180 : 0)), fill: t.paper });
         hits.push({ shape: { type: 'circle', cx: cx + rr * Math.cos(am), cy: cy + rr * Math.sin(am), r: ringW / 2 }, datum });
       }
       let a = a0;
-      n.children?.forEach((k, i) => { const span = (k.value / Math.max(1e-9, n.value)) * (a1 - a0); walk(k as never, lv + 1, a, a + span, lv === 0 ? i : ci); a += span; });
+      n.children?.forEach((k, i) => { const span = equalAngle ? (a1 - a0) / Math.max(1, n.children.length) : (k.value / Math.max(1e-9, n.value)) * (a1 - a0); walk(k as never, lv + 1, a, a + span, lv === 0 ? i : ci); a += span; });
     };
     walk(m.tree as never, 0, -Math.PI / 2, Math.PI * 1.5, 0);
     const sc = scene(ctx.width, ctx.height, [g(nodes)]);
@@ -169,6 +185,9 @@ export const sankeyRenderer: FamilyRenderer<SankeyModel> = {
     const nodes: Node[] = [];
     const hits: Scene['hits'] = [];
     const f = fmt(ctx);
+    const labelMode = String(ctx.options?.['labelMode'] ?? 'both');
+    const flowGradient = ctx.options?.['flowGradient'] !== false;
+    const defs: Scene['defs'] = { gradients: [], radials: [], patterns: [], clips: [] };
     const colX = (d: number) => plot.x + (d / Math.max(1, depth)) * (plot.w - 14);
     // 每列节点纵向堆叠
     const cols = new Map<number, number[]>();
@@ -176,7 +195,7 @@ export const sankeyRenderer: FamilyRenderer<SankeyModel> = {
     const pos: { x: number; y: number; h: number }[] = [];
     cols.forEach((idxs, d) => {
       const tot = idxs.reduce((a, i) => a + m.nodes[i].value, 0) || 1;
-      const gap = Math.min(14, plot.h / (idxs.length * 4));
+      const gap = Math.min(14, plot.h / (idxs.length * 4)) * (String(ctx.options?.['density'] ?? 'comfort') === 'compact' ? 0.6 : 1);
       const avail = plot.h - gap * (idxs.length - 1);
       let y = plot.y;
       idxs.forEach((i) => {
@@ -195,17 +214,26 @@ export const sankeyRenderer: FamilyRenderer<SankeyModel> = {
       srcY.set(l.s, sy + sh); dstY.set(l.t, dy + dh);
       const x1 = s.x + 14, x2 = d.x;
       const mx = (x1 + x2) / 2;
-      nodes.push({ type: 'path', d: `M${x1} ${sy} C${mx} ${sy} ${mx} ${dy} ${x2} ${dy} L${x2} ${dy + dh} C${mx} ${dy + dh} ${mx} ${sy + sh} ${x1} ${sy + sh} Z`, fill: colors[l.s % colors.length], opacity: 0.22 });
+      let fill: unknown = colors[l.s % colors.length];
+      if (flowGradient) {
+        defs.gradients.push({ id: `sk${l.s}_${l.t}`, x1: 0, y1: 0, x2: 1, y2: 0, stops: [{ offset: 0, color: colors[l.s % colors.length] }, { offset: 1, color: colors[l.t % colors.length] }] });
+        fill = { ref: `sk${l.s}_${l.t}` };
+      }
+      nodes.push({ type: 'path', d: `M${x1} ${sy} C${mx} ${sy} ${mx} ${dy} ${x2} ${dy} L${x2} ${dy + dh} C${mx} ${dy + dh} ${mx} ${sy + sh} ${x1} ${sy + sh} Z`, fill: fill as never, opacity: 0.22 });
     }
     m.nodes.forEach((n, i) => {
       const p = pos[i];
       const c = colors[i % colors.length];
       const datum = { kind: 'node', index: i, label: n.name, value: n.value, tooltip: { title: n.name, rows: [{ swatch: c, name: '流量', value: f(n.value) }] } };
       nodes.push({ type: 'rect', x: p.x, y: p.y, w: 14, h: p.h, r: 2, fill: c, datum });
-      nodes.push({ type: 'text', x: n.depth === 0 ? p.x - 5 : p.x + 19, y: p.y + p.h / 2, text: n.name, font: 'body', size: 10.5, anchor: n.depth === 0 ? 'end' : 'start', baseline: 'middle', fill: t.muted });
+      if (labelMode !== 'none' && p.h > 10) {
+        const txt = labelMode === 'both' ? `${n.name} ${f(n.value)}` : n.name;
+        nodes.push({ type: 'text', x: n.depth === 0 ? p.x - 5 : p.x + 19, y: p.y + p.h / 2, text: txt, font: 'body', size: 10.5, anchor: n.depth === 0 ? 'end' : 'start', baseline: 'middle', fill: t.muted });
+      }
       hits.push({ shape: { type: 'rect', x: p.x, y: p.y, w: 14, h: p.h }, datum });
     });
     const sc = scene(ctx.width, ctx.height, [g(nodes)]);
+    sc.defs = defs;
     sc.hits = hits;
     return sc;
   },
@@ -224,12 +252,18 @@ export const boxplotRenderer: FamilyRenderer<BoxplotModel> = {
     const n = m.groups.length;
     const rowH = plot.h / Math.max(1, n);
     const f = fmt(ctx);
+    const showMean = ctx.options?.['mean'] !== false;
+    const rawPoints = ctx.options?.['rawPoints'] === true;
+    const sort = String(ctx.options?.['sort'] ?? 'none');
+    const groups = [...m.groups];
+    if (sort === 'asc') groups.sort((a, b) => a.med - b.med);
+    else if (sort === 'desc') groups.sort((a, b) => b.med - a.med);
     // 横向网格+刻度
     xx.ticks.forEach((v) => {
       nodes.push({ type: 'line', x1: xx(v), y1: plot.y, x2: xx(v), y2: plot.y + plot.h, stroke: t.grid, strokeWidth: 1 });
       nodes.push({ type: 'text', x: xx(v), y: plot.y + plot.h + 5, text: f(v), font: 'mono', size: 10, anchor: 'middle', baseline: 'top', fill: t.faint });
     });
-    m.groups.forEach((g2, i) => {
+    groups.forEach((g2, i) => {
       const cy = plot.y + i * rowH + rowH / 2;
       const bh = Math.min(22, rowH * 0.5);
       const c = colors[i % colors.length];
@@ -239,7 +273,15 @@ export const boxplotRenderer: FamilyRenderer<BoxplotModel> = {
       nodes.push({ type: 'line', x1: xx(g2.max), y1: cy - bh / 3, x2: xx(g2.max), y2: cy + bh / 3, stroke: t.muted, strokeWidth: 1 });
       nodes.push({ type: 'rect', x: xx(g2.q1), y: cy - bh / 2, w: Math.max(1, xx(g2.q3) - xx(g2.q1)), h: bh, r: 2, fill: c, opacity: 0.3, stroke: c, strokeWidth: 1.2, datum });
       nodes.push({ type: 'line', x1: xx(g2.med), y1: cy - bh / 2, x2: xx(g2.med), y2: cy + bh / 2, stroke: c, strokeWidth: 2 });
-      if (g2.mean) nodes.push({ type: 'circle', cx: xx(g2.mean), cy, r: 2.5, fill: t.ink });
+      if (showMean && g2.mean) nodes.push({ type: 'path', d: `M${xx(g2.mean)} ${cy - 4} L${xx(g2.mean) + 4} ${cy} L${xx(g2.mean)} ${cy + 4} L${xx(g2.mean) - 4} ${cy} Z`, fill: t.ink });
+      if (rawPoints && g2.values.length) {
+        const step2 = Math.max(1, Math.ceil(g2.values.length / 60));
+        g2.values.forEach((v, vi) => {
+          if (vi % step2) return;
+          const jy = cy + (((vi * 37) % 17) / 16 - 0.5) * bh * 1.6;
+          nodes.push({ type: 'circle', cx: xx(v), cy: jy, r: 1.8, fill: t.ink, opacity: 0.35 });
+        });
+      }
       for (const o of g2.outliers) nodes.push({ type: 'circle', cx: xx(o), cy, r: 2, fill: 'none', stroke: t.neg, strokeWidth: 1 });
       nodes.push({ type: 'text', x: plot.x - 8, y: cy, text: g2.name, font: 'mono', size: 11, anchor: 'end', baseline: 'middle', fill: t.muted });
       hits.push({ shape: { type: 'rect', x: plot.x, y: cy - rowH / 2, w: plot.w, h: rowH }, datum });
@@ -262,13 +304,23 @@ export const radarRenderer: FamilyRenderer<RadarModel> = {
     const pt = (i: number, r: number) => [cx + r * Math.cos(ang(i)), cy + r * Math.sin(ang(i))] as const;
     const nodes: Node[] = [];
     const hits: Scene['hits'] = [];
-    // 蛛网
-    for (const lv of [0.25, 0.5, 0.75, 1]) {
-      nodes.push({ type: 'path', d: m.axes.map((_, i) => `${i ? 'L' : 'M'}${pt(i, R * lv).join(' ')}`).join(' ') + ' Z', fill: 'none', stroke: t.grid, strokeWidth: 1 });
+    const fillPoly = ctx.options?.['fillPoly'] !== false;
+    const gridAxes = ctx.options?.['gridAxes'] !== false;
+    const ringLabels = ctx.options?.['ringLabels'] === true;
+    const vertexLabels = ctx.options?.['vertexLabels'] === true;
+    const vmax = Math.max(1e-9, ...m.items.flatMap((it) => it.values));
+    // 蛛网 + 轴
+    if (gridAxes) {
+      for (const lv of [0.25, 0.5, 0.75, 1]) {
+        nodes.push({ type: 'path', d: m.axes.map((_, i) => `${i ? 'L' : 'M'}${pt(i, R * lv).join(' ')}`).join(' ') + ' Z', fill: 'none', stroke: t.grid, strokeWidth: 1 });
+        if (ringLabels) nodes.push({ type: 'text', x: cx, y: cy - R * lv - 2, text: fmt(ctx)(vmax * lv), font: 'mono', size: 9, anchor: 'middle', baseline: 'bottom', fill: t.faint });
+      }
+      m.axes.forEach((_, i) => {
+        const [x2, y2] = pt(i, R);
+        nodes.push({ type: 'line', x1: cx, y1: cy, x2, y2, stroke: t.grid, strokeWidth: 1 });
+      });
     }
     m.axes.forEach((ax, i) => {
-      const [x2, y2] = pt(i, R);
-      nodes.push({ type: 'line', x1: cx, y1: cy, x2, y2, stroke: t.grid, strokeWidth: 1 });
       const [lx, ly] = pt(i, R + 18);
       nodes.push({ type: 'text', x: lx, y: ly, text: ax.label, font: 'body', size: 11, anchor: 'middle', baseline: 'middle', fill: t.muted });
     });
@@ -276,9 +328,12 @@ export const radarRenderer: FamilyRenderer<RadarModel> = {
       const c = colors[si % colors.length];
       const pts = it.norm.map((v, i) => pt(i, v * R));
       const d = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(2)} ${p[1].toFixed(2)}`).join(' ') + ' Z';
-      nodes.push({ type: 'path', d, fill: c, opacity: 0.15 });
+      if (fillPoly) nodes.push({ type: 'path', d, fill: c, opacity: 0.15 });
       nodes.push({ type: 'path', d, fill: 'none', stroke: c, strokeWidth: 2 });
-      pts.forEach(([px, py], i) => hits.push({ shape: { type: 'circle', cx: px, cy: py, r: 9 }, datum: { kind: 'vertex', index: i, series: it.name, label: m.axes[i].label, value: it.values[i], tooltip: { title: `${it.name} · ${m.axes[i].label}`, rows: [{ swatch: c, name: '值', value: fmt(ctx)(it.values[i]) }] } } }));
+      pts.forEach(([px, py], i) => {
+        if (vertexLabels) nodes.push({ type: 'text', x: px + (px > cx ? 5 : -5), y: py + (py > cy ? 5 : -5), text: fmt(ctx)(it.values[i]), font: 'mono', size: 9.5, anchor: px > cx ? 'start' : 'end', baseline: py > cy ? 'top' : 'bottom', fill: c });
+        hits.push({ shape: { type: 'circle', cx: px, cy: py, r: 9 }, datum: { kind: 'vertex', index: i, series: it.name, label: m.axes[i].label, value: it.values[i], tooltip: { title: `${it.name} · ${m.axes[i].label}`, rows: [{ swatch: c, name: '值', value: fmt(ctx)(it.values[i]) }] } } });
+      });
     });
     const sc = scene(ctx.width, ctx.height, [g(nodes)]);
     sc.hits = hits;

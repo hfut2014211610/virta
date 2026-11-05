@@ -17,8 +17,6 @@ export const CONTRACT_BULLET: ChartContract = {
   ],
   variants: [],
   options: [
-    { key: 'layout', label: '布局', type: 'enum', group: 'view', static: true, default: 'card',
-      values: [{ value: 'card', label: '卡片' }, { value: 'compact', label: '紧凑' }] },
     { key: 'sort', label: '排序', type: 'enum', group: 'view', static: false, default: 'original',
       values: [
         { value: 'original', label: '原顺序' }, { value: 'ratio', label: '达成率 低→高' }, { value: 'gap', label: '差距 大→小' },
@@ -27,7 +25,8 @@ export const CONTRACT_BULLET: ChartContract = {
       description: '过滤到未达标指标' },
     { key: 'gapLabels', label: '差距标注', type: 'boolean', group: 'display', static: true, default: true,
       description: '显示 实际-目标 差距' },
-    { key: 'scale', label: '刻度', type: 'boolean', group: 'display', static: true, default: true },
+    { key: 'scale', label: '刻度', type: 'boolean', group: 'display', static: true, default: true,
+      description: '底部量程刻度' },
   ],
   inference: [
     '达成度 = actual/target 自动判定状态色（达标/接近/落后）',

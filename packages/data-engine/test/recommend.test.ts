@@ -58,7 +58,7 @@ const EXPECT: Record<string, { view: string; variant?: string; mode?: string }> 
   'sample-tree-levels.csv': { view: 'sunburst' },
 };
 
-const DOC_FILES = new Set(['sample-report.md', 'sample-note.txt']);
+const DOC_FILES = new Set(['sample-report.md', 'sample-note.txt', 'showcase-report.md']);
 
 async function load(f: string) {
   const loaded = await readInput(path.join(DIR, f));

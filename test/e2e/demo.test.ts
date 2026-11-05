@@ -38,10 +38,10 @@ describe('demo', () => {
 });
 
 describe('gallery', () => {
-  it('生成 index.html：双标签页 + 30 图族卡片 + 真图缩略图', { timeout: 240_000 }, () => {
+  it('生成 index.html：双标签页 + 26 图族卡片（3D 并入基类）+ 真图缩略图', { timeout: 240_000 }, () => {
     const r = cli(['gallery', '--out', 'out/e2e-gallery', '--json']);
     expect(r.ok, JSON.stringify(r.error)).toBe(true);
-    expect(r.data.views).toBe(30);
+    expect(r.data.views).toBe(26); // 30 视图 - 4 个 3D 并入基类组
     expect(r.data.packs).toBe(5);
     const html = readFileSync(r.data.index, 'utf8');
     expect(html).toContain('按场景');

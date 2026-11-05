@@ -15,12 +15,12 @@ export function viewEntrySource(view) {
   const isDoc = view === "report";
   return `import { boot } from './packages/viewer/src/runtime.js';
 import { ${m.renderer} } from './packages/charts/src/${m.charts}.js';
-import { ${m.toModel} } from './packages/data-engine/src/${m.adapter}.js';
+import { ${[m.toModel, m.toModelCurve].filter(Boolean).join(', ')} } from './packages/data-engine/src/${m.adapter}.js';
 const deps = {
   renderer: ${m.renderer},
   ${isDoc
     ? `buildDoc: (text, name) => ${m.toModel}(text, name),`
-    : `adapt: (t) => ${m.toModel}(t.passthrough?.kind === 'echarts' ? { __echarts: t.passthrough.data } : t.rows),`}
+    : `adapt: (t, s) => ${m.toModelCurve ? `(s?.variant === 'curve' ? ${m.toModelCurve} : ${m.toModel})` : m.toModel}(t.passthrough?.kind === 'echarts' ? { __echarts: t.passthrough.data } : t.rows),`}
 };
 boot(window.__VIRTA__, deps);
 `;

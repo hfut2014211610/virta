@@ -39,7 +39,7 @@ const COMPONENT_CSS = `*{box-sizing:border-box;margin:0;padding:0}
 :focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:4px}
 body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:56px 56px;opacity:.6}
 .wrap{max-width:1080px;margin:0 auto;position:relative}
-header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1.5px solid var(--ink);padding-bottom:16px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1.5px solid var(--ink);padding-bottom:10px}
 .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--acc);text-transform:uppercase}
 h1{font-family:var(--serif);font-weight:300;font-size:clamp(32px,5vw,52px);letter-spacing:-.02em}
 h1 em{font-style:normal;color:var(--acc);font-weight:500}

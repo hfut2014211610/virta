@@ -24,11 +24,6 @@ export const CONTRACT_GANTT: ChartContract = {
     { id: 'calendar', label: '日历', description: '按周泳道排布' },
   ],
   options: [
-    { key: 'groupBy', label: '分组', type: 'enum', group: 'view', static: true, default: 'lane',
-      values: [
-        { value: 'lane', label: '泳道' }, { value: 'status', label: '状态' },
-        { value: 'owner', label: '负责人' }, { value: 'flat', label: '平铺' },
-      ] },
     { key: 'colorBy', label: '着色', type: 'enum', group: 'style', static: true, default: 'group',
       values: [{ value: 'group', label: '按泳道' }, { value: 'status', label: '按状态' }] },
     { key: 'density', label: '密度', type: 'enum', group: 'style', static: true, default: 'comfort',

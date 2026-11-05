@@ -16,3 +16,4 @@ test-results/
 # accidental shell artifact (npm warnings redirected by `2> nul` under bash)
 /nul
 test/perf/.out/
+.tmp/

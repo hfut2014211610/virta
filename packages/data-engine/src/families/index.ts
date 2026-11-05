@@ -12,7 +12,7 @@ import { toFunnel } from './funnel.js';
 import { toGantt } from './gantt.js';
 import { toGrid } from './grid.js';
 import { toHeatmap } from './heatmap.js';
-import { toLine3d } from './line3d.js';
+import { toLine3d, toLine3dCurve } from './line3d.js';
 import { toPie } from './pie.js';
 import { toPie3d } from './pie3d.js';
 import { toRadar } from './radar.js';
@@ -112,3 +112,17 @@ for (const [view, fn] of Object.entries(TO_MODEL)) {
 export const DOC_ADAPTER = { buildDoc };
 
 export const ADAPTED_VIEWS = Object.keys(TO_MODEL) as ViewId[];
+
+// line3d curve 变体：x/y/z 数值列 → 三维空间轨迹模型（其余变体走通用 adapt）。
+{
+  const base = ADAPTERS['line3d' as ViewId];
+  if (base?.adapt) {
+    const prev = base.adapt.bind(base);
+    base.adapt = (table: Table, spec: ViewSpec) => {
+      if (spec?.variant !== 'curve') return prev(table, spec);
+      const model = toLine3dCurve(tableToRaw(table));
+      const mq = (model as { quality?: unknown })?.quality;
+      return { model, quality: mq ? projectQuality(mq) : (undefined as unknown as QualityReport) };
+    };
+  }
+}

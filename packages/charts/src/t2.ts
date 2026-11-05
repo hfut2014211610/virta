@@ -246,6 +246,7 @@ export const controlRenderer: FamilyRenderer<ControlModel> = {
     const nodes: Node[] = [];
     const hits: Scene['hits'] = [];
     const bands = ctx.options?.['showSigmaBands'] !== false;
+    const weRules = ctx.options?.['weRules'] !== false;
     // 右缘预留限线标签位：多系列时标签带系列名（"UCL·3号线" ≈66px），单系列仅 "UCL"
     const rpad = m.lines.some((ln) => ln.name) ? 76 : 34;
     const plot = { x: ctx.plot.x + 50, y: ctx.plot.y + 14, w: ctx.plot.w - 50 - rpad, h: ctx.plot.h - 52 };
@@ -280,9 +281,9 @@ export const controlRenderer: FamilyRenderer<ControlModel> = {
       const pts = ln.points.map((p) => ({ p, x: x(p.x), y: y(p.v) }));
       nodes.push({ type: 'path', d: pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' '), fill: 'none', stroke: col, strokeWidth: 2 });
       pts.forEach(({ p, x: px, y: py }, pi) => {
-        const bad = p.flag === 'r1' || p.flag === 'r2';
+        const bad = weRules && (p.flag === 'r1' || p.flag === 'r2');
         nodes.push({ type: 'circle', cx: px, cy: py, r: bad ? 5 : 3, fill: bad ? t.warn : col, ...(bad ? { stroke: t.tip, strokeWidth: 1.5 } : {}) });
-        hits.push({ shape: { type: 'circle', cx: px, cy: py, r: 7 }, datum: { kind: 'point', index: pi, label: p.x, value: p.v, series: ln.name || undefined, tooltip: { title: p.x, rows: [{ swatch: col, name: ln.name || m.value_key, value: `${fm(ctx)(p.v)}${p.flag === 'r1' ? '（失控·超3σ）' : p.flag === 'r2' ? '（异常·同侧2σ）' : ''}` }] } } });
+        hits.push({ shape: { type: 'circle', cx: px, cy: py, r: 7 }, datum: { kind: 'point', index: pi, label: p.x, value: p.v, series: ln.name || undefined, tooltip: { title: p.x, rows: [{ swatch: col, name: ln.name || m.value_key, value: `${fm(ctx)(p.v)}${bad && p.flag === 'r1' ? '（失控·超3σ）' : bad && p.flag === 'r2' ? '（异常·同侧2σ）' : ''}` }] } } });
       });
     });
     const sc = scene(ctx.width, ctx.height, [g(nodes)]);

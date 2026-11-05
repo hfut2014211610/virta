@@ -22,13 +22,11 @@ export const CONTRACT_BOXPLOT: ChartContract = {
   ],
   variants: [],
   options: [
-    { key: 'orient', label: '方向', type: 'enum', group: 'view', static: true, default: 'v',
-      values: [{ value: 'v', label: '垂直' }, { value: 'h', label: '水平' }] },
     { key: 'sort', label: '排序', type: 'enum', group: 'view', static: false, default: 'none',
       values: [{ value: 'none', label: '首见' }, { value: 'asc', label: '中位数↑' }, { value: 'desc', label: '中位数↓' }] },
     { key: 'rawPoints', label: '原始散点', type: 'boolean', group: 'display', static: true, default: false,
       description: 'observations 模式叠加抖动散点' },
-    { key: 'mean', label: '均值', type: 'boolean', group: 'display', static: true, default: false,
+    { key: 'mean', label: '均值', type: 'boolean', group: 'display', static: true, default: true,
       description: '叠加均值菱形标记' },
   ],
   inference: [

@@ -12,11 +12,13 @@ export const CONTRACT_LINE3D: ChartContract = {
     { role: 'value', label: '数值', type: 'number', required: true, multiple: true, aliases: ['value', 'count', 'amount', 'y', '数值', '数量', '金额', '销量', '营收', '增减'], note: '宽表多个数值列各一条系列；长表系列列+数值列' },
     { role: 'series', label: '系列', type: 'category', required: false, aliases: ['series', 'group', '系列', '分组', '渠道', '门店', '城市', '部门'], note: '深度轴（每条系列一根带状折线）' },
   ],
-  variants: [],
+  variants: [
+    { id: 'bands', label: '带状', description: '每系列一条带状折线沿深度轴排布（默认）' },
+    { id: 'curve', label: '三维曲线', description: 'x/y/z 数值列的三维空间轨迹线' },
+  ],
   options: [
     { key: 'floorGrid', label: '地面网格', type: 'boolean', group: 'display', static: true, default: true },
     { key: 'axes3d', label: '三轴', type: 'boolean', group: 'display', static: true, default: true },
-    { key: 'wall', label: '参考墙', type: 'boolean', group: 'display', static: true, default: true },
     { key: 'ribbon', label: '飘带填充', type: 'boolean', group: 'style', static: true, default: true },
     { key: 'dots', label: '数据点', type: 'boolean', group: 'display', static: true, default: true },
   ],

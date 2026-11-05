@@ -28,6 +28,10 @@ export const CONTRACT_BAR: ChartContract = {
         { value: 'ribbed', label: '竖纹' }, { value: 'dotted', label: '点阵' }, { value: 'metal', label: '金属' },
         { value: 'neon', label: '霓虹' }, { value: 'carve', label: '浮雕' },
       ], description: '柱体表面质感；hatch/dotted/outline 适合不依赖颜色的场景' },
+    { key: 'colorBy', label: '着色', type: 'enum', group: 'style', static: true, default: 'series',
+      values: [
+        { value: 'series', label: '按系列' }, { value: 'value', label: '按数值' },
+      ], description: '按数值着色即色阶（顺序色带，|值| 越大越饱和）；瀑布图保持涨跌语义色' },
     { key: 'shape', label: '形状', type: 'enum', group: 'style', static: true, default: 'round',
       values: [
         { value: 'round', label: '圆角' }, { value: 'rect', label: '直角' }, { value: 'pill', label: '胶囊' },

@@ -55,7 +55,7 @@ function fontFallbackOk(fontFiles: string[]): boolean {
 }
 
 const runtimeCache = new Map<string, string>();
-const VIEW_MAP = JSON.parse(readFileSync(join('packages/viewer/view-map.json'), 'utf8')) as Record<string, { charts: string; renderer: string; adapter: string; toModel: string }>;
+const VIEW_MAP = JSON.parse(readFileSync(join('packages/viewer/view-map.json'), 'utf8')) as Record<string, { charts: string; renderer: string; adapter: string; toModel: string; toModelCurve?: string }>;
 
 /** per-view 入口源码：与 scripts/build.mjs 同款，只打包本视图 renderer+toModel。 */
 function viewEntrySource(view: string): string {
@@ -64,13 +64,13 @@ function viewEntrySource(view: string): string {
   const isDoc = view === 'report';
   return `import { boot } from './packages/viewer/src/runtime.js';
 import { ${m.renderer} } from './packages/charts/src/${m.charts}.js';
-import { ${m.toModel} } from './packages/data-engine/src/${m.adapter}.js';
+import { ${[m.toModel, m.toModelCurve].filter(Boolean).join(', ')} } from './packages/data-engine/src/${m.adapter}.js';
 import { facetLayout, facetGroups, FACETABLE } from './packages/viewer/src/facet.js';
 const deps = {
   renderer: ${m.renderer},
   ${isDoc
     ? `buildDoc: (text, name) => ${m.toModel}(text, name),`
-    : `adapt: (t) => ${m.toModel}(t.passthrough?.kind === 'echarts' ? { __echarts: t.passthrough.data } : t.rows),`}
+    : `adapt: (t, s) => ${m.toModelCurve ? `(s?.variant === 'curve' ? ${m.toModelCurve} : ${m.toModel})` : m.toModel}(t.passthrough?.kind === 'echarts' ? { __echarts: t.passthrough.data } : t.rows),`}
 };
 boot(window.__VIRTA__, deps);
 `;
@@ -169,7 +169,7 @@ export async function renderChart(job: RenderJob): Promise<RenderResult & { svgS
   const svg = toSVG(sc);
 
   const payload: Payload = {
-    spec, table, insights, reason: 'explicit', doc: job.doc,
+    spec, table, insights, reason: 'explicit', doc: job.doc, viewTitle: contract?.title,
     counts,
     quality: { confidence: quality?.confidence ?? 'high', issues: quality?.issues ?? [], mapping: quality?.mapping ?? {} },
   };
