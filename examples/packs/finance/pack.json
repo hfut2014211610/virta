@@ -9,7 +9,11 @@
       "question": "哪些部门超支？",
       "spec": {
         "version": 1,
-        "view": "bullet"
+        "view": "bullet",
+        "mapping": {
+          "actual": "实际",
+          "target": "预算"
+        }
       },
       "expectTop": "bullet"
     },

@@ -573,7 +573,7 @@ const PACKS: Pack[] = [
       { id: 'control', file: 'daily_defect_rate.csv', question: '不良率何时失控？', spec: spec('control'), expectTop: 'control', expectInsight: 'outlier' },
       { id: 'shift', file: 'line_shift_heat.csv', question: '夜班是否更高发？', spec: spec('heatmap'), expectTop: 'heatmap' },
       { id: 'times', file: 'process_times.csv', question: '哪道工序离散大？', spec: spec('boxplot'), expectTop: 'boxplot' },
-      { id: 'yield', file: 'yield_kpi.csv', question: '各线良率达标吗？', spec: spec('bullet'), expectTop: 'bullet' },
+      { id: 'yield', file: 'yield_kpi.csv', question: '各线良率达标吗？', spec: spec('bullet', { mapping: { actual: '实际良率', target: '目标' } }), expectTop: 'bullet' },
       { id: 'output', file: 'line_month_output.csv', question: '各线月度产出？', spec: spec('matrix3d'), expectTop: 'rank' },
       { id: 'sensor', file: 'sensor_batches.csv', question: '工艺参数与不良的关系？', spec: spec('parallel'), expectTop: 'parallel', expectInsight: 'concentration' },
     ],
@@ -598,7 +598,7 @@ const PACKS: Pack[] = [
     id: 'finance', title: '预算执行 · 年度费用超支 6.8%',
     story: '年度费用超预算 6.8%，主要来自市场投放 +32%；Q4 经营现金流承压。',
     charts: [
-      { id: 'bva', file: 'budget_vs_actual.csv', question: '哪些部门超支？', spec: spec('bullet'), expectTop: 'bullet' },
+      { id: 'bva', file: 'budget_vs_actual.csv', question: '哪些部门超支？', spec: spec('bullet', { mapping: { actual: '实际', target: '预算' } }), expectTop: 'bullet' },
       { id: 'bridge', file: 'profit_bridge.csv', question: '利润桥怎么走的？', spec: spec('bar', { variant: 'waterfall' }), expectTop: 'bar' },
       { id: 'tree', file: 'expense_tree.csv', question: '费用结构？', spec: spec('sunburst'), expectTop: 'sunburst' },
       { id: 'ledger', file: 'ledger.csv', question: '多维明细怎么切？', spec: spec('grid', { variant: 'pivot' }), expectTop: 'grid' },

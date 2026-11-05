@@ -20,7 +20,8 @@
     "packs:check": "tsx scripts/packs/check.ts",
     "golden:dump": "python scripts/golden/dump_legacy.py",
     "gallery": "npm run virta -- gallery",
-    "virta": "tsx packages/cli/src/main.ts"
+    "virta": "tsx packages/cli/src/main.ts",
+    "qa": "tsx scripts/qa/matrix.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",

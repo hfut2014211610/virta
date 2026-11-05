@@ -40,12 +40,18 @@ export interface RenderResult {
 }
 
 /** CJK 缺字形探测（§5.8）：用已配置字体渲染固定中文，像素为空则回执警告。 */
+const fontProbeCache = new Map<string, boolean>();
 function fontFallbackOk(fontFiles: string[]): boolean {
+  const key = fontFiles.join('|');
+  const hit = fontProbeCache.get(key);
+  if (hit !== undefined) return hit;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40"><rect width="120" height="40" fill="white"/><text x="4" y="28" font-size="20">中文字形探测</text></svg>`;
   const img = new Resvg(svg, { font: { fontFiles, loadSystemFonts: true } }).render();
   let dark = 0;
   for (let i = 0; i < img.pixels.length; i += 4) if (img.pixels[i] < 200) dark++;
-  return dark > 0;
+  const ok = dark > 0;
+  fontProbeCache.set(key, ok);
+  return ok;
 }
 
 const runtimeCache = new Map<string, string>();

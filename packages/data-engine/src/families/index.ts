@@ -79,8 +79,21 @@ export function makeAdapter<M>(view: ViewId, toModel: (raw: Raw) => M, extras?: 
   return {
     view,
     adaptRaw: toModel,
-    adapt(table: Table, _spec: ViewSpec) {
-      const model = toModel(tableToRaw(table));
+    adapt(table: Table, spec: ViewSpec) {
+      const raw = tableToRaw(table);
+      // spec.mapping 显式映射：把映射列的值复制到角色名键上（角色名本身在别名表内，
+      // 如 bullet 的 actual/target），让 --set mapping.x=列 / spec.mapping 真正生效；
+      // 只写未存在的键——数据里已有同名列时不覆盖（显式同名列优先）。
+      const mapping = spec?.mapping;
+      if (mapping && Array.isArray(raw)) {
+        for (const [role, col] of Object.entries(mapping)) {
+          if (typeof col !== 'string' || col === role) continue;
+          for (const r of raw as Record<string, unknown>[]) {
+            if (r[role] === undefined && r[col] !== undefined) r[role] = r[col];
+          }
+        }
+      }
+      const model = toModel(raw);
       const mq = (model as { quality?: unknown })?.quality;
       return { model, quality: mq ? projectQuality(mq) : (undefined as unknown as QualityReport) };
     },

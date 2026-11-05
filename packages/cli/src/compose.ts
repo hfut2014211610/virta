@@ -17,13 +17,6 @@ interface ComposePanelDef {
   chart?: string; file?: string; spec?: ViewSpec; question?: string;
   w?: number; h?: number;
 }
-interface ComposeFile {
-  title?: string; layout?: 'grid' | 'story';
-  theme?: Theme; palette?: PaletteId;
-  size?: { width?: number; height?: number };
-  panels: ComposePanelDef[];
-  links?: { column: string }[];
-}
 interface PackJson { charts?: { id: string; file: string; spec?: ViewSpec; question?: string }[] }
 
 export interface ComposeJob {
@@ -32,6 +25,10 @@ export interface ComposeJob {
   out: string;
   scale: number;
   fontFiles: string[];
+  /** 输出文件名前缀（默认 compose） */
+  stem?: string;
+  /** 文件名用 stem 原样（不加 -layout-theme 后缀），demo 的 index.html/dashboard.html 用 */
+  exactName?: boolean;
 }
 
 const VIEW_MAP = JSON.parse(readFileSync(join('packages/viewer/view-map.json'), 'utf8')) as Record<string, { charts: string; renderer: string; adapter: string; toModel: string }>;
@@ -83,14 +80,25 @@ function packStory(panels: { h?: number }[], W: number, topY: number, padX: numb
   return { rects, bottom: cy };
 }
 
+export interface ComposeFileShape {
+  title?: string; layout?: 'grid' | 'story';
+  theme?: Theme; palette?: PaletteId;
+  size?: { width?: number; height?: number };
+  panels: ComposePanelDef[];
+  links?: { column: string }[];
+}
+
 export async function runCompose(job: ComposeJob): Promise<{ files: { format: string; path: string; bytes: number }[]; payload: ComposePayload; panels: number; views: string[] }> {
   const cjPath = job.file;
   if (!existsSync(cjPath)) fail('INPUT_NOT_FOUND', `compose.json 不存在：${cjPath}`);
-  let cf: ComposeFile;
-  try { cf = JSON.parse(readFileSync(cjPath, 'utf8')) as ComposeFile; }
+  let cf: ComposeFileShape;
+  try { cf = JSON.parse(readFileSync(cjPath, 'utf8')) as ComposeFileShape; }
   catch { fail('INVALID_SPEC', `${cjPath} 不是合法 JSON`, '参考 pack.json 的 compose 字段'); }
-  const dir = dirname(cjPath);
-  // pack.json chart 引用解析
+  return runComposeFile(cf!, dirname(cjPath), job);
+}
+
+/** 直接以内存 ComposeFile 运行（demo 等调用方用）；dir 用于解析 pack.json 与数据文件。 */
+export async function runComposeFile(cf: ComposeFileShape, dir: string, job: ComposeJob): Promise<{ files: { format: string; path: string; bytes: number }[]; payload: ComposePayload; panels: number; views: string[] }> {
   const packPath = join(dir, 'pack.json');
   const pack: PackJson | null = existsSync(packPath) ? JSON.parse(readFileSync(packPath, 'utf8')) as PackJson : null;
   const defs: (ComposePanelDef & { file: string; spec: ViewSpec })[] = [];
@@ -175,9 +183,9 @@ export async function runCompose(job: ComposeJob): Promise<{ files: { format: st
   // 导出
   const files: { format: string; path: string; bytes: number }[] = [];
   mkdirSync(job.out, { recursive: true });
-  const stem = 'compose';
+  const stem = job.stem ?? 'compose';
   for (const fmt of job.formats) {
-    const path = join(job.out, `${stem}-${cf!.layout ?? 'grid'}-${theme}.${fmt === 'png' ? 'png' : fmt}`);
+    const path = join(job.out, job.exactName ? `${stem}.${fmt === 'png' ? 'png' : fmt}` : `${stem}-${cf!.layout ?? 'grid'}-${theme}.${fmt === 'png' ? 'png' : fmt}`);
     if (fmt === 'svg') {
       writeFileSync(path, svg, 'utf8');
       files.push({ format: 'svg', path, bytes: Buffer.byteLength(svg) });

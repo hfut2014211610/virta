@@ -191,3 +191,33 @@
   id+parent 显式层级），与 §8 pack 期望一致。
 - **交互边界**：renderer 声明 `drill`/`drag-node`/`brush` 能力，viewer runtime 目前
   只实现 tooltip 命中；点击下钻、节点拖拽、轴刷选留 M8 打磨（与 M4 起的既有口径一致）。
+
+## M8 · Demo、画廊与视觉打磨（§0.3 决策）
+
+- **virta demo <pack|--all>**：`packages/cli/src/demo.ts`。每包产出 `index.html`（story
+  布局：pack.json 的 question → 交互图 → 洞察）、`dashboard.html`（grid + 自动联动）、
+  `png/*.png`（1200×675 卡片版）；`--all` 另产 demo 首页。compose 重构出
+  `runComposeFile(cf, dir, job)` 供内存 ComposeFile 复用；`exactName` 选项让产物名
+  精确为 index.html/dashboard.html（§8.4）。
+- **自动联动列**：dashboard 的 links 不手写——统计各图表文件间"同为维度的列"，取出现
+  ≥2 次的列（频次降序，≤3 个）。retail 命中 渠道、quality 命中 产线 等。
+- **virta gallery**（§6.6）：`packages/cli/src/gallery.ts`。按场景（5 包全部图表）+
+  按图族（30 视图）双标签页；缩略图 640×360 真实 PNG，点击开 1200×675 交互 HTML。
+  图族示例解析顺序：pack 图表 → basic recommend top-1 → 逐文件试 adapt（3d/kpi
+  这类永不赢 top-1 的视图靠最后一步覆盖）。统计数字取自 contract 注册表。
+- **spec.mapping 生效修复**：`makeAdapter.adapt` 此前完全忽略 spec.mapping——现把
+  映射列值复制到角色名键（角色名在别名表内，如 bullet 的 actual/target），
+  `--set mapping.x=列` 与 pack spec.mapping 真正生效。由此修复 finance bva
+  （预算→target）与 quality yield（实际良率→actual）两张卡此前根本渲不出来的问题
+  （pack 测试只断言 recommend/insights，不跑 render——demo 首次全量暴露）。
+- **resvg 内存**：PNG 渲染每次 `loadSystemFonts:true` 装载全系统字体库（Windows 上
+  ~400MB/次瞬态），且 `fontFallbackOk` 探测每渲染一次就重复一次。现按 fontFiles
+  签名缓存探测结果（每进程一次），`demo --all` 同进程五包可完成（峰值 RSS ~2.4GB
+  回落明显）。系统字体回退保留：罕见字形缺字时仍给 FONT_FALLBACK 警告。
+- **control 右缘标签**：多系列时 UCL/LCL 标签带系列名（"UCL·3号线"≈66px）超右缘 20px
+  被裁——按"是否有系列名"预留 76/34px 右距，已更基线。
+- **QA 矩阵**：`npm run qa` → `out/qa/`（30 图族 × 2 主题 × 3 配色 = 180 PNG +
+  index.html），抽查 control/sankey/parallel/fishbone/kpi/gantt/matrix3d 等高密
+  视图的双主题×配色组合，除 control 标签裁切外未见碰撞/溢出/对比度问题。
+- **perf**：`test/perf/budgets.test.ts`——10k 散点 HTML / 100k grid HTML 计时预算 +
+  per-view bundle ≤150KB（dist 缺失时跳过，build 命令另行把关）。

@@ -246,7 +246,9 @@ export const controlRenderer: FamilyRenderer<ControlModel> = {
     const nodes: Node[] = [];
     const hits: Scene['hits'] = [];
     const bands = ctx.options?.['showSigmaBands'] !== false;
-    const plot = { x: ctx.plot.x + 50, y: ctx.plot.y + 14, w: ctx.plot.w - 70, h: ctx.plot.h - 52 };
+    // 右缘预留限线标签位：多系列时标签带系列名（"UCL·3号线" ≈66px），单系列仅 "UCL"
+    const rpad = m.lines.some((ln) => ln.name) ? 76 : 34;
+    const plot = { x: ctx.plot.x + 50, y: ctx.plot.y + 14, w: ctx.plot.w - 50 - rpad, h: ctx.plot.h - 52 };
     const xs = [...new Set(m.lines.flatMap((l) => l.points.map((p) => p.x)))].sort();
     const x = scalePoint(xs, [plot.x, plot.x + plot.w]);
     const allV = m.lines.flatMap((l) => [...l.points.map((p) => p.v), l.ucl, l.lcl, l.cl]);

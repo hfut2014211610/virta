@@ -2,7 +2,7 @@
 // virta CLI（§5.8）：list/schema/inspect/validate/render/compose/demo/gallery/preview/guide。
 // 规则：--json 时 stdout 只输出一个 Envelope；日志写 stderr；退出码按 §4.5。
 import { existsSync, readFileSync, statSync } from 'node:fs';
-import { basename, extname } from 'node:path';
+import { basename, extname, join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { execFile } from 'node:child_process';
 import type { Envelope, Table, ViewId, ViewSpec, VizError } from '@virta/contracts';
@@ -260,8 +260,47 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
       return outErr('compose', { code: 'RENDER_FAILED', message: (e as Error).message, recoverable: false }, json);
     }
   },
-  async demo(args) { return outErr('demo', { code: 'INTERNAL', message: 'demo 计划在 M8 落地', hint: '本期 M5 可用 compose', recoverable: true }, Boolean(args.values['json'])); },
-  async gallery(args) { return outErr('gallery', { code: 'INTERNAL', message: 'gallery 计划在 M8 落地', hint: '本期 M5 可用 compose', recoverable: true }, Boolean(args.values['json'])); },
+  async demo(args) {
+    const json = Boolean(args.values['json']);
+    const all = Boolean(args.values['all']);
+    const pack = String(args.positionals[0] ?? '');
+    if (!all && !pack) return outErr('demo', { code: 'INVALID_SPEC', message: '缺少场景包名或 --all', hint: 'virta demo retail | virta demo --all', recoverable: true }, json);
+    const outDir = v(args, 'out') ?? 'out/demo';
+    const job = { out: outDir, scale: Number(v(args, 'scale') ?? 1), fontFiles: multi(args, 'font-file'), theme: v(args, 'theme') as 'light' | 'dark' | undefined, palette: v(args, 'palette') as 'signal' | 'patina' | 'mono' | undefined };
+    try {
+      const { runDemo, writeDemoIndex, listPacks } = await import('./demo.js');
+      const ids = all ? listPacks() : [pack];
+      if (!ids.length) return outErr('demo', { code: 'INPUT_NOT_FOUND', message: 'examples/packs 下没有场景包', recoverable: true }, json);
+      const packs: { id: string; title: string; story?: string; charts: number }[] = [];
+      const files: string[] = [];
+      for (const id of ids) {
+        const r = await runDemo({ ...job, pack: id });
+        files.push(...r.files);
+        const meta = JSON.parse(readFileSync(join('examples/packs', id, 'pack.json'), 'utf8')) as { title?: string; story?: string };
+        packs.push({ id, title: meta.title ?? id, story: meta.story, charts: r.charts });
+      }
+      if (all) writeDemoIndex(outDir, packs);
+      if (!json) for (const f of files) console.log(`✓ 生成 ${f}`);
+      out('demo', { packs: packs.map((p) => p.id), files, index: all ? join(outDir, 'index.html') : join(outDir, ids[0]!, 'index.html') }, json);
+      return 0;
+    } catch (e) {
+      if (e instanceof CliError) return outErr('demo', e.viz, json);
+      return outErr('demo', { code: 'RENDER_FAILED', message: (e as Error).message, recoverable: false }, json);
+    }
+  },
+  async gallery(args) {
+    const json = Boolean(args.values['json']);
+    try {
+      const { runGallery } = await import('./gallery.js');
+      const r = await runGallery({ out: v(args, 'out') ?? 'out/gallery', scale: Number(v(args, 'scale') ?? 1), fontFiles: multi(args, 'font-file'), theme: v(args, 'theme') as 'light' | 'dark' | undefined, palette: v(args, 'palette') as 'signal' | 'patina' | 'mono' | undefined });
+      if (!json) console.log(`✓ 画廊生成 ${r.index}（${r.views} 图族 / ${r.packs} 场景 / ${r.items} 卡片）`);
+      out('gallery', r, json);
+      return 0;
+    } catch (e) {
+      if (e instanceof CliError) return outErr('gallery', e.viz, json);
+      return outErr('gallery', { code: 'RENDER_FAILED', message: (e as Error).message, recoverable: false }, json);
+    }
+  },
 };
 
 async function main(): Promise<number> {

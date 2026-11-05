@@ -2,6 +2,7 @@
 
 > 状态：已定稿，待实施 · 编写：2026-11-05
 > Rev 2 变更：地图本期搁置（设计保留在 §13，不实施）；字体下载已获授权，列为 M1 必做任务
+> 后续：M8 之后插入 Phase 2a，见 `docs/plan/PHASE_2A.md`
 > 读者：实施 Agent（新会话）与维护者
 > 本文是下阶段唯一的设计与计划来源。实施中如与本文冲突，以本文为准；本文未覆盖的细节按 §0.3 处理。
 
@@ -987,12 +988,16 @@ npm run test:visual                                         # 包含首屏断言
 
 ### M8 Demo、画廊与视觉打磨
 
-- [ ] `virta demo`（5 个包）和 `virta gallery`（真实缩略图）。
-- [ ] 视觉 QA 矩阵：全部视图 × 双主题 × 3 套配色（signal、patina、mono）截图，逐张检查标签碰撞、溢出和对比度，修复后更新基线。
-- [ ] 性能预算全部达标；bundle 体积预算达标。
-- [ ] 重写 README（安装、`npm link`、快速开始、Agent 指南入口、画廊截图）。
+- [x] `virta demo`（5 个包）和 `virta gallery`（真实缩略图）。
+- [x] 视觉 QA 矩阵：全部视图 × 双主题 × 3 套配色（signal、patina、mono）截图，逐张检查标签碰撞、溢出和对比度，修复后更新基线。
+- [x] 性能预算全部达标；bundle 体积预算达标。
+- [x] 重写 README（安装、`npm link`、快速开始、Agent 指南入口、画廊截图）。
 
 **DoD**：`npm run test:perf` 通过；`virta demo --all && virta gallery` 生成成功；README 中的所有命令都能复制运行。
+
+### Phase 2a（M8 之后插入）
+
+M8 完成后进入 Phase 2a：长内容流式排版、`asOf` 与时区契约、缺失值不补 0、组合页 report 面板、计划与实际对比。详细设计与里程碑（M2a.0–M2a.6）见 `docs/plan/PHASE_2A.md`。M9 与 2a 互不阻塞。
 
 ### M9 legacy 归档（需用户确认对等清单后才执行）
 

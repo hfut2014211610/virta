@@ -49,11 +49,8 @@ describe('错误码覆盖（hint 非空可执行）', () => {
     expect((r.error.hint ?? '').length).toBeGreaterThan(0);
   });
 
-  it('INTERNAL · gallery 未落地前的占位', () => {
-    const r = cliErr(['gallery', '--json']);
-    expect(r.ok).toBe(false);
-    expect(r.error.code).toBe('INTERNAL');
-  });
+  // INTERNAL 是兜底码（catch-all）：M8 起 demo/gallery 全部落地，CLI 已无确定性的
+  // INTERNAL 触发路径；其余 12 个 ErrorCode 均有真实用例覆盖。
 
   it('validate 歧义角色写入 ambiguous 字段', () => {
     writeFileSync('out/e2e-ambig.csv', '来源,起点,数值\nA,B,1\nA,B,2');

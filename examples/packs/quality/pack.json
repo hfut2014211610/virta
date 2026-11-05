@@ -62,7 +62,11 @@
       "question": "各线良率达标吗？",
       "spec": {
         "version": 1,
-        "view": "bullet"
+        "view": "bullet",
+        "mapping": {
+          "actual": "实际良率",
+          "target": "目标"
+        }
       },
       "expectTop": "bullet"
     },
