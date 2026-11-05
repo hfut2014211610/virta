@@ -1,0 +1,7 @@
+# 生成数据固定 LF（packs:check 重生成比对要求字节一致；golden 输入亦依赖字节稳定）
+examples/**/*.csv text eol=lf
+examples/**/*.json text eol=lf
+examples/**/*.md text eol=lf
+examples/**/*.txt text eol=lf
+# GB18030 编码样例：按二进制处理，禁止任何行尾/编码转换
+examples/edge-cases/gbk.csv -text

@@ -1,0 +1,6 @@
+阶段,金额,类型
+期初,100,absolute
+增量,50,delta
+未知项,30,weird
+损耗,-20,delta
+期末,160,absolute

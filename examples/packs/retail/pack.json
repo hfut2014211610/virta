@@ -1,0 +1,128 @@
+{
+  "id": "retail",
+  "title": "零售电商 · 2025 年度经营复盘",
+  "story": "全年 GMV 同比 +18%；8 月华南线下门店调整、大促加购→下单转化下降，Q3 承压；配件品类贡献主要增量。",
+  "charts": [
+    {
+      "id": "trend",
+      "file": "monthly_sales.csv",
+      "question": "销售从什么时候开始承压？",
+      "spec": {
+        "version": 1,
+        "view": "line",
+        "options": {
+          "fill": "stack"
+        },
+        "text": {
+          "title": "月度销售额",
+          "unit": "万元"
+        }
+      },
+      "expectTop": "line",
+      "expectInsight": "change"
+    },
+    {
+      "id": "category",
+      "file": "category_tree.csv",
+      "question": "哪条品类线贡献增量？",
+      "spec": {
+        "version": 1,
+        "view": "sunburst"
+      },
+      "expectTop": "sunburst"
+    },
+    {
+      "id": "funnel",
+      "file": "funnel_jul_aug.csv",
+      "question": "转化在哪一步掉？",
+      "spec": {
+        "version": 1,
+        "view": "funnel"
+      },
+      "expectTop": "funnel",
+      "expectInsight": "bottleneck"
+    },
+    {
+      "id": "paths",
+      "file": "traffic_paths.csv",
+      "question": "流量怎么走？",
+      "spec": {
+        "version": 1,
+        "view": "sankey"
+      },
+      "expectTop": "sankey"
+    },
+    {
+      "id": "hours",
+      "file": "store_hours.csv",
+      "question": "客流高峰在什么时候？",
+      "spec": {
+        "version": 1,
+        "view": "heatmap"
+      },
+      "expectTop": "heatmap"
+    },
+    {
+      "id": "bridge",
+      "file": "profit_bridge.csv",
+      "question": "利润从哪漏的？",
+      "spec": {
+        "version": 1,
+        "view": "bar",
+        "variant": "waterfall"
+      },
+      "expectTop": "bar"
+    },
+    {
+      "id": "kpi",
+      "file": "kpi.csv",
+      "question": "哪些指标没达标？",
+      "spec": {
+        "version": 1,
+        "view": "bullet"
+      },
+      "expectTop": "bullet",
+      "expectInsight": "target"
+    },
+    {
+      "id": "pricevol",
+      "file": "price_volume.csv",
+      "question": "高价 SKU 卖得动吗？",
+      "spec": {
+        "version": 1,
+        "view": "scatter"
+      },
+      "expectTop": "scatter"
+    },
+    {
+      "id": "orderval",
+      "file": "order_values.csv",
+      "question": "各渠道客单价分布？",
+      "spec": {
+        "version": 1,
+        "view": "boxplot"
+      },
+      "expectTop": "boxplot"
+    },
+    {
+      "id": "cityrank",
+      "file": "city_rank_monthly.csv",
+      "question": "城市排名怎么变？",
+      "spec": {
+        "version": 1,
+        "view": "rank",
+        "variant": "race"
+      }
+    },
+    {
+      "id": "yoy",
+      "file": "channel_yoy.csv",
+      "question": "各渠道同比？",
+      "spec": {
+        "version": 1,
+        "view": "compare"
+      },
+      "expectTop": "compare"
+    }
+  ]
+}

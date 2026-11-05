@@ -1,0 +1,8 @@
+阶段,金额,类型
+期初ARR,4200,absolute
+新签,1180,delta
+扩容,1560,delta
+续费调整,240,delta
+流失,-720,delta
+降级,-310,delta
+期末ARR,6150,absolute

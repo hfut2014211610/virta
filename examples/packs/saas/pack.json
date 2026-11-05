@@ -1,0 +1,108 @@
+{
+  "id": "saas",
+  "title": "SaaS 产品增长 · 2025",
+  "story": "6/15 协作空间上线后新用户第 4 周留存 38%→46%；企业版 CAC 上升 30%，LTV/CAC 逼近 3 倍警戒线。",
+  "charts": [
+    {
+      "id": "dau",
+      "file": "dau_daily.csv",
+      "question": "DAU 什么时候跃升？",
+      "spec": {
+        "version": 1,
+        "view": "heatmap",
+        "mode": "calendar"
+      },
+      "expectTop": "heatmap"
+    },
+    {
+      "id": "cohort",
+      "file": "cohort_retention.csv",
+      "question": "留存改善了吗？",
+      "spec": {
+        "version": 1,
+        "view": "cohort"
+      },
+      "expectTop": "cohort"
+    },
+    {
+      "id": "features",
+      "file": "feature_usage.csv",
+      "question": "各版本功能使用差异？",
+      "spec": {
+        "version": 1,
+        "view": "radar"
+      },
+      "expectTop": "radar"
+    },
+    {
+      "id": "onboarding",
+      "file": "onboarding_paths.csv",
+      "question": "新手在哪流失？",
+      "spec": {
+        "version": 1,
+        "view": "sankey"
+      },
+      "expectTop": "sankey"
+    },
+    {
+      "id": "arr",
+      "file": "arr_bridge.csv",
+      "question": "ARR 增长结构？",
+      "spec": {
+        "version": 1,
+        "view": "bar",
+        "variant": "waterfall"
+      },
+      "expectTop": "bar"
+    },
+    {
+      "id": "econ",
+      "file": "channel_unit_econ.csv",
+      "question": "渠道经济模型健康吗？",
+      "spec": {
+        "version": 1,
+        "view": "scatter"
+      },
+      "expectTop": "scatter"
+    },
+    {
+      "id": "nps",
+      "file": "nps_scores.csv",
+      "question": "NPS 分布形态？",
+      "spec": {
+        "version": 1,
+        "view": "boxplot"
+      },
+      "expectTop": "boxplot"
+    },
+    {
+      "id": "roadmap",
+      "file": "roadmap.csv",
+      "question": "版本计划会延期吗？",
+      "spec": {
+        "version": 1,
+        "view": "gantt"
+      },
+      "expectTop": "gantt"
+    },
+    {
+      "id": "mrr",
+      "file": "mrr_metrics.csv",
+      "question": "ARPA 为什么降？",
+      "spec": {
+        "version": 1,
+        "view": "combo"
+      }
+    },
+    {
+      "id": "plans",
+      "file": "plans_compare.csv",
+      "question": "套餐结构变化？",
+      "spec": {
+        "version": 1,
+        "view": "compare"
+      },
+      "expectTop": "compare"
+    }
+  ]
+}

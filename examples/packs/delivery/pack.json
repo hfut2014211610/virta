@@ -1,0 +1,107 @@
+{
+  "id": "delivery",
+  "title": "研发交付 · V3.0 延期风险",
+  "story": "关键路径「支付网关改造」滞后 6 天；缺陷回流集中在集成测试阶段。",
+  "charts": [
+    {
+      "id": "plan",
+      "file": "plan.csv",
+      "question": "关键路径是什么？",
+      "spec": {
+        "version": 1,
+        "view": "gantt"
+      },
+      "expectTop": "gantt",
+      "expectInsight": "critical-path"
+    },
+    {
+      "id": "burndown",
+      "file": "burndown.csv",
+      "question": "燃尽偏离了吗？",
+      "spec": {
+        "version": 1,
+        "view": "line"
+      },
+      "expectTop": "line"
+    },
+    {
+      "id": "bugflow",
+      "file": "bug_flow.csv",
+      "question": "缺陷在哪回流？",
+      "spec": {
+        "version": 1,
+        "view": "network"
+      },
+      "expectTop": "network"
+    },
+    {
+      "id": "effort",
+      "file": "effort_tree.csv",
+      "question": "工时花在哪？",
+      "spec": {
+        "version": 1,
+        "view": "treemap"
+      },
+      "expectTop": "sunburst"
+    },
+    {
+      "id": "reqfunnel",
+      "file": "req_funnel.csv",
+      "question": "需求漏斗健康吗？",
+      "spec": {
+        "version": 1,
+        "view": "funnel"
+      },
+      "expectTop": "funnel"
+    },
+    {
+      "id": "skill",
+      "file": "team_skill.csv",
+      "question": "团队能力短板？",
+      "spec": {
+        "version": 1,
+        "view": "radar"
+      },
+      "expectTop": "radar"
+    },
+    {
+      "id": "deps",
+      "file": "service_deps.csv",
+      "question": "服务依赖核心在哪？",
+      "spec": {
+        "version": 1,
+        "view": "network"
+      },
+      "expectTop": "network"
+    },
+    {
+      "id": "org",
+      "file": "org.csv",
+      "question": "组织结构？",
+      "spec": {
+        "version": 1,
+        "view": "tree"
+      },
+      "expectTop": "tree"
+    },
+    {
+      "id": "density",
+      "file": "defect_density.csv",
+      "question": "哪个模块质量差？",
+      "spec": {
+        "version": 1,
+        "view": "scatter"
+      },
+      "expectTop": "scatter"
+    },
+    {
+      "id": "weekly",
+      "file": "weekly_report.md",
+      "question": "本周指标？",
+      "spec": {
+        "version": 1,
+        "view": "report"
+      }
+    }
+  ]
+}

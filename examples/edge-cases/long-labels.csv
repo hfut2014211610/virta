@@ -1,0 +1,4 @@
+分类,数值
+这是一个长度超过六十个中文字符的超长分类标签它用于验证图表标签避让和截断策略在各种边界条件下的鲁棒性表现,120
+Another very long english category label that exceeds sixty characters for label overflow testing,95
+短标签,60

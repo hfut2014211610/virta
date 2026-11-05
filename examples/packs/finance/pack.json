@@ -1,0 +1,69 @@
+{
+  "id": "finance",
+  "title": "预算执行 · 年度费用超支 6.8%",
+  "story": "年度费用超预算 6.8%，主要来自市场投放 +32%；Q4 经营现金流承压。",
+  "charts": [
+    {
+      "id": "bva",
+      "file": "budget_vs_actual.csv",
+      "question": "哪些部门超支？",
+      "spec": {
+        "version": 1,
+        "view": "bullet"
+      },
+      "expectTop": "bullet"
+    },
+    {
+      "id": "bridge",
+      "file": "profit_bridge.csv",
+      "question": "利润桥怎么走的？",
+      "spec": {
+        "version": 1,
+        "view": "bar",
+        "variant": "waterfall"
+      },
+      "expectTop": "bar"
+    },
+    {
+      "id": "tree",
+      "file": "expense_tree.csv",
+      "question": "费用结构？",
+      "spec": {
+        "version": 1,
+        "view": "sunburst"
+      },
+      "expectTop": "sunburst"
+    },
+    {
+      "id": "ledger",
+      "file": "ledger.csv",
+      "question": "多维明细怎么切？",
+      "spec": {
+        "version": 1,
+        "view": "grid",
+        "variant": "pivot"
+      },
+      "expectTop": "grid"
+    },
+    {
+      "id": "margin",
+      "file": "revenue_margin.csv",
+      "question": "毛利率何时下滑？",
+      "spec": {
+        "version": 1,
+        "view": "combo"
+      }
+    },
+    {
+      "id": "cash",
+      "file": "cashflow_daily.csv",
+      "question": "现金流哪些天为负？",
+      "spec": {
+        "version": 1,
+        "view": "heatmap",
+        "mode": "calendar"
+      },
+      "expectTop": "heatmap"
+    }
+  ]
+}

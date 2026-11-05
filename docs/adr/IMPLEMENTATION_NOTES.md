@@ -56,3 +56,19 @@
 - 问题：DoD"options 数量 ≥ 非主题按钮组数"中，variant（如 bar 五种模式）是否计入 options 不明。
 - 选择：从严口径——只数 `contract.options`（variant/mode 不算），为此给 fishbone+`legend`、grid+`density`/`showTotals`、heatmap+`weekStart`、pie+`centerLabel`、sunburst+`equalAngle`（均为真实能力选项，非凑数）；`coverage.test.ts` 按模板 `class="label"` 计数强制断言。grid 的 dims/values 二选一均无 required，同样由该测试覆盖。
 - 理由：variant 走 spec.variant 通道是 §4.3 既定结构；从严口径对 DoD 更稳。
+
+## 2026-11-06 · M2 推荐引擎打分表落地偏差记录
+
+- **层级判定**：§5.1 画像的"子→父映射唯一"保留在 `profile.hierarchy`；但 sunburst 样例里父级名跨祖父级复用（「人力」同时在研发/运营下），严格函数映射判不出层级。打分层（`hierScore`）改用启发式：**维度列 distinct 沿列序严格递增 = 树形**；label×series、id×group、source×target 交叉表 distinct 不递增被排除；同时要求恰好 1 个度量、排除时间维（时间×类目是矩阵不是树）。
+- **决胜序**：同分按 SCORERS 表序（特例→兜底）；`0.8+0.05` 浮点误差曾让 line 击败同 0.85 的 heatmap-calendar，排序键改 `round(score*1e4)` 整数。
+- **别名命中**：adapter 保持 legacy 严格全等（golden 基准）；打分层单独放宽两处——bullet 的 actual 允许列名包含别名（「实际良率」⊃「实际」），target 增补「预算/计划」别名（燃尽"计划剩余"不含糊因仍需全等命中）。
+- **回避规则**（打分表未覆盖处，§0.3）：sankey 形（source+target 同现）bullet 不抢；命中 HEAT 轴别名（hour/星期等）boxplot 不抢；boxplot raw 要求恰好 1 维（多维事实表归 grid）；line 长表形态限 2 维（更多维度归 grid）；rank 需要单维标签且无系列列、≥12 行；kpi 要求标签列名像「指标/kpi/metric」；funnel 标签列名必须是阶段类词（stage/阶段/环节/步骤/漏斗/流程），不能只命中通用 label 别名；scatter 要求无 LABEL 主键、无时间列；全文本表 grid 0.2 兜底。
+- **radar 同量级**：判据取各度量列量级（min/max 绝对值上界）之比 <10；列内量程差异（雷达本身做逐轴归一）不计。
+- **场景包**：T1/T2 视图（combo/cohort/compare/rank/tree/network/control/parallel/histogram/kpi）已进打分器并可拿第一（如 cohort 0.90、control 0.85、network 0.85、tree 0.95、compare 0.80），但渲染要等 M6/M7——`pack.json` 的 `expectTop` 只对当前 top1 与计划意图一致的条目启用，其余条目实现后启用（M6/M7 任务单已有此要求）。store_hours 的小时列用「小时」（命中 HEAT_Y）；计划原文「时段」在 HEAT_X 侧，不改 legacy 别名表。
+- **xlsx/二进制 edge**：`excel_dates` 用 `excel-serials.csv`（序列号列）表达；`gbk.csv` 由 python 一次性生成提交，`packs:check` 跳过二进制/非 UTF-8 文件比对；10k/100k 行数据按计划在 perf 测试运行时生成，不提交。
+
+## 2026-11-06 · M2 结构
+
+- 别名总表收口 `src/aliases.ts`（含 gantt/heatmap/fishbone/boxplot/sankey 私有别名），`legacy-core.ts` 只做解析/统计/质量骨架。
+- `families/index.ts` 的 `makeAdapter` 统一接 `score.ts`（§5.1 表序 SCORERS）、`insights.ts`（中文模板+importance 降序≤8）、`counts.ts`；`validate.ts` 按契约 roles/options 产出 ValidateReceipt（歧义/越界给 `--set`/`--unset` 可执行建议）。
+- 同构层无 Node API：`read.ts`（papaparse/JSON/ECharts 透传/嗅探）+ `node/index.ts`（fs、GB18030 回退 >1% 替换字符、read-excel-file readSheet、stdin/--data 嗅探）。
