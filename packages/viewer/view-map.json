@@ -1,0 +1,22 @@
+{
+  "bar":       { "charts": "bar", "renderer": "barRenderer",      "adapter": "families/barline",   "toModel": "toChart" },
+  "line":      { "charts": "line", "renderer": "lineRenderer",     "adapter": "families/barline",   "toModel": "toChart" },
+  "matrix3d":  { "charts": "b1",   "renderer": "matrix3dRenderer", "adapter": "families/barline",   "toModel": "toChart" },
+  "scatter":   { "charts": "b1",   "renderer": "scatterRenderer",  "adapter": "families/scatter",   "toModel": "toScatter" },
+  "pie":       { "charts": "b1",   "renderer": "pieRenderer",      "adapter": "families/pie",       "toModel": "toPie" },
+  "bullet":    { "charts": "b1",   "renderer": "bulletRenderer",   "adapter": "families/bullet",    "toModel": "toBullet" },
+  "funnel":    { "charts": "b1",   "renderer": "funnelRenderer",   "adapter": "families/funnel",    "toModel": "toFunnel" },
+  "heatmap":   { "charts": "b2",   "renderer": "heatmapRenderer",  "adapter": "families/heatmap",   "toModel": "toHeatmap" },
+  "treemap":   { "charts": "b2",   "renderer": "treemapRenderer",  "adapter": "families/treemap",   "toModel": "toTreemap" },
+  "sunburst":  { "charts": "b2",   "renderer": "sunburstRenderer", "adapter": "families/sunburst",  "toModel": "toSunburst" },
+  "sankey":    { "charts": "b2",   "renderer": "sankeyRenderer",   "adapter": "families/sankey",    "toModel": "toSankey" },
+  "boxplot":   { "charts": "b2",   "renderer": "boxplotRenderer",  "adapter": "families/boxplot",   "toModel": "toBoxplot" },
+  "radar":     { "charts": "b2",   "renderer": "radarRenderer",    "adapter": "families/radar",     "toModel": "toRadar" },
+  "gantt":     { "charts": "b3",   "renderer": "ganttRenderer",    "adapter": "families/gantt",     "toModel": "toGantt" },
+  "fishbone":  { "charts": "b3",   "renderer": "fishboneRenderer", "adapter": "families/fishbone",  "toModel": "toFishbone" },
+  "grid":      { "charts": "b3",   "renderer": "gridRenderer",     "adapter": "families/grid",      "toModel": "toGrid" },
+  "report":    { "charts": "b3",   "renderer": "reportRenderer",   "adapter": "families/docmd",     "toModel": "buildDoc" },
+  "pie3d":     { "charts": "b3",   "renderer": "pie3dRenderer",    "adapter": "families/pie3d",     "toModel": "toPie3d" },
+  "line3d":    { "charts": "b3",   "renderer": "line3dRenderer",   "adapter": "families/line3d",    "toModel": "toLine3d" },
+  "scatter3d": { "charts": "b3",   "renderer": "scatter3dRenderer","adapter": "families/scatter3d", "toModel": "toScatter3d" }
+}

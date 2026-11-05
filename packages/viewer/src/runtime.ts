@@ -1,7 +1,5 @@
 // viewer 运行期：单文件 HTML 内嵌本模块（esbuild 打成 <view>.js）。
 // 负责：adapt+layout+SVG 渲染、图例开关、tooltip、编辑抽屉、hash 同步、导出。
-import { ADAPTERS } from '@virta/data-engine/families';
-import { getRenderer } from '@virta/charts';
 import { hitTest, toSVG } from '@virta/chart-core';
 import { getContract, THEMES, paletteColors, PALETTE_IDS } from './deps.js';
 import type { ViewSpec, Table } from '@virta/contracts';
@@ -9,6 +7,8 @@ import type { ViewSpec, Table } from '@virta/contracts';
 export interface Payload {
   spec: ViewSpec;
   table: Table;
+  /** 文档视图原文（report 等）；非空时浏览器端走 buildDoc */
+  doc?: string;
   insights: { kind: string; text: string; importance: number }[];
   reason: string;
   counts: Record<string, number>;
@@ -21,12 +21,22 @@ function getState(spec: ViewSpec): { sort: 'none' | 'asc' | 'desc'; hiddenSeries
   return { sort: spec.state?.sort ?? 'none', hiddenSeries: spec.state?.hiddenSeries ?? [] };
 }
 
-export function boot(payload: Payload): void {
+/** 注入式运行期依赖：per-view bundle 只打包本视图的 adapter+renderer。 */
+export interface RuntimeDeps {
+  /** Table → 图族 model（等价 adapter.adapt(...).model） */
+  adapt?: (table: Table) => unknown;
+  /** 文档原文 → DocModel（report 等文档视图） */
+  buildDoc?: (text: string, name: string) => unknown;
+  /** 图族 renderer */
+  renderer: { layout: (model: never, ctx: never) => unknown } | undefined;
+}
+
+export function boot(payload: Payload, deps: RuntimeDeps): void {
   const root = $('#virta-app');
   if (!root) return;
   let spec = structuredClone(payload.spec);
   const contract = getContract(spec.view as never);
-  const renderer = getRenderer(spec.view as never);
+  const renderer = deps.renderer;
   const view = spec.view;
 
   // hash 恢复
@@ -51,7 +61,9 @@ export function boot(payload: Payload): void {
     const box = $('#chart-box');
     const width = Math.max(360, box.clientWidth || 960);
     const height = Math.min(640, Math.max(360, Math.round(window.innerHeight * 0.58)));
-    const { model } = ADAPTERS[view as import('@virta/contracts').ViewId]!.adapt(payload.table, spec);
+    const model = payload.doc !== undefined
+      ? deps.buildDoc!(payload.doc, payload.spec.text?.title ?? 'doc')
+      : deps.adapt!(payload.table);
     const sc = renderer!.layout(model as never, {
       width, height,
       plot: { x: 0, y: 0, w: width, h: height },

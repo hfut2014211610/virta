@@ -11,6 +11,22 @@ export {
 } from './families/index.js';
 export type { FamilyAdapter, ScoreResult } from './families/types.js';
 export type { BarlineModel, BarlineSeries, Raw } from './families/barline.js';
+export type { ScatterModel, ScatterPoint, ScatterFit } from './families/scatter.js';
+export type { PieModel, PieSlice } from './families/pie.js';
+export type { BulletModel, BulletItem } from './families/bullet.js';
+export type { FunnelModel, FunnelStage } from './families/funnel.js';
+export type { HeatmapModel } from './families/heatmap.js';
+export type { SankeyModel } from './families/sankey.js';
+export type { TreemapModel, TreemapChild } from './families/treemap.js';
+export type { SunburstModel, SBTree } from './families/sunburst.js';
+export type { RadarModel } from './families/radar.js';
+export type { BoxplotModel, BoxGroup } from './families/boxplot.js';
+export type { GanttModel } from './families/gantt.js';
+export type { FishboneModel } from './families/fishbone.js';
+export type { GridModel } from './families/grid.js';
+export type { Pie3dModel } from './families/pie3d.js';
+export type { Line3dModel } from './families/line3d.js';
+export type { DocModel } from './families/docmd.js';
 
 import type { Row, SourceMeta, Table } from '@virta/contracts';
 import type { Raw } from './families/barline.js';

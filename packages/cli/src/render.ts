@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { build } from 'esbuild';
 import type { PaletteId, Table, Theme, ViewId, ViewSpec, VizError } from '@virta/contracts';
 import { getContract } from '@virta/contracts';
-import { ADAPTERS } from '@virta/data-engine';
+import { ADAPTERS, DOC_ADAPTER, projectQuality } from '@virta/data-engine';
 import { getRenderer } from '@virta/charts';
 import { scene as mkScene, toSVG } from '@virta/chart-core';
 import { frameStatic, type LegendItem } from '@virta/chart-skin';
@@ -22,6 +22,8 @@ export const fail = (code: VizError['code'], message: string, hint?: string, det
 export interface RenderJob {
   table: Table;
   spec: ViewSpec;
+  /** 文档输入（report 视图专用）：非空时绕过表格适配器 */
+  doc?: string;
   /** 导出格式 */
   formats: ('html' | 'svg' | 'png')[];
   out: string;           // 目录或无扩展名路径
@@ -46,18 +48,38 @@ function fontFallbackOk(fontFiles: string[]): boolean {
 }
 
 const runtimeCache = new Map<string, string>();
-/** esbuild 打 viewer 运行期（浏览器 iife）；缓存到内存。 */
-async function viewerRuntime(): Promise<string> {
-  const hit = runtimeCache.get('rt');
+const VIEW_MAP = JSON.parse(readFileSync(join('packages/viewer/view-map.json'), 'utf8')) as Record<string, { charts: string; renderer: string; adapter: string; toModel: string }>;
+
+/** per-view 入口源码：与 scripts/build.mjs 同款，只打包本视图 renderer+toModel。 */
+function viewEntrySource(view: string): string {
+  const m = VIEW_MAP[view];
+  if (!m) fail('UNKNOWN_VIEW', `view-map 缺少 ${view}`);
+  const isDoc = view === 'report';
+  return `import { boot } from './packages/viewer/src/runtime.js';
+import { ${m.renderer} } from './packages/charts/src/${m.charts}.js';
+import { ${m.toModel} } from './packages/data-engine/src/${m.adapter}.js';
+const deps = {
+  renderer: ${m.renderer},
+  ${isDoc
+    ? `buildDoc: (text, name) => ${m.toModel}(text, name),`
+    : `adapt: (t) => ${m.toModel}(t.passthrough?.kind === 'echarts' ? { __echarts: t.passthrough.data } : t.rows),`}
+};
+boot(window.__VIRTA__, deps);
+`;
+}
+
+/** esbuild 打 viewer 运行期（浏览器 iife，按视图 slim）；缓存到内存。 */
+async function viewerRuntime(view: string): Promise<string> {
+  const hit = runtimeCache.get(view);
   if (hit) return hit;
   const res = await build({
-    entryPoints: ['packages/viewer/src/runtime.ts'],
+    stdin: { contents: viewEntrySource(view), resolveDir: process.cwd(), loader: 'ts' },
     bundle: true, format: 'iife', platform: 'browser', target: 'es2020',
     write: false, minify: true, globalName: '__VIRTA_RT',
     define: { 'import.meta.url': '"http://localhost/__bundle__/"' },
   });
-  const js = res.outputFiles[0].text + '\n__VIRTA_RT.boot(window.__VIRTA__);';
-  runtimeCache.set('rt', js);
+  const js = res.outputFiles[0].text;
+  runtimeCache.set(view, js);
   return js;
 }
 
@@ -68,14 +90,32 @@ export async function renderChart(job: RenderJob): Promise<RenderResult & { svgS
   const adapter = ADAPTERS[view];
   const renderer = getRenderer(view);
   const contract = getContract(view);
-  if (!adapter || !renderer) fail('UNKNOWN_VIEW', `视图 ${view} 暂不支持渲染`, 'virta list 查看已支持视图', { candidates: Object.keys(ADAPTERS) });
-  const adapt = adapter!; const rend = renderer!;
+  const isDoc = job.doc !== undefined;
+  if (!renderer || (!isDoc && !adapter)) fail('UNKNOWN_VIEW', `视图 ${view} 暂不支持渲染`, 'virta list 查看已支持视图', { candidates: Object.keys(ADAPTERS) });
+  const rend = renderer!;
 
   const theme: Theme = spec.theme ?? 'light';
   const tokens = THEMES[theme];
-  const { model, quality } = adapt.adapt(table, spec);
-  const insights = adapt.insights(model, spec);
-  const counts = adapt.counts(model);
+  let model: unknown, quality: ReturnType<typeof projectQuality> | undefined;
+  let insights: import('@virta/contracts').Insight[];
+  let counts: Record<string, number>;
+  if (isDoc) {
+    const dm = DOC_ADAPTER.buildDoc(job.doc!, job.stem);
+    model = dm;
+    quality = projectQuality(dm.quality);
+    insights = [
+      { kind: 'distribution', text: `共 ${dm.stats.sections} 个章节、${dm.stats.paragraphs} 段`, importance: 50 },
+      { kind: 'target', text: `识别 ${dm.metrics.length} 个指标`, importance: 40 },
+    ];
+    counts = { 章节: dm.stats.sections, 段落: dm.stats.paragraphs, 表格: dm.stats.tables, 指标: dm.metrics.length };
+  } else {
+    const adapt = adapter!;
+    const a = adapt.adapt(table, spec);
+    model = a.model;
+    quality = a.quality;
+    insights = adapt.insights(model, spec);
+    counts = adapt.counts(model);
+  }
 
   // 卡片框 → 绘图区 → 图族布局（图例项先行：model.series 可直接枚举）
   const palette = spec.palette ?? 'signal';
@@ -102,7 +142,7 @@ export async function renderChart(job: RenderJob): Promise<RenderResult & { svgS
   const svg = toSVG(sc);
 
   const payload: Payload = {
-    spec, table, insights, reason: 'explicit',
+    spec, table, insights, reason: 'explicit', doc: job.doc,
     counts,
     quality: { confidence: quality?.confidence ?? 'high', issues: quality?.issues ?? [], mapping: quality?.mapping ?? {} },
   };
@@ -136,7 +176,7 @@ export async function renderChart(job: RenderJob): Promise<RenderResult & { svgS
         fail('EXPORT_FAILED', `PNG 导出失败：${(e as Error).message}`, '检查 --font-file 与尺寸参数');
       }
     } else if (fmt === 'html') {
-      const html = singleFileHtml({ payload, svg, runtimeJs: await viewerRuntime(), theme });
+      const html = singleFileHtml({ payload, svg, runtimeJs: await viewerRuntime(view), theme });
       writeFileSync(path, html, 'utf8');
       files.push({ format: 'html', path, bytes: Buffer.byteLength(html), width: job.width, height: job.height });
     } else {

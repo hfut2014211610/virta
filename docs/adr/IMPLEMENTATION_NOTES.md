@@ -95,3 +95,28 @@
 - **Table.rows 是对象行**（非数组）：viewer/CSV 导出按 `columns` 取值。
 - **视觉**：`test/visual/bar-line.spec.ts` 首屏断言 chart 底边 ≤800px@1280×800 + toHaveScreenshot
   基线（`snapshots/bar-line.spec.ts/`）+ 新旧并排 `snapshots/compare/{bar,line}-{legacy,new}.png`。
+
+## M4 备忘（legacy 图族迁移 B1/B2/B3）
+
+- **渲染器组织**：`packages/charts/src/{b1,b2,b3}.ts` 按批分组（B1 matrix3d/scatter/pie/bullet/funnel；
+  B2 heatmap/treemap/sunburst/sankey/boxplot/radar；B3 gantt/fishbone/grid/report/pie3d/line3d/scatter3d），
+  统一 `FamilyRenderer.layout(model, ctx)` → Scene；`src/index.ts` RENDERERS 全量注册 20 视图。
+- **gantt 模型语义**：`tasks[].s/e` 是相对天数（minS 归零），`baseOrd`/`baseIso` 才是绝对基准；
+  x 域固定 `[0, span]`，刻度标签 = `ISO(baseOrd+d)`，`today` 亦为相对天（§0.3：勿直接拿 s/e 当序数）。
+- **heatmap calendar**：`years[y]` 的 pair 是 `[绝对日序, 值]`；周内位置用真实
+  `getUTCDay` + `jan1Dow` 对齐（od−jan1+jan1Dow）/7，不能 `%7` 近似。
+- **report 文档通路**：CLI `render` 对 md/txt 输入走 `job.doc` 分支——`DOC_ADAPTER.buildDoc` 直产
+  DocModel，quality 用 `projectQuality(dm.quality)` 投影，counts/insights 由 stats 合成；
+  `Payload.doc` 透传到浏览器端，运行期同样 buildDoc。inspect/validate 对文档输入给
+  UNSUPPORTED_FORMAT + hint（§0.3：文档仅 render --view report）。
+- **per-view slim bundle（预算达标）**：runtime `boot(payload, deps)` 改为注入式
+  （`RuntimeDeps = {adapt, buildDoc, renderer}`），不再静态 import ADAPTERS/getRenderer；
+  `packages/viewer/view-map.json` 记录 view→{charts 文件, renderer 名, adapter 模块, toModel 名}，
+  `scripts/build.mjs` 与 CLI `viewerRuntime(view)` 共用同一 stdin 入口模板。每视图 bundle
+  75–86KB（min），满足 §5.7 ≤150KB；同文件渲染器（b1/b2/b3 内 5–8 个）暂时共打进，已足够达标。
+- **伪 3D**：matrix3d/pie3d/line3d/scatter3d 用 `project3d(x,y,z,azimuth,tilt)` 等轴投影，
+  `state.azimuth/tilt` 可调；pie3d 借 2D 环形 + 侧壁路径（dz=8）；line3d z=系列分层。
+- **已知打磨项（M8 再处理）**：fishbone 鱼刺文字密集时仍可能相邻；sunburst 标签按扇区角宽隐藏；
+  sankey 流带透明度 0.22（legacy 近似）；line3d/scatter3d 地框仅简线。均无数据正确性问题。
+- **视觉基线**：`test/visual/families.spec.ts` 20 用例（19 视图 + boxplot-summary 变体 + heatmap-calendar），
+  每例断言浏览器内联运行期产 SVG、图元 >3、首屏底边 ≤820px，截图基线 `snapshots/families.spec.ts/`。

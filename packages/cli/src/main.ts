@@ -48,7 +48,7 @@ function applySet(spec: ViewSpec, kv: string): void {
   cur[path[path.length - 1]] = val;
 }
 
-async function loadTable(args: PV): Promise<{ table: Table; input: string }> {
+async function loadTable(args: PV): Promise<{ table: Table; docText?: string; input: string }> {
   const pos = args.positionals[0];
   const inline = v(args, 'data');
   const fmt = v(args, 'format') as 'csv' | 'json' | 'xlsx' | 'md' | 'txt' | undefined;
@@ -72,14 +72,12 @@ async function loadTable(args: PV): Promise<{ table: Table; input: string }> {
       fail('PARSE_ERROR', m);
     }
   }
-  if (loaded!.docText !== undefined) {
-    fail('UNSUPPORTED_FORMAT', 'md/txt 文档走 report 管线，M4 接入', '本期渲染仅支持表格输入');
-  }
+  if (loaded!.docText !== undefined) return { table: undefined as unknown as Table, docText: loaded!.docText, input: pos! };
   const res = loaded!.result;
   if (!res) fail('EMPTY_DATA', '输入数据为空');
   const table = rawToTable(res!.raw as never, loaded!.source);
   if (!table.rows.length) fail('EMPTY_DATA', '输入数据为空（0 行）');
-  return { table, input: pos! };
+  return { table, docText: undefined, input: pos! };
 }
 
 function buildSpec(args: PV, table?: Table): ViewSpec {
@@ -140,7 +138,8 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
   },
   async inspect(args) {
     const json = Boolean(args.values['json']);
-    const { table, input } = await loadTable(args);
+    const { table, docText, input } = await loadTable(args);
+    if (docText !== undefined) fail('UNSUPPORTED_FORMAT', 'md/txt 文档请用 render --view report', 'inspect 仅支持表格输入');
     const profile = profileTable(table);
     const candidates = recommend(profile, table).slice(0, 5).map((c) => ({ view: c.view, variant: c.variant, mode: c.mode, score: c.score, reason: c.reason, mapping: c.mapping, missingRoles: c.missingRoles }));
     const data = { input, format: table.source.format, rows: table.rows.length, profile, candidates };
@@ -154,7 +153,8 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
   },
   async validate(args) {
     const json = Boolean(args.values['json']);
-    const { table } = await loadTable(args);
+    const { table, docText } = await loadTable(args);
+    if (docText !== undefined) fail('UNSUPPORTED_FORMAT', 'md/txt 文档请用 render --view report', 'validate 仅支持表格输入');
     const spec = buildSpec(args);
     if (spec.view === 'auto') { spec.view = (recommend(profileTable(table), table)[0]?.view ?? 'bar') as ViewId; }
     const rec = validate(table, spec);
@@ -167,15 +167,20 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
   },
   async render(args) {
     const json = Boolean(args.values['json']);
-    const { table, input } = await loadTable(args);
+    const { table, docText, input } = await loadTable(args);
     const spec = buildSpec(args, table);
+    if (docText !== undefined) {
+      if (spec.view === 'auto') spec.view = 'report';
+      if (spec.view !== 'report') return outErr('render', { code: 'UNSUPPORTED_FORMAT', message: '文档输入仅支持 report 视图', hint: 'render x.md --view report', recoverable: true }, json);
+    }
     const view = spec.view as ViewId;
-    if (!ADAPTERS[view]) return outErr('render', { code: 'UNKNOWN_VIEW', message: `视图 ${view} 暂不支持`, hint: 'virta list', recoverable: true }, json);
+    if (docText === undefined && !ADAPTERS[view]) return outErr('render', { code: 'UNKNOWN_VIEW', message: `视图 ${view} 暂不支持`, hint: 'virta list', recoverable: true }, json);
     const formats = (v(args, 'export') ?? 'html').split(',').map((s) => s.trim()) as ('html' | 'svg' | 'png')[];
     for (const f of formats) if (!['html', 'svg', 'png'].includes(f)) return outErr('render', { code: 'UNSUPPORTED_EXPORT', message: `不支持导出 ${f}`, recoverable: true }, json);
     const outArg = v(args, 'out') ?? './out';
     const job = {
-      table, spec, formats,
+      table: docText !== undefined ? { columns: [], rows: [], source: { name: stemOf(input), format: 'md' as const, rows: 0 } } : table,
+      spec, formats, doc: docText,
       out: outArg, stem: stemOf(input),
       width: Number(v(args, 'width') ?? spec.size?.width ?? 1200),
       height: Number(v(args, 'height') ?? spec.size?.height ?? 675),
@@ -185,14 +190,13 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
     };
     try {
       const { files, warnings, payload } = await renderChart(job);
-      const adapter = ADAPTERS[view]!;
-      const counts = adapter.counts(adapter.adapt(table, spec).model);
+      const counts = payload.counts;
       const receipt = {
         view, variant: spec.variant, mode: spec.mode,
         reason: (spec as { __reason?: string }).__reason ?? 'explicit',
         files, counts,
         quality: payload.quality, insights: payload.insights, spec,
-        summaryMd: `${payload.spec.text?.title ?? view} · ${view}${spec.variant ? ':' + spec.variant : ''} · ${table.rows.length} 行 → ${files.map((f) => f.format).join('/')}`,
+        summaryMd: `${payload.spec.text?.title ?? view} · ${view}${spec.variant ? ':' + spec.variant : ''} · ${docText !== undefined ? '1 篇文档' : `${table.rows.length} 行`} → ${files.map((f) => f.format).join('/')}`,
       };
       if (!json) for (const f of files) console.log(`✓ 生成 ${f.path} · ${receipt.reason}`);
       out('render', receipt, json, warnings as never);
