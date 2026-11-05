@@ -963,18 +963,18 @@ npm run test:visual                                         # 包含首屏断言
 
 ### M5 Agent 能力收尾与组合页
 
-- [ ] `compose` 命令：grid 和 story 布局，联动筛选，静态导出（把多个面板的 Scene 拼成一张 SVG/PNG）。
-- [ ] `docs/agent/SKILL.md` 和 `virta guide --agent`（§5.8 要求的内容）。
-- [ ] 错误文案评审：每个 ErrorCode 至少有一个 e2e 用例，hint 非空且可执行。
-- [ ] 模拟 Agent 的 e2e 测试：脚本依次执行 inspect → 取第一候选 → validate → render --json → 断言 `summaryMd` 和 insights 非空。全部 basic 样例都要通过。
+- [x] `compose` 命令：grid 和 story 布局，联动筛选，静态导出（把多个面板的 Scene 拼成一张 SVG/PNG）。
+- [x] `docs/agent/SKILL.md` 和 `virta guide --agent`（§5.8 要求的内容）。
+- [x] 错误文案评审：每个 ErrorCode 至少有一个 e2e 用例，hint 非空且可执行。
+- [x] 模拟 Agent 的 e2e 测试：脚本依次执行 inspect → 取第一候选 → validate → render --json → 断言 `summaryMd` 和 insights 非空。全部 basic 样例都要通过。
 
 **DoD**：`npm run test:e2e` 通过；用 retail 包写一个 `compose.json`，能生成带联动的仪表盘。
 
 ### M6 T1 新图表与分面
 
-- [ ] combo、rank（含 race）、histogram、kpi、compare、cohort：每个都要完成 contract、adapter、score、insights、layout、视觉基线、文档。
-- [ ] `spec.facet` 小多图。
-- [ ] 启用场景包中对应条目的 `expectTop` 和 `expectInsight`。
+- [x] combo、rank（含 race）、histogram、kpi、compare、cohort：每个都要完成 contract、adapter、score、insights、layout、视觉基线、文档。
+- [x] `spec.facet` 小多图。
+- [x] 启用场景包中对应条目的 `expectTop` 和 `expectInsight`。
 
 **DoD**：新视图出现在 `virta list`；推荐和洞察测试通过；静态导出成功。
 

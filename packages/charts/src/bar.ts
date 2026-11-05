@@ -100,6 +100,9 @@ export const barRenderer: FamilyRenderer<BarlineModel> = {
     }));
     if (pctMode) { vMin = Math.min(0, vMin); vMax = 100; }
     if (vMax === vMin) vMax = vMin + 1;
+    // facet sharedScale：分面共享值域覆盖
+    if (ctx.options?.['yMax'] !== undefined) vMax = Number(ctx.options['yMax']);
+    if (ctx.options?.['yMin'] !== undefined) vMin = Number(ctx.options['yMin']);
     const y = scaleLinear([vMin, vMax], [plot.y + plot.h, plot.y]);
     const band = scaleBand(labels, [plot.x, plot.x + plot.w]);
 

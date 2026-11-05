@@ -52,7 +52,9 @@
       "spec": {
         "version": 1,
         "view": "combo"
-      }
+      },
+      "expectTop": "combo",
+      "expectInsight": "trend"
     },
     {
       "id": "cash",

@@ -112,7 +112,9 @@
         "version": 1,
         "view": "rank",
         "variant": "race"
-      }
+      },
+      "expectTop": "rank",
+      "expectInsight": "peak"
     },
     {
       "id": "yoy",
@@ -122,7 +124,8 @@
         "version": 1,
         "view": "compare"
       },
-      "expectTop": "compare"
+      "expectTop": "compare",
+      "expectInsight": "change"
     }
   ]
 }

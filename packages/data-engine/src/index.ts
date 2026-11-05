@@ -27,6 +27,10 @@ export type { GridModel } from './families/grid.js';
 export type { Pie3dModel } from './families/pie3d.js';
 export type { Line3dModel } from './families/line3d.js';
 export type { DocModel } from './families/docmd.js';
+export type {
+  CohortModel, CohortRow, CompareItem, CompareModel, HistBin, HistGroup,
+  HistogramModel, KpiItem, KpiModel, RankModel,
+} from './families/t1.js';
 
 import type { Row, SourceMeta, Table } from '@virta/contracts';
 import type { Raw } from './families/barline.js';

@@ -76,6 +76,8 @@ export const lineRenderer: FamilyRenderer<BarlineModel> = {
       visSeries.forEach((s) => s.values.forEach((v) => { vMin = Math.min(vMin, v); vMax = Math.max(vMax, v); }));
     }
     if (vMax === vMin) vMax = vMin + 1;
+    if (ctx.options?.['yMax'] !== undefined) vMax = Number(ctx.options['yMax']);
+    if (ctx.options?.['yMin'] !== undefined) vMin = Number(ctx.options['yMin']);
     const y = scaleLinear([vMin, vMax], [plot.y + plot.h, plot.y]);
     const xOf = scalePoint(labels, [plot.x + 6, plot.x + plot.w - 6]);
 

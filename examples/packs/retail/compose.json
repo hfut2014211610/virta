@@ -4,13 +4,45 @@
   "theme": "light",
   "palette": "signal",
   "panels": [
-    { "chart": "kpi", "w": 4, "h": 4 },
-    { "chart": "trend", "w": 8, "h": 4 },
-    { "chart": "category", "w": 5, "h": 5 },
-    { "chart": "orderval", "w": 4, "h": 5 },
-    { "chart": "funnel", "w": 3, "h": 5 },
-    { "chart": "paths", "w": 7, "h": 5 },
-    { "chart": "hours", "w": 5, "h": 5 }
+    {
+      "chart": "kpi",
+      "w": 4,
+      "h": 4
+    },
+    {
+      "chart": "trend",
+      "w": 8,
+      "h": 4
+    },
+    {
+      "chart": "category",
+      "w": 5,
+      "h": 5
+    },
+    {
+      "chart": "orderval",
+      "w": 4,
+      "h": 5
+    },
+    {
+      "chart": "funnel",
+      "w": 3,
+      "h": 5
+    },
+    {
+      "chart": "paths",
+      "w": 7,
+      "h": 5
+    },
+    {
+      "chart": "hours",
+      "w": 5,
+      "h": 5
+    }
   ],
-  "links": [{ "column": "渠道" }]
+  "links": [
+    {
+      "column": "渠道"
+    }
+  ]
 }

@@ -72,7 +72,8 @@
       "spec": {
         "version": 1,
         "view": "matrix3d"
-      }
+      },
+      "expectTop": "rank"
     },
     {
       "id": "sensor",

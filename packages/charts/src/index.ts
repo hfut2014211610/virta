@@ -8,6 +8,7 @@ import { lineRenderer } from './line.js';
 import { matrix3dRenderer, scatterRenderer, pieRenderer, bulletRenderer, funnelRenderer } from './b1.js';
 import { heatmapRenderer, treemapRenderer, sunburstRenderer, sankeyRenderer, boxplotRenderer, radarRenderer } from './b2.js';
 import { ganttRenderer, fishboneRenderer, gridRenderer, reportRenderer, pie3dRenderer, line3dRenderer, scatter3dRenderer } from './b3.js';
+import { cohortRenderer, comboRenderer, compareRenderer, histogramRenderer, kpiRenderer, rankRenderer } from './t1.js';
 
 const RENDERERS: Partial<Record<ViewId, FamilyRenderer<never>>> = {
   bar: barRenderer as never,
@@ -30,6 +31,12 @@ const RENDERERS: Partial<Record<ViewId, FamilyRenderer<never>>> = {
   pie3d: pie3dRenderer as never,
   line3d: line3dRenderer as never,
   scatter3d: scatter3dRenderer as never,
+  combo: comboRenderer as never,
+  rank: rankRenderer as never,
+  histogram: histogramRenderer as never,
+  kpi: kpiRenderer as never,
+  compare: compareRenderer as never,
+  cohort: cohortRenderer as never,
 };
 
 export function getRenderer(view: ViewId): FamilyRenderer<never> | undefined {

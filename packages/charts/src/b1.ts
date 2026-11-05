@@ -75,8 +75,10 @@ export const scatterRenderer: FamilyRenderer<ScatterModel> = {
     const nodes: Node[] = [];
     const hits: Scene['hits'] = [];
     const xs = m.points.map((p) => p.x), ys = m.points.map((p) => p.y);
-    const x = scaleLinear([Math.min(0, ...xs), Math.max(1, ...xs)], [plot.x, plot.x + plot.w]);
-    const y = scaleLinear([Math.min(0, ...ys), Math.max(1, ...ys)], [plot.y + plot.h, plot.y]);
+    const xMin = Number(ctx.options?.['xMin'] ?? Math.min(0, ...xs)), xMax = Number(ctx.options?.['xMax'] ?? Math.max(1, ...xs));
+    const yMin = Number(ctx.options?.['yMin'] ?? Math.min(0, ...ys)), yMax = Number(ctx.options?.['yMax'] ?? Math.max(1, ...ys));
+    const x = scaleLinear([xMin, xMax], [plot.x, plot.x + plot.w]);
+    const y = scaleLinear([yMin, yMax], [plot.y + plot.h, plot.y]);
     nodes.push(...yAxis(y, { x: plot.x, y: plot.y, w: plot.w, h: plot.h }, t, fmt(ctx)));
     x.ticks.forEach((v) => {
       nodes.push({ type: 'line', x1: x(v), y1: plot.y, x2: x(v), y2: plot.y + plot.h, stroke: t.grid, strokeWidth: 1 });

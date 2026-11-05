@@ -3,6 +3,7 @@
 import { hitTest, toSVG, type Scene } from '@virta/chart-core';
 import { getContract, THEMES, paletteColors, PALETTE_IDS } from './deps.js';
 import type { ViewSpec, Table } from '@virta/contracts';
+import { facetGroups, facetLayout, FACETABLE } from './facet.js';
 
 export interface Payload {
   spec: ViewSpec;
@@ -61,10 +62,24 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
     const box = $('#chart-box');
     const width = Math.max(360, box.clientWidth || 960);
     const height = Math.min(640, Math.max(360, Math.round(window.innerHeight * 0.58)));
+    const facetCol = spec.facet?.column;
     const model = payload.doc !== undefined
       ? deps.buildDoc!(payload.doc, payload.spec.text?.title ?? 'doc')
       : deps.adapt!(payload.table);
-    const sc = renderer!.layout(model as never, {
+    const facetSubs = payload.doc === undefined && facetCol && FACETABLE.has(view) && payload.table.columns.includes(facetCol)
+      ? facetGroups(payload.table.rows as Record<string, unknown>[], facetCol)
+          .map((gr: { name: string; rows: Record<string, unknown>[] }) => ({ name: gr.name, model: deps.adapt!({ ...payload.table, rows: gr.rows } as Table) }))
+      : null;
+    const sc = facetSubs
+      ? facetLayout(view, renderer as never, facetSubs, {
+          width, height,
+          plot: { x: 0, y: 0, w: width, h: height },
+          theme, palette: spec.palette ?? 'signal', tokens,
+          variant: spec.variant, mode: spec.mode,
+          options: spec.options ?? {}, state: spec.state,
+          format: spec.format, annotations: spec.annotations, text: spec.text,
+        } as never, spec.facet?.sharedScale ?? false, spec.facet?.columns)
+      : renderer!.layout(model as never, {
       width, height,
       plot: { x: 0, y: 0, w: width, h: height },
       theme, palette: spec.palette ?? 'signal', tokens,

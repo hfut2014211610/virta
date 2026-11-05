@@ -544,8 +544,8 @@ const PACKS: Pack[] = [
       { id: 'kpi', file: 'kpi.csv', question: '哪些指标没达标？', spec: spec('bullet'), expectTop: 'bullet', expectInsight: 'target' },
       { id: 'pricevol', file: 'price_volume.csv', question: '高价 SKU 卖得动吗？', spec: spec('scatter'), expectTop: 'scatter' },
       { id: 'orderval', file: 'order_values.csv', question: '各渠道客单价分布？', spec: spec('boxplot'), expectTop: 'boxplot' },
-      { id: 'cityrank', file: 'city_rank_monthly.csv', question: '城市排名怎么变？', spec: spec('rank', { variant: 'race' }) },
-      { id: 'yoy', file: 'channel_yoy.csv', question: '各渠道同比？', spec: spec('compare'), expectTop: 'compare' },
+      { id: 'cityrank', file: 'city_rank_monthly.csv', question: '城市排名怎么变？', spec: spec('rank', { variant: 'race' }), expectTop: 'rank', expectInsight: 'peak' },
+      { id: 'yoy', file: 'channel_yoy.csv', question: '各渠道同比？', spec: spec('compare'), expectTop: 'compare', expectInsight: 'change' },
     ],
   },
   {
@@ -553,15 +553,15 @@ const PACKS: Pack[] = [
     story: '6/15 协作空间上线后新用户第 4 周留存 38%→46%；企业版 CAC 上升 30%，LTV/CAC 逼近 3 倍警戒线。',
     charts: [
       { id: 'dau', file: 'dau_daily.csv', question: 'DAU 什么时候跃升？', spec: spec('heatmap', { mode: 'calendar' }), expectTop: 'heatmap' },
-      { id: 'cohort', file: 'cohort_retention.csv', question: '留存改善了吗？', spec: spec('cohort'), expectTop: 'cohort' },
+      { id: 'cohort', file: 'cohort_retention.csv', question: '留存改善了吗？', spec: spec('cohort'), expectTop: 'cohort', expectInsight: 'retention' },
       { id: 'features', file: 'feature_usage.csv', question: '各版本功能使用差异？', spec: spec('radar'), expectTop: 'radar' },
       { id: 'onboarding', file: 'onboarding_paths.csv', question: '新手在哪流失？', spec: spec('sankey'), expectTop: 'sankey' },
       { id: 'arr', file: 'arr_bridge.csv', question: 'ARR 增长结构？', spec: spec('bar', { variant: 'waterfall' }), expectTop: 'bar' },
       { id: 'econ', file: 'channel_unit_econ.csv', question: '渠道经济模型健康吗？', spec: spec('scatter'), expectTop: 'scatter' },
       { id: 'nps', file: 'nps_scores.csv', question: 'NPS 分布形态？', spec: spec('boxplot'), expectTop: 'boxplot' },
       { id: 'roadmap', file: 'roadmap.csv', question: '版本计划会延期吗？', spec: spec('gantt'), expectTop: 'gantt' },
-      { id: 'mrr', file: 'mrr_metrics.csv', question: 'ARPA 为什么降？', spec: spec('combo') },
-      { id: 'plans', file: 'plans_compare.csv', question: '套餐结构变化？', spec: spec('compare'), expectTop: 'compare' },
+      { id: 'mrr', file: 'mrr_metrics.csv', question: 'ARPA 为什么降？', spec: spec('combo'), expectInsight: 'trend' },
+      { id: 'plans', file: 'plans_compare.csv', question: '套餐结构变化？', spec: spec('compare'), expectTop: 'compare', expectInsight: 'change' },
     ],
   },
   {
@@ -574,7 +574,7 @@ const PACKS: Pack[] = [
       { id: 'shift', file: 'line_shift_heat.csv', question: '夜班是否更高发？', spec: spec('heatmap'), expectTop: 'heatmap' },
       { id: 'times', file: 'process_times.csv', question: '哪道工序离散大？', spec: spec('boxplot'), expectTop: 'boxplot' },
       { id: 'yield', file: 'yield_kpi.csv', question: '各线良率达标吗？', spec: spec('bullet'), expectTop: 'bullet' },
-      { id: 'output', file: 'line_month_output.csv', question: '各线月度产出？', spec: spec('matrix3d') },
+      { id: 'output', file: 'line_month_output.csv', question: '各线月度产出？', spec: spec('matrix3d'), expectTop: 'rank' },
       { id: 'sensor', file: 'sensor_batches.csv', question: '工艺参数与不良的关系？', spec: spec('parallel') },
     ],
   },
@@ -602,7 +602,7 @@ const PACKS: Pack[] = [
       { id: 'bridge', file: 'profit_bridge.csv', question: '利润桥怎么走的？', spec: spec('bar', { variant: 'waterfall' }), expectTop: 'bar' },
       { id: 'tree', file: 'expense_tree.csv', question: '费用结构？', spec: spec('sunburst'), expectTop: 'sunburst' },
       { id: 'ledger', file: 'ledger.csv', question: '多维明细怎么切？', spec: spec('grid', { variant: 'pivot' }), expectTop: 'grid' },
-      { id: 'margin', file: 'revenue_margin.csv', question: '毛利率何时下滑？', spec: spec('combo') },
+      { id: 'margin', file: 'revenue_margin.csv', question: '毛利率何时下滑？', spec: spec('combo'), expectTop: 'combo', expectInsight: 'trend' },
       { id: 'cash', file: 'cashflow_daily.csv', question: '现金流哪些天为负？', spec: spec('heatmap', { mode: 'calendar' }), expectTop: 'heatmap' },
     ],
   },
@@ -621,6 +621,23 @@ for (const p of PACKS) {
   emit(p.id, 'pack.json', JSON.stringify({ id: p.id, title: p.title, story: p.story, charts: p.charts }, null, 2) + '\n');
   emit(p.id, 'README.md', readme(p));
 }
+// retail 联动仪表盘（M5 compose；面板引用 pack.json 图表 id）
+emit('retail', 'compose.json', JSON.stringify({
+  title: '零售电商 · 2025 经营总览',
+  layout: 'grid',
+  theme: 'light',
+  palette: 'signal',
+  panels: [
+    { chart: 'kpi', w: 4, h: 4 },
+    { chart: 'trend', w: 8, h: 4 },
+    { chart: 'category', w: 5, h: 5 },
+    { chart: 'orderval', w: 4, h: 5 },
+    { chart: 'funnel', w: 3, h: 5 },
+    { chart: 'paths', w: 7, h: 5 },
+    { chart: 'hours', w: 5, h: 5 },
+  ],
+  links: [{ column: '渠道' }],
+}, null, 2) + '\n');
 
 const outRoot = process.argv.includes('--out')
   ? process.argv[process.argv.indexOf('--out') + 1]

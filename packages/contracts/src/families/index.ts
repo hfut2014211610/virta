@@ -21,6 +21,12 @@ import { CONTRACT_SANKEY } from './sankey.js';
 import { CONTRACT_BOXPLOT } from './boxplot.js';
 import { CONTRACT_SUNBURST } from './sunburst.js';
 import { CONTRACT_GRID } from './grid.js';
+import { CONTRACT_COHORT } from './cohort.js';
+import { CONTRACT_COMBO } from './combo.js';
+import { CONTRACT_COMPARE } from './compare.js';
+import { CONTRACT_HISTOGRAM } from './histogram.js';
+import { CONTRACT_KPI } from './kpi.js';
+import { CONTRACT_RANK } from './rank.js';
 
 export const CONTRACTS: Readonly<Partial<Record<ViewId, ChartContract>>> = Object.freeze({
   bar: CONTRACT_BAR,
@@ -43,6 +49,12 @@ export const CONTRACTS: Readonly<Partial<Record<ViewId, ChartContract>>> = Objec
   boxplot: CONTRACT_BOXPLOT,
   sunburst: CONTRACT_SUNBURST,
   grid: CONTRACT_GRID,
+  combo: CONTRACT_COMBO,
+  rank: CONTRACT_RANK,
+  histogram: CONTRACT_HISTOGRAM,
+  kpi: CONTRACT_KPI,
+  compare: CONTRACT_COMPARE,
+  cohort: CONTRACT_COHORT,
 });
 
 export function getContract(view: ViewId): ChartContract | undefined {

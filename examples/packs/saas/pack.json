@@ -22,7 +22,8 @@
         "version": 1,
         "view": "cohort"
       },
-      "expectTop": "cohort"
+      "expectTop": "cohort",
+      "expectInsight": "retention"
     },
     {
       "id": "features",
@@ -92,7 +93,8 @@
       "spec": {
         "version": 1,
         "view": "combo"
-      }
+      },
+      "expectInsight": "trend"
     },
     {
       "id": "plans",
@@ -102,7 +104,8 @@
         "version": 1,
         "view": "compare"
       },
-      "expectTop": "compare"
+      "expectTop": "compare",
+      "expectInsight": "change"
     }
   ]
 }

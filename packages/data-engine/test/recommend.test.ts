@@ -39,6 +39,16 @@ const EXPECT: Record<string, { view: string; variant?: string; mode?: string }> 
   'sample-sunburst.csv': { view: 'sunburst' },
   'sample-treemap.csv': { view: 'treemap' },
   'sample-treemap-1d.csv': { view: 'pie' },
+  // T1（M6）：百分比+度量 → combo；类目×时间 → rank race；单度量长表 → histogram；
+  // 分组分布 boxplot 优先；指标+目标 bullet 优先于 kpi 卡
+  'sample-combo.csv': { view: 'combo' },
+  'sample-rank.csv': { view: 'bar' },
+  'sample-rank-race.csv': { view: 'rank', variant: 'race' },
+  'sample-histogram.csv': { view: 'histogram' },
+  'sample-histogram-group.csv': { view: 'boxplot' },
+  'sample-kpi.csv': { view: 'bullet' },
+  'sample-compare.csv': { view: 'compare' },
+  'sample-cohort.csv': { view: 'cohort' },
 };
 
 const DOC_FILES = new Set(['sample-report.md', 'sample-note.txt']);

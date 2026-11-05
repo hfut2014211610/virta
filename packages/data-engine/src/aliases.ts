@@ -83,3 +83,14 @@ for (const k of ['todo', 'planned', 'notstarted', 'backlog', '未开始', '待�
 export const FISH_CAT_ALIAS = n(['category', 'cat', 'dimension', '类别', '类目', '维度', '大骨', '分类', '分组', 'group', '方面']);
 export const FISH_CAUSE_ALIAS = n(['cause', 'reason', '原因', '小骨', '因子', '因素', '问题点', '根因', 'label', 'name', '事项', '原因描述']);
 export const FISH_SUB_ALIAS = n(['sub', 'subcause', '子原因', '子因', '孙骨', '二级原因', '细分']);
+
+// ---- T1 新视图（M6）----
+export const RANK_TIME_ALIAS = n(['time', 'date', 'day', '月份', '日期', '时间', '期']);
+export const RANK_LABEL_ALIAS = n([...RAW_LABEL_ALIASES, ...RAW_SERIES_ALIAS, '城市', '门店', '产品', '国家', '地区', '品牌', '版本', '套餐', '人员', '条目']);
+export const HIST_GROUP_ALIAS = n(['group', 'series', '类别', '组', '组别', '分组', '渠道', '版本']);
+export const KPI_METRIC_ALIAS = n(['metric', 'kpi', 'label', 'name', '指标', '指标名', '名称', '度量']);
+export const KPI_PREV_ALIAS = n(['previous', 'prev', 'last', '上期', '同比', '环比']);
+export const COMPARE_FROM_ALIAS = n(['from', 'a', '前期', '上期', '去年', '上半年', 'before', 'old']);
+export const COMPARE_TO_ALIAS = n(['to', 'b', '后期', '本期', '今年', '下半年', 'after', 'new']);
+export const COHORT_KEY_ALIAS = n(['cohort', '批次', '群', '组', '月份', 'month']);
+export const COHORT_PERIOD_ALIAS = n(['period', '期', '第几期', '期数', 'week', 'n']);

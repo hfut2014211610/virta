@@ -18,6 +18,7 @@ import type { GridModel } from './families/grid.js';
 import type { Pie3dModel } from './families/pie3d.js';
 import type { Line3dModel } from './families/line3d.js';
 import type { DocModel } from './families/docmd.js';
+import type { CohortModel, CompareModel, HistogramModel, KpiModel, RankModel } from './families/t1.js';
 
 const fmt = (v: number) => {
   const r = Math.round(v * 100) / 100;
@@ -225,6 +226,111 @@ function docInsights(m: DocModel): Insight[] {
   return out;
 }
 
+// ── T1 新视图洞察（M6）──
+function rankInsights(m: RankModel): Insight[] {
+  const top = m.items[0];
+  const out: Insight[] = [];
+  if (top) out.push(ins('peak', `榜首 ${top.label}（${fmt(top.value)}），领先次名 ${fmt(top.value - (m.items[1]?.value ?? 0))}`, 0.9));
+  const top3 = m.items.slice(0, 3).reduce((a, b) => a + b.value, 0);
+  const tot = m.items.reduce((a, b) => a + b.value, 0);
+  if (tot > 0) out.push(ins('concentration', `前 3 名占总量 ${pct(top3 / tot)}`, 0.7));
+  if (m.mode === 'race' && m.frames && m.frames.length > 1) {
+    const first = m.frames[0], last = m.frames[m.frames.length - 1];
+    const riser = last.items.slice(0, 5)
+      .map((it) => ({ it, was: first.items.findIndex((a) => a.label === it.label) }))
+      .filter((x) => x.was > 0)
+      .sort((a, b) => a.was - b.was)[0];
+    if (riser) out.push(ins('trend', `${riser.it.label} 从第 ${riser.was + 1} 升至第 ${last.items.indexOf(riser.it) + 1}`, 0.8));
+    out.push(ins('distribution', `${m.frames.length} 个时间帧（${first.time} → ${last.time}）`, 0.5));
+  }
+  return out;
+}
+
+function histogramInsights(m: HistogramModel): Insight[] {
+  const peak = m.bins.reduce((a, b) => (b.count > a.count ? b : a), m.bins[0]);
+  const out: Insight[] = [
+    ins('peak', `最密集区间 ${peak.x0.toFixed(1)}–${peak.x1.toFixed(1)}，含 ${peak.count} 个样本（${pct(peak.count / m.n)}）`, 0.9),
+    ins('distribution', `n=${m.n}，${m.bins.length} 个分箱（FD 规则），范围 ${m.min.toFixed(1)}–${m.max.toFixed(1)}`, 0.6),
+  ];
+  const medBin = m.bins.findIndex((b) => b.cum >= m.n / 2);
+  if (medBin > 0) out.push(ins('distribution', `中位数落在第 ${medBin + 1} 箱（${m.bins[medBin].x0.toFixed(1)}–${m.bins[medBin].x1.toFixed(1)}）`, 0.7));
+  if (m.groups.length > 1) {
+    const gmax = m.groups.reduce((a, b2) => (b2.n > a.n ? b2 : a));
+    out.push(ins('share', `最大分组 ${gmax.name}（${gmax.n}，${pct(gmax.n / m.n)}）`, 0.65));
+  }
+  return out;
+}
+
+function kpiInsights(m: KpiModel): Insight[] {
+  const out: Insight[] = [];
+  const withT = m.items.filter((i) => i.target !== undefined && i.target !== 0);
+  if (withT.length) {
+    out.push(ins('target', `达标 ${withT.filter((i) => i.value / i.target! >= 1).length}/${withT.length} 项指标`, 0.9));
+    const worst = withT.reduce((a, b) => (a.value / a.target! < b.value / b.target! ? a : b));
+    if (worst.value / worst.target! < 1) out.push(ins('bottleneck', `${worst.label} 达成率最低（${pct(worst.value / worst.target!)}）`, 0.85));
+  }
+  const withP = m.items.filter((i) => i.previous !== undefined && i.previous !== 0);
+  if (withP.length) {
+    const best = withP.reduce((a, b) => ((b.value - b.previous!) / Math.abs(b.previous!) > (a.value - a.previous!) / Math.abs(a.previous!) ? b : a));
+    out.push(ins('trend', `环比改善最大：${best.label}（${pct((best.value - best.previous!) / Math.abs(best.previous!))}）`, 0.75));
+  }
+  return out;
+}
+
+function compareInsights(m: CompareModel): Insight[] {
+  const out: Insight[] = [
+    ins('change', `上升 ${m.up} 项、下降 ${m.down} 项${m.reversed ? `，${m.reversed} 项方向反转` : ''}`, 0.9),
+  ];
+  const big = m.items.reduce((a, b) => (Math.abs(b.dpct) > Math.abs(a.dpct) ? b : a));
+  out.push(ins('outlier', `变化最大：${big.label}（${big.delta > 0 ? '+' : ''}${pct(big.dpct)}）`, 0.8));
+  const rev = m.items.filter((i) => (m.up >= m.down ? i.delta < 0 : i.delta > 0));
+  if (rev.length) out.push(ins('bottleneck', `逆势项：${rev.map((i) => i.label).join('、')}`, 0.85));
+  return out;
+}
+
+function cohortInsights(m: CohortModel): Insight[] {
+  const out: Insight[] = [];
+  const p1 = m.rows.filter((r) => r.cells[1] !== null && r.size > 0)
+    .map((r) => r.cells[1]! / r.size);
+  if (p1.length) {
+    const avg = p1.reduce((a, b) => a + b, 0) / p1.length;
+    out.push(ins('retention', `第 1 期平均留存 ${pct(avg)}（${p1.length} 个批次）`, 0.9));
+    const worstIdx = p1.indexOf(Math.min(...p1));
+    const rows1 = m.rows.filter((r) => r.cells[1] !== null && r.size > 0);
+    if (rows1[worstIdx]) out.push(ins('bottleneck', `早期留存最低批次：${rows1[worstIdx].name}（${pct(Math.min(...p1))}）`, 0.8));
+  }
+  const lastP = m.rows.map((r) => {
+    let i = r.cells.length - 1;
+    while (i >= 0 && r.cells[i] === null) i--;
+    return i > 0 && r.size > 0 ? r.cells[i]! / r.size : null;
+  }).filter((v): v is number => v !== null);
+  if (lastP.length) out.push(ins('retention', `末期留存均值 ${pct(lastP.reduce((a, b) => a + b, 0) / lastP.length)}`, 0.7));
+  return out;
+}
+
+function comboInsights(m: BarlineModel): Insight[] {
+  const out: Insight[] = [];
+  if (m.series.length >= 2) {
+    const [a, b] = m.series;
+    const grow = (s: { values: number[] }) => {
+      const v = s.values;
+      return v.length > 1 && v[0] !== 0 ? (v[v.length - 1] - v[0]) / Math.abs(v[0]) : 0;
+    };
+    out.push(ins('trend', `${a.name} ${grow(a) >= 0 ? '增长' : '下降'} ${pct(Math.abs(grow(a)))}，${b.name} ${grow(b) >= 0 ? '增长' : '下降'} ${pct(Math.abs(grow(b)))}`, 0.9));
+    const corrOk = a.values.length > 2 && b.values.length > 2;
+    if (corrOk) {
+      const ma = a.values.reduce((x, y) => x + y) / a.values.length;
+      const mb = b.values.reduce((x, y) => x + y) / b.values.length;
+      let sxy = 0, sx = 0, sy = 0;
+      a.values.forEach((va, i) => { const vb = b.values[i]; sxy += (va - ma) * (vb - mb); sx += (va - ma) ** 2; sy += (vb - mb) ** 2; });
+      const r = sxy / (Math.sqrt(sx * sy) || 1);
+      if (Math.abs(r) >= 0.7) out.push(ins('correlation', `两指标${r > 0 ? '正' : '负'}相关（r=${r.toFixed(2)}）`, 0.8));
+      else if (Math.abs(r) < 0.3) out.push(ins('correlation', `两指标相关性弱（r=${r.toFixed(2)}）`, 0.6));
+    }
+  }
+  return out;
+}
+
 const INSIGHTERS: Partial<Record<ViewId, (m: never) => Insight[]>> = {
   bar: barlineInsights as never, matrix3d: barlineInsights as never,
   line: lineInsights as never, line3d: line3dInsights as never,
@@ -236,6 +342,9 @@ const INSIGHTERS: Partial<Record<ViewId, (m: never) => Insight[]>> = {
   heatmap: heatmapInsights as never, gantt: ganttInsights as never,
   fishbone: fishboneInsights as never, grid: gridInsights as never,
   pie3d: pie3dInsights as never, report: docInsights as never,
+  combo: comboInsights as never, rank: rankInsights as never,
+  histogram: histogramInsights as never, kpi: kpiInsights as never,
+  compare: compareInsights as never, cohort: cohortInsights as never,
 };
 
 export function insights(view: ViewId, model: unknown, _spec?: ViewSpec): Insight[] {

@@ -44,4 +44,4 @@ npm run gallery        # 生成画廊
 
 `npm run typecheck && npm test` 全绿 → 在 `docs/adr/IMPLEMENTATION_NOTES.md` 记录本里程碑备忘 → `git status` 干净 → 本地提交（不 push）。
 
-> 进度追踪：里程碑与任务清单见 `docs/plan/NEXT_PHASE.md` §10，本文件不维护状态。当前进行到 M6。
+> 进度追踪：里程碑与任务清单见 `docs/plan/NEXT_PHASE.md` §10，本文件不维护状态。当前进行到 M7。

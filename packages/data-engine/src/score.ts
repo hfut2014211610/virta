@@ -239,20 +239,25 @@ const sCompare: Scorer = (p) => {
   if (!l || ms.length !== 2) return no();
   const cmp = /(20\d{2}|上|下|前|后|旧|新|计划|实际|预算|去年|今年|同期|本期|上期|下半年|上半年|Q[1-4])/;
   return ms.every((m) => cmp.test(m.name))
-    ? { score: 0.8, reason: '标签 + 恰好 2 个对比期度量列', mapping: { label: l.name, values: ms.map((m) => m.name) }, missingRoles: [] } : no();
+    ? { score: 0.8, reason: '标签 + 恰好 2 个对比期度量列', mapping: { label: l.name, from: ms[0].name, to: ms[1].name }, missingRoles: [] } : no();
 };
 
 const sRank: Scorer = (p) => {
   const l = labelCol(p);
   const ms = measureCols(p);
   const ds = dimCols(p);
-  if (!l || ms.length !== 1 || p.rows < 12 || hit(p, SERIES_ALIAS)) return no();
+  if (!l || ms.length !== 1 || p.rows < 12) return no();
   const temporalDim = ds.find((c) => c.type === 'temporal-label' || c.type === 'date');
-  // race：非时间标签 + 另一时间维；否则仅单维排名
-  if (ds.length === 2 && temporalDim && l.name !== temporalDim.name) {
-    return { score: 0.75, reason: '标签 + 单度量 + 时间列 → race', variant: 'race', mapping: { label: l.name, value: ms[0].name, time: temporalDim.name }, missingRoles: [] };
+  // race：类目维 + 时间维 + 单度量；类目 3–30、时间帧 ≥6 才有动态意义 → 压过 line 多系列
+  if (ds.length === 2 && temporalDim) {
+    const cat = ds.find((d) => d !== temporalDim);
+    if (cat && cat.distinct >= 3 && cat.distinct <= 30 && temporalDim.distinct >= 6) {
+      return { score: 0.9, reason: `类目 ${cat.name}（${cat.distinct} 项）× 时间 → race`, variant: 'race', mapping: { label: cat.name, value: ms[0].name, time: temporalDim.name }, missingRoles: [] };
+    }
+    return no();
   }
-  return ds.length === 1
+  // 静态：标签命中系列别名会让位多系列图，不抢
+  return ds.length === 1 && !hit(p, SERIES_ALIAS)
     ? { score: 0.65, reason: '标签 + 单度量 ≥12 行', mapping: { label: l.name, value: ms[0].name }, missingRoles: [] } : no();
 };
 
@@ -299,14 +304,19 @@ const sScatter: Scorer = (p) => {
 
 const sCombo: Scorer = (p) => {
   const ms = measureCols(p);
-  if (!dimCols(p).length || ms.length !== 2) return no();
+  // 宽表视图：恰好 1 维 + 2 度量；多维长表不归 combo（让给 control/heatmap 等）
+  if (dimCols(p).length !== 1 || ms.length !== 2) return no();
   const [a, b] = ms;
   const scaleA = Math.max(Math.abs(a.min ?? 0), Math.abs(a.max ?? 0));
   const scaleB = Math.max(Math.abs(b.min ?? 0), Math.abs(b.max ?? 0));
   const ratio = Math.max(scaleA, scaleB) / Math.max(1e-9, Math.min(scaleA, scaleB));
-  const pct = a.type === 'percent' || b.type === 'percent';
-  return ratio > 10 || pct
-    ? { score: 0.7, reason: pct ? '两度量其一为百分比（双轴）' : '两度量量级相差 >10 倍（双轴）', mapping: { label: dimCols(p)[0].name, values: ms.map((a2) => a2.name) }, missingRoles: [] } : no();
+  const pctName = (nm: string) => /率|占比|pct|percent|rate|百分比|达成|毛利/.test(normKey(nm) + nm);
+  const pct = a.type === 'percent' || b.type === 'percent' || pctName(a.name) || pctName(b.name);
+  // 百分比+度量是双轴签名场景：同图单轴会压扁其一 → 应压过单轴 line
+  return pct
+    ? { score: 0.9, reason: '两度量其一为百分比（双轴）', mapping: { label: dimCols(p)[0].name, value: ms.map((a2) => a2.name) }, missingRoles: [] }
+    : ratio > 10
+      ? { score: 0.7, reason: '两度量量级相差 >10 倍（双轴）', mapping: { label: dimCols(p)[0].name, value: ms.map((a2) => a2.name) }, missingRoles: [] } : no();
 };
 
 const sGrid: Scorer = (p) =>
@@ -340,7 +350,7 @@ const sKpi: Scorer = (p) => {
   const l = labelCol(p), v = measureCols(p)[0];
   // 仅当标签列名像"指标"（否则小表会抢 pie/bar 的类目数据）
   return l && v && p.rows <= 8 && KPI_LABEL_NAMES.includes(normKey(l.name))
-    ? { score: 0.6, reason: '≤8 行指标名 + 值', mapping: { label: l.name, value: v.name }, missingRoles: [] } : no();
+    ? { score: 0.6, reason: '≤8 行指标名 + 值', mapping: { metric: l.name, value: v.name }, missingRoles: [] } : no();
 };
 
 const sParallel: Scorer = (p) =>

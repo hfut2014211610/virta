@@ -22,6 +22,7 @@ import { toScatter3d } from './scatter3d.js';
 import { toSunburst } from './sunburst.js';
 import { toTreemap } from './treemap.js';
 import { buildDoc } from './docmd.js';
+import { toCohort, toCompare, toHistogram, toKpi, toRank } from './t1.js';
 import { scoreView } from '../score.js';
 import { insights as familyInsights } from '../insights.js';
 import { counts as familyCounts } from '../counts.js';
@@ -32,6 +33,9 @@ export const TO_MODEL: Partial<Record<ViewId, (raw: Raw) => unknown>> = {
   gantt: toGantt, grid: toGrid, heatmap: toHeatmap, line3d: toLine3d,
   pie: toPie, pie3d: toPie3d, radar: toRadar, sankey: toSankey,
   scatter: toScatter, scatter3d: toScatter3d, sunburst: toSunburst, treemap: toTreemap,
+  // T1（M6）：combo 复用 barline 模型（标签+多系列），渲染层决定左右轴
+  combo: toChart,
+  rank: toRank, histogram: toHistogram, kpi: toKpi, compare: toCompare, cohort: toCohort,
 };
 
 /** Table.rows → legacy Raw（含 ECharts 透传）。 */

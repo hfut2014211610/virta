@@ -22,14 +22,20 @@ const COUNTERS: Record<string, (m: Any) => Record<string, number>> = {
   sunburst: (m) => ({ levels: (m['counts'] as Any)?.['levels'] as number ?? 0, leaves: (m['counts'] as Any)?.['leaves'] as number ?? 0 }),
   treemap: (m) => ({ leaf: m['n_leaf'] as number ?? 0, groups: (m['n_groups'] as number) ?? 0 }),
   report: (m) => ({ sections: (m['stats'] as Any)?.['sections'] as number ?? 0, metrics: arr(m['metrics']) }),
+  rank: (m) => ({ items: arr(m['items']), frames: arr(m['frames']) }),
+  histogram: (m) => ({ bins: arr(m['bins']), groups: arr(m['groups']), n: m['n'] as number ?? 0 }),
+  kpi: (m) => ({ items: arr(m['items']), hits: m['hits'] as number ?? 0 }),
+  compare: (m) => ({ items: arr(m['items']), reversed: m['reversed'] as number ?? 0 }),
+  cohort: (m) => ({ cohorts: arr(m['rows']), periods: arr(m['periods']) }),
 };
 
-const BARLINE_VIEWS = new Set(['bar', 'line', 'matrix3d']);
+const BARLINE_VIEWS = new Set(['bar', 'line', 'matrix3d', 'combo']);
 const VIEW_COUNTER: Partial<Record<ViewId, string>> = {
   bullet: 'bullet', boxplot: 'boxplot', fishbone: 'fishbone', funnel: 'funnel',
   gantt: 'gantt', grid: 'grid', heatmap: 'heatmap', line3d: 'line3d', pie: 'pie',
   pie3d: 'pie3d', radar: 'radar', sankey: 'sankey', scatter: 'scatter',
   scatter3d: 'scatter', sunburst: 'sunburst', treemap: 'treemap', report: 'report',
+  rank: 'rank', histogram: 'histogram', kpi: 'kpi', compare: 'compare', cohort: 'cohort',
 };
 
 export function counts(view: ViewId, model: unknown): Record<string, number> {

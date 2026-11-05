@@ -141,3 +141,28 @@
 - **e2e 注意**：`--set mapping.X=["a","b"]` 的数组引号会被 shell 吃掉——传数组 mapping
   一律用 `--spec` 文件（SKILL.md 已写明）。`compose`/`demo`/`gallery` 占位回执需经
   `args.values['json']` 判定输出形态。
+
+## M6 · T1 新图表与分面（§0.3 决策）
+
+- **T1 六视图**：combo（复用 BarlineModel 双度量柱+线）、rank（静态榜 + race 帧序列）、
+  histogram（分箱 + 可选分组/累计曲线）、kpi（指标卡 + 目标/环比 + sparkline 变体）、
+  compare（斜率图 + dumbbell 变体，支持年份列名 2024/2025 作 from/to）、
+  cohort（队列×期次留存三角热力）。契约各 1 个、适配器集中在 `families/t1.ts`、
+  渲染器集中在 `charts/src/t1.ts`，模型类型从 `@virta/data-engine` 导出。
+- **适配器别名与兜底**：T1 别名收口进 `aliases.ts`；compare 标签列兜底取"首个非数值列"
+  （JS 对象把 `2024/2025` 数字键排到前部，取 cols[0] 会误选度量列）；histogram 组别
+  别名补 `组别`；rank 标签别名覆盖 城市/版本 等 pack 列名。
+- **打分微调**（保既有期望）：rank-race 要 label+measure+时序维且 distinct ≥6 帧才给 0.9
+  （Q1–Q4 四帧数据仍归 pie/bar）；combo 仅在"恰 1 个维度的宽表 + 列名/类型命中百分比语义"
+  时给 0.9（revenue_margin 毛利率 → combo；多维控制图数据不抢 control）。
+- **spec.facet**：`{column, columns, sharedScale}`；`FACETABLE` = bar/line/scatter/histogram/compare，
+  不支持视图报 INVALID_SPEC、缺列报 MISSING_COLUMN；各面板独立 adapt，sharedScale 时把
+  全量值域经 `ctx.options` 注入渲染器。facet 布局放 `packages/viewer/src/facet.ts`
+  （CLI 经 `@virta/viewer` 复用）——若留在 `@virta/charts` 入口，浏览器 runtime 会拖入
+  全部渲染器使 slim bundle 涨到 ~149KB；迁移后各视图 90–96KB。
+- **pack 断言启用**：finance margin→combo/trend、retail cityrank→rank/peak、retail yoy→
+  compare/change、saas cohort→retention、saas mrr→trend、saas plans→change、
+  quality output→rank。pack.json/compose.json 均由生成器产出（hand-edit 的 compose.json
+  并入 generate.ts，CRLF 经 packs:gen 归一 LF）。
+- **渲染细节**：compare 两端标签做贪心垂直避让；histogram 分组图例由 render.ts 从
+  `model.groups` 提取（此前只认 model.series）。

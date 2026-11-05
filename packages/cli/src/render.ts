@@ -6,6 +6,7 @@ import type { PaletteId, Table, Theme, ViewId, ViewSpec, VizError } from '@virta
 import { getContract } from '@virta/contracts';
 import { ADAPTERS, DOC_ADAPTER, projectQuality } from '@virta/data-engine';
 import { getRenderer } from '@virta/charts';
+import { FACETABLE, facetGroups, facetLayout } from '@virta/viewer';
 import { scene as mkScene, toSVG } from '@virta/chart-core';
 import { frameStatic, type LegendItem } from '@virta/chart-skin';
 import { singleFileHtml, type Payload } from '@virta/viewer';
@@ -58,6 +59,7 @@ function viewEntrySource(view: string): string {
   return `import { boot } from './packages/viewer/src/runtime.js';
 import { ${m.renderer} } from './packages/charts/src/${m.charts}.js';
 import { ${m.toModel} } from './packages/data-engine/src/${m.adapter}.js';
+import { facetLayout, facetGroups, FACETABLE } from './packages/viewer/src/facet.js';
 const deps = {
   renderer: ${m.renderer},
   ${isDoc
@@ -117,24 +119,43 @@ export async function renderChart(job: RenderJob): Promise<RenderResult & { svgS
     counts = adapt.counts(model);
   }
 
-  // 卡片框 → 绘图区 → 图族布局（图例项先行：model.series 可直接枚举）
+  // 卡片框 → 绘图区 → 图族布局（图例项先行：model.series/groups 可直接枚举）
   const palette = spec.palette ?? 'signal';
   const hiddenS = new Set(spec.state?.hiddenSeries ?? []);
   const seriesNames = ((model as { series?: { name: string }[] }).series ?? []).map((s) => s.name);
-  const legend: LegendItem[] | undefined = seriesNames.length > 1
-    ? seriesNames.map((name, i) => ({ name, color: paletteColors(palette, theme)[i % paletteColors(palette, theme).length], hidden: hiddenS.has(name) }))
+  const groupNames = seriesNames.length <= 1 && view === 'histogram'
+    ? ((model as { groups?: { name: string }[] }).groups ?? []).map((s2) => s2.name).filter((n) => n !== '__all__')
+    : [];
+  const legendNames = seriesNames.length > 1 ? seriesNames : groupNames;
+  const legend: LegendItem[] | undefined = legendNames.length > 1
+    ? legendNames.map((name, i) => ({ name, color: paletteColors(palette, theme)[i % paletteColors(palette, theme).length], hidden: hiddenS.has(name) }))
     : undefined;
   const framed = frameStatic(job.width, job.height, {
     text: spec.text, insights, legend, theme: tokens, frame: job.frame,
   });
-  const inner = rend.layout(model as never, {
-    width: job.width, height: job.height,
-    plot: framed.plot,
-    theme, palette, tokens,
-    variant: spec.variant, mode: spec.mode,
-    options: spec.options ?? {}, state: spec.state,
-    format: spec.format, annotations: spec.annotations, text: spec.text,
-  });
+  const facetCol = spec.facet?.column;
+  let inner;
+  if (!isDoc && facetCol) {
+    if (!FACETABLE.has(view)) fail('INVALID_SPEC', `视图 ${view} 不支持分面`, `分面支持：${[...FACETABLE].join('/')}`);
+    if (!table.columns.includes(facetCol)) fail('MISSING_COLUMN', `分面列不存在：${facetCol}`, `--unset facet.column，或改用表内列`, { candidates: table.columns });
+    const subs = facetGroups(table.rows as Record<string, unknown>[], facetCol)
+      .map((gr) => ({ name: gr.name, model: adapter!.adapt({ ...table, rows: gr.rows } as Table, spec).model }));
+    inner = facetLayout(view, rend, subs, {
+      width: job.width, height: job.height, plot: framed.plot,
+      theme, palette, tokens, variant: spec.variant, mode: spec.mode,
+      options: spec.options ?? {}, state: spec.state,
+      format: spec.format, annotations: spec.annotations, text: spec.text,
+    }, spec.facet?.sharedScale ?? false, spec.facet?.columns);
+  } else {
+    inner = rend.layout(model as never, {
+      width: job.width, height: job.height,
+      plot: framed.plot,
+      theme, palette, tokens,
+      variant: spec.variant, mode: spec.mode,
+      options: spec.options ?? {}, state: spec.state,
+      format: spec.format, annotations: spec.annotations, text: spec.text,
+    });
+  }
   const sc = mkScene(job.width, job.height, [], tokens.paper);
   sc.defs = inner.defs;
   sc.hits = inner.hits;
