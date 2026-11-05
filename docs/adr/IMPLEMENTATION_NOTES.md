@@ -262,3 +262,19 @@
   列表/引用/代码/图片全块覆盖）。
 - **配色响应**：装饰性 `t.acc` → `accentFor(palette, theme)`（瀑布汇总柱、bullet
   装饰、scatter 拟合线、grid 表头、3D 点缀等），html[data-palette] 同步。
+
+## M9 · 四套图表主题（ADR-0008）
+
+- `Theme` 扩为 6 值：light/dark/minimal/sketch/pastel/tech；`--theme` 非法值现在
+  报 INVALID_OPTION（此前会静默崩在 THEMES[theme]）。
+- `ChartTheme = ThemeTokens + ThemeSkin`（design-system/skins.ts）：字号倍率、
+  网格/零基线、图例圆角、标记描边、圆角倍率、手绘抖动、发光、卡片圆角、
+  页面网格纹、color-scheme。light/dark 皮肤值与旧硬编码一致，基线不受影响。
+- 配色：10 套 palette 派生 6 主题（pastel 向白混 0.32、sketch 蜡笔化、
+  minimal/tech 复用 light/dark 基色）；accentFor 对新主题按明度族回退。
+- `applySkin`（chart-skin/skin.ts）：Scene 后处理——字号倍率、标记描边、
+  圆角、坐标空间哈希手绘抖动（共享边不错位、重复渲染稳定）、tech 发光。
+  hits/defs/text 不动。
+- 画廊：删 STYLE_CARDS 风格重复卡；新增「四套主题·同数据对比」
+  （bar/line/pie/sankey/network/tree × 4 主题，PNG + 交互页）。
+- 验证：typecheck + vitest 269 全绿；20 张四主题 PNG/ SVG 抽查通过。

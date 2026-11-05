@@ -18,6 +18,7 @@ function commonAttrs(n: Node): string {
   if (n.strokeWidth !== undefined) s += ` stroke-width="${f2(n.strokeWidth)}"`;
   if (n.opacity !== undefined) s += ` opacity="${f2(n.opacity)}"`;
   if (n.dash) s += ` stroke-dasharray="${n.dash.map(f2).join(',')}"`;
+  if (n.linecap) s += ` stroke-linecap="${n.linecap}"`;
   if (n.clip) s += ` clip-path="url(#${esc(n.clip)})"`;
   if (n.shadow) s += ` filter="drop-shadow(${f2(n.shadow.dx)}px ${f2(n.shadow.dy)}px ${f2(n.shadow.blur)}px ${esc(n.shadow.color)})"`;
   if (n.id) s += ` id="${esc(n.id)}"`;

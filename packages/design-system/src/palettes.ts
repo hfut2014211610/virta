@@ -1,5 +1,6 @@
 // 10 套分类配色（原样迁移 legacy bar-basic 的 PALETTES）+ 各套 --acc 覆盖 + OKLCH 色阶。
-import { lerpOklch } from './oklch.js';
+// ADR-0008：minimal/sketch/pastel/tech 四套主题的分类色由 light/dark 基色派生（见 derivePalette）。
+import { lerpOklch, oklabToOklch, oklchToOklab, rgbToOklab, oklabToRgb, hexToRgb, rgbToHex } from './oklch.js';
 import { THEMES, type ThemeId } from './tokens.js';
 
 export type PaletteId =
@@ -11,7 +12,8 @@ export const PALETTE_IDS: readonly PaletteId[] = [
   'mono', 'sundown', 'dunhuang', 'aurora', 'morandi',
 ];
 
-export const PALETTES: Record<PaletteId, Record<ThemeId, readonly string[]>> = {
+/** 基色：10 套 × light/dark（legacy 原样）。新主题在此基础上派生，保证同数据可比。 */
+const BASE: Record<PaletteId, { light: readonly string[]; dark: readonly string[] }> = {
   signal: {
     light: ['#0f766e', '#e85d3f', '#d99a06', '#2563eb', '#7c3aed', '#059669', '#db2777', '#0891b2'],
     dark: ['#c6f13f', '#ff6b4a', '#ffb224', '#4de3c2', '#7dd3fc', '#f472b6', '#a78bfa', '#facc15'],
@@ -54,6 +56,29 @@ export const PALETTES: Record<PaletteId, Record<ThemeId, readonly string[]>> = {
   },
 };
 
+// —— ADR-0008 派生规则（OKLCH 空间，确定性）——
+// pastel：向白混合降饱和；sketch：色相微旋 + 彩度收敛的蜡笔色；
+// minimal/tech 直接复用 light/dark 基色（主题差异由皮肤层承担）。
+function pastelize(hex: string): string {
+  return lerpOklch(hex, '#ffffff', 0.32);
+}
+function crayonize(hex: string, i: number): string {
+  const c = oklabToOklch(rgbToOklab(hexToRgb(hex)));
+  const h = (c.h + ((i * 37) % 11) - 5 + 360) % 360;
+  return rgbToHex(oklabToRgb(oklchToOklab({ l: Math.min(0.82, c.l * 0.98 + 0.02), c: c.c * 0.9, h })));
+}
+
+export const PALETTES: Record<PaletteId, Record<ThemeId, readonly string[]>> = Object.fromEntries(
+  PALETTE_IDS.map((id): [PaletteId, Record<ThemeId, readonly string[]>] => [id, {
+    light: BASE[id].light,
+    dark: BASE[id].dark,
+    minimal: BASE[id].light,
+    pastel: BASE[id].light.map(pastelize),
+    sketch: BASE[id].light.map(crayonize),
+    tech: BASE[id].dark,
+  }]),
+) as unknown as Record<PaletteId, Record<ThemeId, readonly string[]>>;
+
 /** 各套配色对 --acc 的覆盖（迁移 _shared.css；未列出的主题沿用主题默认 acc）。 */
 export const PALETTE_ACC: Partial<Record<PaletteId, Partial<Record<ThemeId, string>>>> = {
   cinnabar: { light: '#b5412f' },
@@ -67,8 +92,16 @@ export const PALETTE_ACC: Partial<Record<PaletteId, Partial<Record<ThemeId, stri
   morandi: { light: '#8b9dad', dark: '#b8c7d4' },
 };
 
+/** 新主题的配色族：minimal/sketch/pastel 取 light 基色族，tech 取 dark 基色族。 */
+const THEME_FAMILY: Record<ThemeId, 'light' | 'dark'> = {
+  light: 'light', dark: 'dark', minimal: 'light', sketch: 'light', pastel: 'light', tech: 'dark',
+};
+
 export function accentFor(palette: PaletteId, theme: ThemeId): string {
-  return PALETTE_ACC[palette]?.[theme] ?? PALETTE_ACC[palette]?.light ?? THEMES[theme].acc;
+  const acc = PALETTE_ACC[palette];
+  // light/dark 保持 legacy 回退链（dark 缺省回退 light acc），新主题按族回退。
+  if (theme === 'light' || theme === 'dark') return acc?.[theme] ?? acc?.light ?? THEMES[theme].acc;
+  return acc?.[theme] ?? acc?.[THEME_FAMILY[theme]] ?? THEMES[theme].acc;
 }
 
 export function paletteColors(palette: PaletteId, theme: ThemeId): readonly string[] {

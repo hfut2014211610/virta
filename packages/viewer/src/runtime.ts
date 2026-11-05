@@ -1,7 +1,8 @@
 // viewer 运行期：单文件 HTML 内嵌本模块（esbuild 打成 <view>.js）。
 // 负责：adapt+layout+SVG 渲染、图例开关、tooltip、编辑抽屉、hash 同步、导出。
 import { hitTest, toSVG, type Scene } from '@virta/chart-core';
-import { getContract, THEMES, paletteColors, PALETTE_IDS } from './deps.js';
+import { applySkin } from '@virta/chart-skin';
+import { getContract, resolveTheme, PALETTE_IDS } from './deps.js';
 import type { ViewSpec, Table } from '@virta/contracts';
 import { facetGroups, facetLayout, FACETABLE } from './facet.js';
 import { ZH } from './i18n/zh-CN.js';
@@ -61,7 +62,7 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
 
   function layoutScene() {
     const theme = spec.theme ?? 'light';
-    const tokens = THEMES[theme];
+    const tokens = resolveTheme(theme);
     document.documentElement.dataset['theme'] = theme;
     document.documentElement.dataset['palette'] = spec.palette ?? 'signal';
     document.body.dataset['theme'] = theme;
@@ -93,6 +94,7 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
       options: spec.options ?? {}, state: spec.state,
       format: spec.format, annotations: spec.annotations, text: spec.text,
     } as never);
+    applySkin(sc, tokens.skin);
     return sc;
   }
 
@@ -225,7 +227,7 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
 
   // —— 主题/选项行/全屏 ——
   $$('#theme-seg button').forEach((b) => {
-    b.onclick = () => { spec = { ...spec, theme: b.dataset['t'] as 'light' | 'dark' }; render(); };
+    b.onclick = () => { spec = { ...spec, theme: b.dataset['t'] as ViewSpec['theme'] }; render(); };
   });
   $('#btn-opts').onclick = () => {
     const open = $('#opt-row').classList.toggle('open');

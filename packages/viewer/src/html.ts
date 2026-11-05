@@ -1,6 +1,7 @@
 // 单文件 HTML 组装：设计 token CSS + 内联字体 + 首屏静态 SVG + payload JSON + 运行期 bundle。
 // 壳层布局对齐 legacy vizscape 演示页：header（eyebrow+标题+主题 seg）→ 标签化工具栏（trow）→ 卡片。
 import { buildCss } from '@virta/design-system';
+import { THEME_IDS, type Theme } from '@virta/contracts';
 import { ZH } from './i18n/zh-CN.js';
 import type { Payload } from './runtime.js';
 
@@ -10,7 +11,7 @@ export interface SingleFileOpts {
   svg: string;
   /** 运行期 JS bundle（viewer/dist/<view>.js 或 esbuild 产物） */
   runtimeJs: string;
-  theme: 'light' | 'dark';
+  theme: Theme;
 }
 
 export function singleFileHtml(o: SingleFileOpts): string {
@@ -65,7 +66,7 @@ details.fold summary{cursor:pointer;font:12.5px var(--body);color:var(--muted)}
       <h1>${h1}</h1>
       ${t.subtitle ? `<p class="subtitle">${esc(t.subtitle)}</p>` : ''}
     </div>
-    <div class="seg" id="theme-seg"><button type="button" data-t="light">${ZH.themeLight}</button><button type="button" data-t="dark">${ZH.themeDark}</button></div>
+    <div class="seg" id="theme-seg">${THEME_IDS.map((t) => `<button type="button" data-t="${t}"${t === theme ? ' class="on"' : ''}>${ZH.themeNames[t]}</button>`).join('')}</div>
   </header>
   ${payload.insights.length ? `<div class="insights">${payload.insights.slice(0, 3).map((i) => `<span>${esc(i.text)}</span>`).join('')}</div>` : ''}
   <div class="trow" id="toolbar">

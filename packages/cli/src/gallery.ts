@@ -20,7 +20,7 @@ export interface GalleryItem {
   key: string; title: string; sub: string; view: string;
   file: string; dir: string; spec?: ViewSpec; doc?: boolean;
 }
-interface Rendered { png?: string; light?: string; dark?: string }
+interface Rendered { png?: string; light?: string; dark?: string; alts?: { label: string; path?: string }[] }
 interface Group { id: string; eyebrow: string; title: string; desc: string; items: (GalleryItem & Rendered)[] }
 
 export interface GalleryJob { out: string; scale: number; fontFiles: string[]; theme?: Theme; palette?: PaletteId }
@@ -38,48 +38,7 @@ const FAMILY_ORDER: ViewId[] = [
 ];
 const MERGE_3D: Partial<Record<ViewId, ViewId>> = { matrix3d: 'bar', line3d: 'line', scatter3d: 'scatter', pie3d: 'pie' };
 
-// 风格展示卡：同一份数据不同皮肤（变体 / options / 配色差异），每族最多 2 张
-const STYLE_CARDS: Partial<Record<ViewId, { tag: string; file?: string; variant?: string; options?: Record<string, string | number | boolean>; palette?: PaletteId }[]>> = {
-  bar: [
-    // 风格演示用普通分组数据——瀑布语义色会盖掉 finish/colorBy
-    { tag: '描边', file: 'sample-multi.csv', variant: 'grouped', options: { finish: 'outline', shape: 'rect' }, palette: 'blueprint' },
-    { tag: '斜纹', file: 'sample-multi.csv', variant: 'grouped', options: { finish: 'hatch' }, palette: 'patina' },
-    { tag: '色阶', file: 'sample-multi.csv', variant: 'grouped', options: { colorBy: 'value' }, palette: 'sundown' },
-  ],
-  line: [
-    { tag: '面积填充·实线', options: { fill: 'area', lineStyle: 'straight' }, palette: 'morandi' },
-    { tag: '纹理线', options: { hatch: true }, palette: 'inkwash' },
-  ],
-  pie: [{ tag: '环内标注', options: { labelMode: 'inside', ringRatio: '0.45' }, palette: 'sundown' }],
-  scatter: [
-    { tag: '菱点·均值线', options: { marker: 'diamond', meanLines: true, trendline: false }, palette: 'patina' },
-    { tag: '方块·标签', options: { marker: 'square', labelMode: 'all' }, palette: 'mono' },
-  ],
-  histogram: [{ tag: '累计曲线', variant: 'cumulative', palette: 'inkwash' }],
-  funnel: [
-    { tag: '扁平·左对齐', options: { finish: 'flat', align: 'left' }, palette: 'cinnabar' },
-    { tag: '分色', options: { colorMode: 'cat' }, palette: 'aurora' },
-  ],
-  treemap: [{ tag: '无框紧凑', options: { groupBg: false }, palette: 'aurora' }],
-  sankey: [{ tag: '单色流', options: { flowGradient: false }, palette: 'inkwash' }],
-  sunburst: [{ tag: '等角', options: { equalAngle: true, arcLabels: false }, palette: 'morandi' }],
-  radar: [{ tag: '线框·顶点值', options: { fillPoly: false, vertexLabels: true, ringLabels: true }, palette: 'blueprint' }],
-  heatmap: [{ tag: '发散色带·标注', options: { scale: 'diverging', valueLabels: true }, palette: 'sundown' }],
-  boxplot: [{ tag: '散点叠加', options: { rawPoints: true }, palette: 'patina' }],
-  network: [{ tag: '环形布局', variant: 'circular', palette: 'aurora' }],
-  gantt: [{ tag: '状态着色·紧凑', options: { colorBy: 'status', density: 'compact' }, palette: 'signal' }],
-  grid: [
-    { tag: '紧凑', options: { density: 'compact' }, palette: 'mono' },
-    { tag: '斑马纹', options: { zebra: true }, palette: 'blueprint' },
-  ],
-  fishbone: [{ tag: '右向·无图例', options: { direction: 'right', legend: false }, palette: 'patina' }],
-  parallel: [{ tag: '低透明', options: { opacity: 0.35 }, palette: 'aurora' }],
-  rank: [{ tag: '单色·数值', options: { valueLabels: true }, palette: 'mono' }],
-  bullet: [{ tag: '刻度·差距', options: { scale: true, gapLabels: true }, palette: 'patina' }],
-  compare: [{ tag: '哑铃·单色', variant: 'dumbbell', palette: 'mono' }],
-  report: [{ tag: '宽版大字', options: { wide: true, fontSize: 16 }, palette: 'inkwash' }],
-  kpi: [{ tag: '琥珀', palette: 'dunhuang' }],
-};
+// ADR-0008：风格/样式重复卡（STYLE_CARDS）已移除——主题皮肤由「四套主题」分组统一呈现。
 
 /** 每个图族的示例来源：优先 pack 图表，其次 basic 样例（recommend top-1 命中），report 找 md/txt。 */
 export async function familyExamples(packs: PackJson[]): Promise<Map<string, GalleryItem>> {
@@ -179,7 +138,9 @@ function card(it: GalleryItem & Rendered): string {
         <h3>${esc(it.title)}</h3>
         <div class="meta">${esc(it.view)} · ${esc(it.sub)}</div>
         ${tags ? `<div class="tags">${tags}</div>` : ''}
-        <div class="actions">${it.light ? `<button class="btn primary" type="button" data-preview="${rel(it.light)}" data-title="${esc(it.title)} · 浅色">浅色浮窗</button>` : ''}${it.dark ? `<button class="btn ghost" type="button" data-preview="${rel(it.dark)}" data-title="${esc(it.title)} · 深色">深色浮窗</button>` : ''}</div>
+        <div class="actions">${it.alts?.length
+          ? it.alts.map((a) => `<button class="btn primary" type="button" data-preview="${rel(a.path)}" data-title="${esc(it.title)} · ${esc(a.label)}">${esc(a.label)}</button>`).join('')
+          : `${it.light ? `<button class="btn primary" type="button" data-preview="${rel(it.light)}" data-title="${esc(it.title)} · 浅色">浅色浮窗</button>` : ''}${it.dark ? `<button class="btn ghost" type="button" data-preview="${rel(it.dark)}" data-title="${esc(it.title)} · 深色">深色浮窗</button>` : ''}`}</div>
       </article>`;
 }
 
@@ -324,23 +285,44 @@ export async function runGallery(job: GalleryJob): Promise<{ items: number; view
         if (!tryAdapt(spec)) continue;
         await push({ ...base, key: `st-${v}-${vb.id}`, title: `${c.title} · ${vb.label}`, sub: '变体', spec }, `var|${base.file}|${vb.id}`);
       }
-      // 5) 风格卡：同一数据（或指定文件）换 options/配色
-      const adaptOn = async (file: string, dir: string, spec: ViewSpec) => {
-        const li = await readInput(join(dir, file));
-        const ti: Table | null = li.result ? rawToTable(li.result.raw as never, li.source) : null;
-        if (!ti) return false;
-        try { ADAPTERS[v]?.adapt(ti, spec); return true; } catch { return false; }
-      };
-      for (const st of STYLE_CARDS[v] ?? []) {
-        if (items.length >= 9) break;
-        const spec: ViewSpec = { ...(base.spec ?? { version: 1, view: v }), view: v, ...(st.variant ? { variant: st.variant } : {}), options: { ...(base.spec?.options ?? {}), ...(st.options ?? {}) }, palette: st.palette };
-        const file = st.file ?? base.file, dir = st.file ? BASIC_DIR : base.dir;
-        if (!await adaptOn(file, dir, spec)) continue;
-        await push({ ...base, file, dir, key: `st-${v}-${st.tag}`, title: `${c.title} · ${st.tag}`, sub: '风格', spec }, `sty|${file}|${st.tag}`);
-      }
     }
     if (!items.length) continue;
     famGroups.push({ id: v, eyebrow: `${v} chart`, title: c.title, desc: c.summary, items });
+  }
+
+  // —— ADR-0008 主题实验室：同数据 × 同配置，仅切换主题皮肤 ——
+  const THEME_LABELS: Record<string, string> = { minimal: '极简卡片', sketch: '手绘草图', pastel: '现代柔彩', tech: '深色科技' };
+  const THEME_VIEWS: ViewId[] = ['bar', 'line', 'pie', 'sankey', 'network', 'tree'];
+  const themeItems: (GalleryItem & Rendered)[] = [];
+  for (const v of THEME_VIEWS) {
+    const ex = fam.get(v);
+    const c = getContract(v);
+    if (!ex || !c || ex.doc) continue;
+    const fpath = join(ex.dir, ex.file);
+    if (!existsSync(fpath)) continue;
+    const l = await readInput(fpath);
+    if (l.docText !== undefined || !l.result) continue;
+    const table: Table = rawToTable(l.result.raw as never, l.source);
+    for (const th of ['minimal', 'sketch', 'pastel', 'tech'] as Theme[]) {
+      const spec: ViewSpec = { version: 1, palette: job.palette ?? 'signal', ...(ex.spec ?? {}), view: v, theme: th };
+      const stem = `th-${v}`;
+      try {
+        const png = await renderChart({ table, spec, formats: ['png'], out: join(job.out, 'png'), stem, width: 640, height: 360, scale: 1, frame: 'card', fontFiles: job.fontFiles });
+        const html = await renderChart({ table, spec, formats: ['html'], out: join(job.out, 'html'), stem, width: 1200, height: 675, scale: job.scale, frame: 'card', fontFiles: job.fontFiles });
+        themeItems.push({
+          key: `${stem}-${th}`, title: `${c.title} · ${THEME_LABELS[th]}`, sub: '主题对比', view: v, file: ex.file, dir: ex.dir, spec,
+          png: png.files[0]?.path,
+          alts: html.files[0] ? [{ label: `${THEME_LABELS[th]} · 交互预览`, path: html.files[0].path }] : [],
+        });
+      } catch { /* 单主题渲染失败不阻塞画廊 */ }
+    }
+  }
+  if (themeItems.length) {
+    famGroups.unshift({
+      id: 'themes', eyebrow: 'theme lab · ADR-0008', title: '四套主题 · 同数据对比',
+      desc: '同一份数据、同一图表类型与配置，仅切换主题皮肤（配色/底色/网格/坐标轴/标记/描边/圆角/动效）。打开交互页后可在顶部于 6 套主题间实时切换。',
+      items: themeItems,
+    });
   }
 
   // —— 按场景分组 ——

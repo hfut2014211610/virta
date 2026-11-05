@@ -32,6 +32,7 @@ function paintPath(ctx: Ctx, n: Node, p2d: Path2D, defs: Scene['defs']) {
   if (stroke !== undefined && stroke !== 'none') {
     ctx.strokeStyle = stroke;
     ctx.lineWidth = n.strokeWidth ?? 1;
+    ctx.lineCap = n.linecap ?? 'butt';
     if (n.dash) ctx.setLineDash(n.dash);
     ctx.stroke(p2d);
   }

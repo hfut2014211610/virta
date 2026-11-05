@@ -3,14 +3,14 @@
 import type { Insight, ViewSpec } from '@virta/contracts';
 import type { Node, Scene } from '@virta/chart-core';
 import { g, scene } from '@virta/chart-core';
-import type { ThemeTokens } from '@virta/design-system';
+import type { ChartTheme } from '@virta/design-system';
 import { legendNodes, type LegendItem } from './legend.js';
 
 export interface FrameOpts {
   text?: ViewSpec['text'];
   insights?: Insight[];
   legend?: LegendItem[];
-  theme: ThemeTokens;
+  theme: ChartTheme;
   frame?: 'card' | 'chart';
   /** 图表绘制区（card 模式下自动扣除头部/脚部） */
   plotWidth?: number; plotHeight?: number;

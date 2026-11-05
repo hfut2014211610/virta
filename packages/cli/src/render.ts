@@ -3,14 +3,14 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { build } from 'esbuild';
 import type { PaletteId, Table, Theme, ViewId, ViewSpec, VizError } from '@virta/contracts';
-import { getContract } from '@virta/contracts';
+import { getContract, THEME_IDS } from '@virta/contracts';
 import { ADAPTERS, DOC_ADAPTER, projectQuality } from '@virta/data-engine';
 import { getRenderer } from '@virta/charts';
 import { FACETABLE, facetGroups, facetLayout } from '@virta/viewer';
 import { scene as mkScene, toSVG } from '@virta/chart-core';
-import { frameStatic, type LegendItem } from '@virta/chart-skin';
+import { applySkin, frameStatic, type LegendItem } from '@virta/chart-skin';
 import { singleFileHtml, type Payload } from '@virta/viewer';
-import { fontPath, paletteColors, THEMES } from '@virta/design-system';
+import { fontPath, paletteColors, resolveTheme } from '@virta/design-system';
 import { Resvg } from '@resvg/resvg-js';
 
 export class CliError extends Error {
@@ -103,7 +103,8 @@ export async function renderChart(job: RenderJob): Promise<RenderResult & { svgS
   const rend = renderer!;
 
   const theme: Theme = spec.theme ?? 'light';
-  const tokens = THEMES[theme];
+  if (!THEME_IDS.includes(theme)) fail('INVALID_SPEC', `未知主题 ${theme}`, `支持：${THEME_IDS.join(' | ')}`);
+  const tokens = resolveTheme(theme);
   let model: unknown, quality: ReturnType<typeof projectQuality> | undefined;
   let insights: import('@virta/contracts').Insight[];
   let counts: Record<string, number>;
@@ -166,6 +167,7 @@ export async function renderChart(job: RenderJob): Promise<RenderResult & { svgS
   sc.defs = inner.defs;
   sc.hits = inner.hits;
   sc.root.children = [...framed.scene.root.children, ...inner.root.children];
+  applySkin(sc, tokens.skin);
   const svg = toSVG(sc);
 
   const payload: Payload = {

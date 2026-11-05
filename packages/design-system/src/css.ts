@@ -1,7 +1,8 @@
 // buildCss：token → CSS 变量 + 组件基础样式，由 viewer/CLI 内联进产物页面（§5.2、§6）。
 import { fontFaceCss, loadFontData } from './fonts.js';
-import { PALETTE_ACC, PALETTE_IDS } from './palettes.js';
-import { FONTS, MOTION, RADII, SPACING, THEMES, type ThemeId, type ThemeTokens } from './tokens.js';
+import { accentFor, PALETTE_IDS } from './palettes.js';
+import { SKINS } from './skins.js';
+import { FONTS, MOTION, RADII, SPACING, THEMES, THEME_IDS, type ThemeId, type ThemeTokens } from './tokens.js';
 
 const SEMANTIC_KEYS: (keyof ThemeTokens)[] = [
   'bg', 'paper', 'panel', 'ink', 'muted', 'faint',
@@ -10,16 +11,20 @@ const SEMANTIC_KEYS: (keyof ThemeTokens)[] = [
 
 function themeRule(theme: ThemeId): string {
   const t = THEMES[theme];
+  const s = SKINS[theme];
   const vars = SEMANTIC_KEYS.map((k) => `--${k === 'tipInk' ? 'tipink' : k}:${t[k]}`).join(';');
-  return `html[data-theme="${theme}"]{${vars};--shadow:${t.shadow}}`;
+  return `html[data-theme="${theme}"]{${vars};--shadow:${t.shadow};color-scheme:${s.colorScheme};` +
+    `--r-card:${s.cardRadius}px;--r-panel:${s.panelRadius}px;--r-table:${s.tableRadius}px;--r-tip:${s.tipRadius}px;` +
+    `--grid-size:${s.bgGridSize}px;--grid-opacity:${s.bgGridOpacity}}`;
 }
 
 function paletteRules(): string {
+  // ADR-0008：每个 (theme, palette) 对都输出 --acc 覆盖，与 accentFor() 同一解析链。
   const rules: string[] = [];
-  for (const p of PALETTE_IDS) {
-    const acc = PALETTE_ACC[p];
-    if (acc?.light) rules.push(`html[data-palette="${p}"]{--acc:${acc.light}}`);
-    if (acc?.dark) rules.push(`html[data-theme="dark"][data-palette="${p}"]{--acc:${acc.dark}}`);
+  for (const theme of THEME_IDS) {
+    for (const p of PALETTE_IDS) {
+      rules.push(`html[data-theme="${theme}"][data-palette="${p}"]{--acc:${accentFor(p, theme)}}`);
+    }
   }
   return rules.join('\n');
 }
@@ -37,7 +42,7 @@ function rootVars(): string {
 const COMPONENT_CSS = `*{box-sizing:border-box;margin:0;padding:0}
 ::selection{background:var(--acc);color:var(--tipink)}
 :focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:4px}
-body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:56px 56px;opacity:.6}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:var(--grid-size,56px) var(--grid-size,56px);opacity:var(--grid-opacity,.6)}
 .wrap{max-width:1080px;margin:0 auto;position:relative}
 header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1.5px solid var(--ink);padding-bottom:10px}
 .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--acc);text-transform:uppercase}
@@ -48,19 +53,19 @@ h1 em{font-style:normal;color:var(--acc);font-weight:500}
 .seg button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:13px;padding:8px 14px;border-radius:99px;cursor:pointer}
 .seg button.on{background:var(--ink);color:var(--paper)}
 .deck{display:flex;flex-direction:column;gap:10px;margin:16px 0}
-.trow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:9px 12px}
+.trow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-panel,16px);padding:9px 12px}
 .trow .label{min-width:34px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
 .trow .spacer{flex:1}
 .trow .seg{box-shadow:none}
 .toggle{appearance:none;border:1px solid var(--line2);background:var(--paper);color:var(--muted);border-radius:99px;padding:8px 14px;font-size:13px;cursor:pointer;transition:background var(--dur-fast) var(--ease)}
 .toggle.on{background:var(--acc);border-color:var(--acc);color:var(--paper);font-weight:700}
 .chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:transparent;color:var(--ink);border-radius:99px;padding:6px 12px;font-size:12px;cursor:pointer;transition:all var(--dur-fast) var(--ease)}
-.card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);position:relative}
-#tooltip{position:absolute;pointer-events:none;background:var(--tip);color:var(--tipink);padding:10px 12px;border-radius:10px;font-family:var(--mono);font-size:12px;line-height:1.7;display:none;z-index:10;min-width:160px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-card,20px);padding:20px;box-shadow:var(--shadow);position:relative}
+#tooltip{position:absolute;pointer-events:none;background:var(--tip);color:var(--tipink);padding:10px 12px;border-radius:var(--r-tip,10px);font-family:var(--mono);font-size:12px;line-height:1.7;display:none;z-index:10;min-width:160px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 #tooltip b{color:var(--acc)}
 #detail{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;min-height:22px}
 #detail b{color:var(--ink)}
-.table{width:100%;border-collapse:collapse;font-size:13px;margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.table{width:100%;border-collapse:collapse;font-size:13px;margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-table,14px);overflow:hidden}
 .table th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-align:left;color:var(--muted);border-bottom:1.5px solid var(--ink);padding:10px}
 .table td{border-bottom:1px solid var(--line);padding:9px 10px}
 .table td.num,.table th.num{text-align:right;font-family:var(--mono)}
@@ -75,9 +80,9 @@ footer{margin-top:18px;font-family:var(--mono);font-size:11px;color:var(--faint)
 .quality-ok{margin:11px 0 0;color:var(--acc);font-size:12px}
 .hint{font-size:12px;color:var(--faint);margin-top:8px}
 .summary{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 14px}
-.sum-card{display:inline-flex;align-items:baseline;gap:8px;border:1px solid var(--line2);border-radius:14px;padding:9px 12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sum-card{display:inline-flex;align-items:baseline;gap:8px;border:1px solid var(--line2);border-radius:var(--r-table,14px);padding:9px 12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
 .sum-card b{color:var(--ink);font-size:19px;font-weight:500;letter-spacing:-.02em}
-.quality{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--paper);border-radius:16px;padding:14px;margin:16px 0 8px;box-shadow:0 1px 0 rgba(0,0,0,.02) inset}
+.quality{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--paper);border-radius:var(--r-panel,16px);padding:14px;margin:16px 0 8px;box-shadow:0 1px 0 rgba(0,0,0,.02) inset}
 .quality.warn{border-left-color:var(--neg)}
 .quality.warn .quality-score b{color:var(--neg)}
 .quality-warnings{margin:11px 0 0;padding-left:18px;color:var(--neg);font-size:12px;line-height:1.75}
@@ -89,7 +94,7 @@ export interface BuildCssOptions {
 }
 
 export function buildCss(opts: BuildCssOptions = {}): string {
-  const parts = [rootVars(), themeRule('light'), themeRule('dark'), paletteRules(), COMPONENT_CSS];
+  const parts = [rootVars(), ...THEME_IDS.map(themeRule), paletteRules(), COMPONENT_CSS];
   if (opts.fonts) parts.unshift(fontFaceCss(loadFontData()));
   return parts.join('\n');
 }

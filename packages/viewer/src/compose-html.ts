@@ -1,5 +1,6 @@
 // compose 单文件 HTML：多面板网格 + 联动筛选条 + 内联首屏 SVG + payload + 运行期。
 import { buildCss } from '@virta/design-system';
+import type { Theme } from '@virta/contracts';
 import type { ComposePayload } from './runtime-compose.js';
 
 export interface ComposeHtmlOpts {
@@ -7,7 +8,7 @@ export interface ComposeHtmlOpts {
   /** 每面板首屏 SVG（与 panels 同序） */
   svgs: string[];
   runtimeJs: string;
-  theme: 'light' | 'dark';
+  theme: Theme;
 }
 
 export function composeHtml(o: ComposeHtmlOpts): string {

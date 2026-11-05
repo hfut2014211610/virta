@@ -1,5 +1,6 @@
 // contracts v1 · ViewSpec 的手写 JSON Schema（供 `virta schema --spec-schema` 输出）。
 // 与 spec.ts 的 ViewSpec 保持一致；契约变更须同步更新本文件（ADR-0004）。
+import { THEME_IDS } from './spec.js';
 import { VIEW_IDS } from './views.js';
 
 const PALETTES = ['signal', 'cinnabar', 'patina', 'blueprint', 'inkwash', 'mono', 'sundown', 'dunhuang', 'aurora', 'morandi'];
@@ -37,7 +38,7 @@ export const VIEW_SPEC_SCHEMA = {
       description: 'role → 列名，覆盖自动识别',
       additionalProperties: { anyOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
     },
-    theme: { enum: ['light', 'dark'] },
+    theme: { enum: [...THEME_IDS] },
     palette: { enum: PALETTES },
     options: {
       type: 'object',

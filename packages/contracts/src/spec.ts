@@ -1,7 +1,9 @@
 // contracts v1 · §4.4 ViewSpec
 import type { ViewId } from './views.js';
 
-export type Theme = 'light' | 'dark';
+// ADR-0008：主题从 light/dark 扩为 6 套（新增 minimal/sketch/pastel/tech 四套可切换图表主题）。
+export const THEME_IDS = ['light', 'dark', 'minimal', 'sketch', 'pastel', 'tech'] as const;
+export type Theme = typeof THEME_IDS[number];
 export type PaletteId =
   | 'signal' | 'cinnabar' | 'patina' | 'blueprint' | 'inkwash'
   | 'mono' | 'sundown' | 'dunhuang' | 'aurora' | 'morandi';

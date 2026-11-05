@@ -4,3 +4,4 @@ export * from './axis.js';
 export * from './legend.js';
 export * from './frame.js';
 export * from './annotate.js';
+export * from './skin.js';

@@ -1,7 +1,7 @@
 // 标注（§5.4）：refLine（acc 虚线+右端标签）、band（acc 8% 透明）、marker（圆点+说明）、event（时间轴竖线+顶部标签）。
 import type { Annotation } from '@virta/contracts';
 import type { Node } from '@virta/chart-core';
-import type { ThemeTokens } from '@virta/design-system';
+import type { ChartTheme } from '@virta/design-system';
 
 export interface AnnotateCtx {
   plot: { x: number; y: number; w: number; h: number };
@@ -12,7 +12,7 @@ export interface AnnotateCtx {
   format: (v: number) => string;
 }
 
-export function annotationNodes(annotations: Annotation[] | undefined, c: AnnotateCtx, t: ThemeTokens): Node[] {
+export function annotationNodes(annotations: Annotation[] | undefined, c: AnnotateCtx, t: ChartTheme): Node[] {
   const out: Node[] = [];
   for (const a of annotations ?? []) {
     if (a.type === 'refLine' && a.axis === 'y') {

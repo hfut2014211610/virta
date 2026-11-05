@@ -5,8 +5,8 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { basename, extname, join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { execFile } from 'node:child_process';
-import type { Envelope, Table, ViewId, ViewSpec, VizError } from '@virta/contracts';
-import { CONTRACTS, EXIT_CODES, getContract, VIEW_IDS, VIEW_SPEC_SCHEMA } from '@virta/contracts';
+import type { Envelope, Table, Theme, ViewId, ViewSpec, VizError } from '@virta/contracts';
+import { CONTRACTS, EXIT_CODES, getContract, THEME_IDS, VIEW_IDS, VIEW_SPEC_SCHEMA } from '@virta/contracts';
 import { ADAPTERS, profileTable, rawToTable, recommend, validate } from '@virta/data-engine';
 import { readInput, readInline } from '@virta/data-engine/node';
 import { RENDERED_VIEWS } from '@virta/charts';
@@ -92,7 +92,11 @@ function buildSpec(args: PV, table?: Table): ViewSpec {
     try { spec = { ...spec, ...(JSON.parse(txt) as ViewSpec) }; }
     catch { fail('INVALID_SPEC', '--spec 不是合法 JSON 或可读文件', 'virta schema <view> 查看契约'); }
   }
-  const theme = v(args, 'theme'); if (theme) spec.theme = theme as never;
+  const theme = v(args, 'theme');
+  if (theme) {
+    if (!THEME_IDS.includes(theme as Theme)) fail('INVALID_OPTION', `未知主题 ${theme}`, `支持：${THEME_IDS.join(' | ')}`);
+    spec.theme = theme as Theme;
+  }
   const pal = v(args, 'palette'); if (pal) spec.palette = pal as never;
   const variant = v(args, 'variant'); if (variant) spec.variant = variant;
   const view = v(args, 'view'); if (view) spec.view = view as ViewId;
@@ -266,7 +270,7 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
     const pack = String(args.positionals[0] ?? '');
     if (!all && !pack) return outErr('demo', { code: 'INVALID_SPEC', message: '缺少场景包名或 --all', hint: 'virta demo retail | virta demo --all', recoverable: true }, json);
     const outDir = v(args, 'out') ?? 'out/demo';
-    const job = { out: outDir, scale: Number(v(args, 'scale') ?? 1), fontFiles: multi(args, 'font-file'), theme: v(args, 'theme') as 'light' | 'dark' | undefined, palette: v(args, 'palette') as 'signal' | 'patina' | 'mono' | undefined };
+    const job = { out: outDir, scale: Number(v(args, 'scale') ?? 1), fontFiles: multi(args, 'font-file'), theme: v(args, 'theme') as Theme | undefined, palette: v(args, 'palette') as 'signal' | 'patina' | 'mono' | undefined };
     try {
       const { runDemo, writeDemoIndex, listPacks } = await import('./demo.js');
       const ids = all ? listPacks() : [pack];
@@ -292,7 +296,7 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
     const json = Boolean(args.values['json']);
     try {
       const { runGallery } = await import('./gallery.js');
-      const r = await runGallery({ out: v(args, 'out') ?? 'out/gallery', scale: Number(v(args, 'scale') ?? 1), fontFiles: multi(args, 'font-file'), theme: v(args, 'theme') as 'light' | 'dark' | undefined, palette: v(args, 'palette') as 'signal' | 'patina' | 'mono' | undefined });
+      const r = await runGallery({ out: v(args, 'out') ?? 'out/gallery', scale: Number(v(args, 'scale') ?? 1), fontFiles: multi(args, 'font-file'), theme: v(args, 'theme') as Theme | undefined, palette: v(args, 'palette') as 'signal' | 'patina' | 'mono' | undefined });
       if (!json) console.log(`✓ 画廊生成 ${r.index}（${r.views} 图族 / ${r.packs} 场景 / ${r.items} 卡片）`);
       out('gallery', r, json);
       return 0;
@@ -314,7 +318,7 @@ async function main(): Promise<number> {
   inspect <input|-> [--format csv|json] [--sheet N] [--json]
   validate <input|-> --view <v> [--spec f|json] [--set k=v]... [--json]
   render <input|-> [--view v|auto] [--variant id] [--spec f|json] [--set k=v]...
-           [--data <json>] [--format csv|json] [--sheet N] [--theme light|dark] [--palette id]
+           [--data <json>] [--format csv|json] [--sheet N] [--theme ${THEME_IDS.join('|')}] [--palette id]
            [--title ..] [--subtitle ..] [--note ..] [--source ..] [--unit ..]
            [--export html,svg,png] [--out dir] [--width 1200] [--height 675] [--scale 2]
            [--frame card|chart] [--font-file ttf]... [--json]

@@ -1,5 +1,7 @@
 // design-system token 唯一来源（§5.2）。色值取自 legacy 主题变量与 _shared.css。
-export type ThemeId = 'light' | 'dark';
+// ADR-0008：light/dark 之外新增 minimal/sketch/pastel/tech 四套图表主题。
+export const THEME_IDS = ['light', 'dark', 'minimal', 'sketch', 'pastel', 'tech'] as const;
+export type ThemeId = typeof THEME_IDS[number];
 
 /** 语义色板。`panel`/`pos`/`warn` 为 legacy 未单列项，取值见 IMPLEMENTATION_NOTES。 */
 export interface ThemeTokens {
@@ -21,6 +23,26 @@ export const SHADOWS: Record<ThemeId, { sm: string; md: string; lg: string }> = 
     md: '0 10px 36px rgba(0,0,0,.40)',
     lg: '0 16px 48px rgba(0,0,0,.50)',
   },
+  minimal: {
+    sm: '0 1px 2px rgba(15,23,42,.05)',
+    md: '0 4px 16px rgba(15,23,42,.06)',
+    lg: '0 12px 32px rgba(15,23,42,.10)',
+  },
+  sketch: {
+    sm: '0 2px 8px rgba(64,57,44,.07)',
+    md: '0 8px 28px rgba(64,57,44,.09)',
+    lg: '0 14px 40px rgba(64,57,44,.13)',
+  },
+  pastel: {
+    sm: '0 2px 10px rgba(47,58,85,.05)',
+    md: '0 10px 34px rgba(47,58,85,.08)',
+    lg: '0 18px 50px rgba(47,58,85,.12)',
+  },
+  tech: {
+    sm: '0 2px 8px rgba(0,0,0,.35)',
+    md: '0 10px 36px rgba(0,0,0,.45)',
+    lg: '0 16px 48px rgba(0,0,0,.55)',
+  },
 };
 
 export const THEMES: Record<ThemeId, ThemeTokens> = {
@@ -39,6 +61,38 @@ export const THEMES: Record<ThemeId, ThemeTokens> = {
     line: '#23261d', line2: '#2e3323', grid: 'rgba(237,233,220,.05)',
     acc: '#c6f13f', neg: '#ff6b4a', pos: '#c6f13f', warn: '#ffb224',
     tip: '#ede9dc', tipInk: '#0d0e0a', shadow: SHADOWS.dark.md,
+  },
+  /** Minimal · 极简卡片：冷灰白底 + 细边框 + 蓝 accent（参考 shadcn new-york） */
+  minimal: {
+    bg: '#f8fafc', paper: '#ffffff', panel: '#ffffff',
+    ink: '#0f172a', muted: '#475569', faint: '#8291a8',
+    line: '#e2e8f0', line2: '#cbd5e1', grid: 'rgba(15,23,42,.05)',
+    acc: '#2563eb', neg: '#dc2626', pos: '#16a34a', warn: '#d97706',
+    tip: '#0f172a', tipInk: '#ffffff', shadow: SHADOWS.minimal.md,
+  },
+  /** Sketch · 手绘草图：暖纸底 + 蜡笔色 + 墨线（参考 roughviz） */
+  sketch: {
+    bg: '#f6efdd', paper: '#fdf8ec', panel: '#fdf8ec',
+    ink: '#40392c', muted: '#6e6353', faint: '#968a70',
+    line: '#ddd0b4', line2: '#cbbd97', grid: 'rgba(96,82,55,.09)',
+    acc: '#c05f3c', neg: '#b5433a', pos: '#56805a', warn: '#b98d2f',
+    tip: '#40392c', tipInk: '#fdf8ec', shadow: SHADOWS.sketch.md,
+  },
+  /** Pastel · 现代柔彩：浅蓝白底 + 低饱和柔和色块（参考 nivo） */
+  pastel: {
+    bg: '#f4f5fa', paper: '#ffffff', panel: '#ffffff',
+    ink: '#2f3a55', muted: '#5a6a8c', faint: '#8694b0',
+    line: '#e3e6f0', line2: '#cfd4e6', grid: 'rgba(47,58,85,.05)',
+    acc: '#7a6fd0', neg: '#d96a7f', pos: '#5aa98c', warn: '#d9a05b',
+    tip: '#2f3a55', tipInk: '#ffffff', shadow: SHADOWS.pastel.md,
+  },
+  /** Tech · 深色科技：深蓝灰底 + 适度明亮数据色（参考 Highcharts dark stock） */
+  tech: {
+    bg: '#0a1120', paper: '#101a30', panel: '#101a30',
+    ink: '#dbe6f7', muted: '#8fa1c4', faint: '#6b7a99',
+    line: '#1d2c4d', line2: '#2a3d68', grid: 'rgba(110,150,230,.09)',
+    acc: '#56c8f5', neg: '#ff7a7a', pos: '#4ade80', warn: '#fbbf24',
+    tip: '#1b2a4a', tipInk: '#dbe6f7', shadow: SHADOWS.tech.md,
   },
 };
 

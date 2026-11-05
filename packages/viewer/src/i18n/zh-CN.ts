@@ -3,6 +3,10 @@ export const ZH = {
   eyebrow: 'VIRTA',
   themeLight: '☀ 浅色',
   themeDark: '☾ 深色',
+  /** ADR-0008 主题中文名（theme id → seg 按钮文案） */
+  themeNames: {
+    light: '浅色', dark: '深色', minimal: '极简', sketch: '手绘', pastel: '柔彩', tech: '深色科技',
+  } as Record<string, string>,
   variant: '变体',
   palette: '配色',
   export: '导出',

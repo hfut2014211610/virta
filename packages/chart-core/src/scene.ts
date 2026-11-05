@@ -13,6 +13,8 @@ export interface DatumRef { kind: string; index: number; series?: string; label?
 interface Base {
   id?: string; fill?: Paint; stroke?: Paint; strokeWidth?: number;
   opacity?: number; dash?: number[]; clip?: string; shadow?: Shadow; datum?: DatumRef;
+  /** ADR-0008：描边端点形状（dot 网格等需要 round cap） */
+  linecap?: 'butt' | 'round' | 'square';
 }
 export type Node =
   | (Base & { type: 'group'; children: Node[]; transform?: [number, number, number, number, number, number] })

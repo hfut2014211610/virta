@@ -1,8 +1,9 @@
 // compose 运行期：多面板联动仪表盘（§5.7 组合页）。
 // links: [{column}] —— 任一面板点击类目 → 同列筛选写入共享 state.filter → 其余面板重新 adapt。
 import { hitTest, toSVG, type Scene } from '@virta/chart-core';
-import { getContract, THEMES, paletteColors } from './deps.js';
-import type { ViewSpec, Table } from '@virta/contracts';
+import { applySkin } from '@virta/chart-skin';
+import { THEME_IDS, resolveTheme } from './deps.js';
+import type { Theme, ViewSpec, Table } from '@virta/contracts';
 
 export interface ComposePanel {
   id: string;
@@ -16,7 +17,7 @@ export interface ComposePanel {
 export interface ComposePayload {
   title?: string;
   layout: 'grid' | 'story';
-  theme: 'light' | 'dark';
+  theme: Theme;
   palette: string;
   links: { column: string }[];
   panels: ComposePanel[];
@@ -54,7 +55,7 @@ export function bootCompose(payload: ComposePayload, views: Record<string, Compo
     const box = $(`#pbox-${i}`);
     const view = views[p.view];
     if (!box || !view) return;
-    const tokens = THEMES[theme];
+    const tokens = resolveTheme(theme);
     const width = Math.max(280, box.clientWidth || 560);
     const height = Math.max(220, Math.round(width * 0.56));
     const ft = filtered(p.table);
@@ -68,6 +69,7 @@ export function bootCompose(payload: ComposePayload, views: Record<string, Compo
       options: p.spec.options ?? {}, state: { ...p.spec.state, filter },
       format: p.spec.format, annotations: p.spec.annotations, text: p.spec.text,
     } as never);
+    applySkin(sc, tokens.skin);
     box.innerHTML = toSVG(sc);
     (box as HTMLElement & { __scene?: Scene }).__scene = sc;
     const svg = box.firstElementChild as SVGElement | null;
@@ -111,7 +113,8 @@ export function bootCompose(payload: ComposePayload, views: Record<string, Compo
   }
 
   $('#btn-theme')?.addEventListener('click', () => {
-    theme = theme === 'dark' ? 'light' : 'dark';
+    const i = THEME_IDS.indexOf(theme as never);
+    theme = THEME_IDS[(i + 1) % THEME_IDS.length]!;
     document.body.dataset['theme'] = theme;
     payload.panels.forEach((_, i) => renderPanel(i));
   });

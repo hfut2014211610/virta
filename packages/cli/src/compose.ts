@@ -4,12 +4,14 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { build } from 'esbuild';
 import type { PaletteId, Table, Theme, ViewId, ViewSpec } from '@virta/contracts';
+import { THEME_IDS } from '@virta/contracts';
 import { ADAPTERS, DOC_ADAPTER, rawToTable } from '@virta/data-engine';
 import { readInput } from '@virta/data-engine/node';
 import { getRenderer } from '@virta/charts';
 import { g, scene as mkScene, toSVG, type Node } from '@virta/chart-core';
 import { composeHtml, type ComposePayload } from '@virta/viewer';
-import { fontPath, THEMES } from '@virta/design-system';
+import { applySkin } from '@virta/chart-skin';
+import { fontPath, resolveTheme } from '@virta/design-system';
 import { Resvg } from '@resvg/resvg-js';
 import { fail } from './render.js';
 
@@ -114,7 +116,8 @@ export async function runComposeFile(cf: ComposeFileShape, dir: string, job: Com
   if (!defs.length) fail('EMPTY_DATA', 'compose.json 没有面板');
 
   const theme: Theme = cf!.theme ?? 'light';
-  const tokens = THEMES[theme];
+  if (!THEME_IDS.includes(theme)) fail('INVALID_SPEC', `未知主题 ${theme}`, `支持：${THEME_IDS.join(' | ')}`);
+  const tokens = resolveTheme(theme);
   const palette = cf!.palette ?? 'signal';
   const W = cf!.size?.width ?? 1440;
 
@@ -178,6 +181,7 @@ export async function runComposeFile(cf: ComposeFileShape, dir: string, job: Com
     children.push(g([...pn, ...sc.root.children]));
   });
   const sc = mkScene(W, H, children, tokens.paper);
+  applySkin(sc, tokens.skin);
   const svg = toSVG(sc);
 
   // 导出

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { contrastRatio, deltaE76 } from './oklch.js';
 import { PALETTE_IDS, PALETTES, rampDiverging, rampSequential } from './palettes.js';
-import { THEMES, type ThemeId } from './tokens.js';
+import { THEMES, THEME_IDS, type ThemeId } from './tokens.js';
 
 // mono/inkwash/morandi 依赖纹理与明度而非色相区分，豁免 ΔE 检查（§5.2 测试项注明）
 const DELTA_E_EXEMPT = new Set(['mono', 'inkwash', 'morandi']);
@@ -18,7 +18,7 @@ const PAIR_MIN_OVERRIDES = new Map<string, number>([
 ]);
 
 describe('主题语义色', () => {
-  for (const theme of ['light', 'dark'] as ThemeId[]) {
+  for (const theme of THEME_IDS) {
     const t = THEMES[theme];
     it(`${theme}: ink/muted/faint 在 paper 上满足对比度`, () => {
       expect(contrastRatio(t.ink, t.paper)).toBeGreaterThanOrEqual(4.5);
@@ -34,9 +34,9 @@ describe('主题语义色', () => {
 });
 
 describe('分类配色', () => {
-  it('10 套 × light/dark × 8 色', () => {
+  it('10 套 × 6 主题 × 8 色', () => {
     for (const id of PALETTE_IDS) {
-      for (const theme of ['light', 'dark'] as ThemeId[]) {
+      for (const theme of THEME_IDS) {
         expect(PALETTES[id][theme]).toHaveLength(8);
         for (const c of PALETTES[id][theme]) expect(c).toMatch(/^#[0-9a-f]{6}$/i);
       }
