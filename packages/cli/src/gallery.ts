@@ -257,11 +257,11 @@ export async function runGallery(job: GalleryJob): Promise<{ items: number; view
       if (r.png || r.light) items.push({ ...it, ...r });
       return true;
     };
-    // 1) pack 图表：同族内按变体去重——显式变体只留首张，无变体最多 2 张，避免同一形态堆叠
+    // 1) pack 图表：同族内按变体去重——显式变体只留首张，无变体最多 2 张，整族 pack 卡 ≤2 张
     const variantCount = new Map<string, number>();
     for (const p of packs) {
       for (const ch of p.charts) {
-        if (ch.spec?.view !== v) continue;
+        if (ch.spec?.view !== v || items.length >= 2) continue;
         const vk = ch.spec.variant ?? '';
         const n = variantCount.get(vk) ?? 0;
         if ((vk ? 1 : 2) <= n) continue;
@@ -273,13 +273,13 @@ export async function runGallery(job: GalleryJob): Promise<{ items: number; view
     }
     // 2) 图族示例：数据文件未出现才补卡（report 组因此同时呈现 pack 周报与 showcase 富文档）
     const ex = fam.get(v as string);
-    if (ex && items.length < 9) {
+    if (ex && items.length < 4) {
       const fk = `${ex.dir}/${ex.file}`;
       if (!seenFiles.has(fk)) await push({ ...ex, title: ex.doc ? '富文档排版示例' : c.title, sub: ex.sub });
     }
     // 3) 3D 并入：matrix3d→bar / line3d→line / scatter3d→scatter / pie3d→pie（先于变体/风格卡占位）
     for (const [v3, baseV] of Object.entries(MERGE_3D) as [ViewId, ViewId][]) {
-      if (baseV !== v || items.length >= 9) continue;
+      if (baseV !== v || items.length >= 4) continue;
       const c3 = getContract(v3), ex3 = fam.get(v3 as string);
       if (!c3 || !ex3) continue;
       await push({ ...ex3, key: `v-${v3}`, title: `${c3.title}（多维）`, sub: '三维视图', view: v3 }, `3d|${v3}|${ex3.file}|${ex3.dir}`);
@@ -292,7 +292,7 @@ export async function runGallery(job: GalleryJob): Promise<{ items: number; view
       const tryAdapt = (spec: ViewSpec) => { if (!t2) return false; try { ADAPTERS[v]?.adapt(t2, spec); return true; } catch { return false; } };
       const usedVariants = new Set(items.map((it) => it.spec?.variant).filter(Boolean));
       for (const vb of c.variants) {
-        if (usedVariants.has(vb.id) || items.length >= 9) break;
+        if (usedVariants.has(vb.id) || items.length >= 4) break;
         const spec: ViewSpec = { ...(base.spec ?? { version: 1, view: v }), view: v, variant: vb.id };
         if (!tryAdapt(spec)) continue;
         await push({ ...base, key: `st-${v}-${vb.id}`, title: `${c.title} · ${vb.label}`, sub: '变体', spec }, `var|${base.file}|${vb.id}`);
