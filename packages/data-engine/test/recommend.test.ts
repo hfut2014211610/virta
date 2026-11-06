@@ -56,6 +56,10 @@ const EXPECT: Record<string, { view: string; variant?: string; mode?: string }> 
   'sample-control.csv': { view: 'control' },
   'sample-parallel.csv': { view: 'parallel' },
   'sample-tree-levels.csv': { view: 'sunburst' },
+  'showcase-pie.csv': { view: 'bar' },
+  'showcase-sankey.csv': { view: 'sankey' },
+  'showcase-network.csv': { view: 'network' },
+  'showcase-tree.csv': { view: 'tree' },
 };
 
 const DOC_FILES = new Set(['sample-report.md', 'sample-note.txt', 'showcase-report.md']);

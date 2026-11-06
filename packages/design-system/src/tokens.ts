@@ -49,7 +49,7 @@ export const THEMES: Record<ThemeId, ThemeTokens> = {
   /** Meridian · 暖纸色 + 墨色 + 铜绿强调 */
   light: {
     bg: '#f6f3ec', paper: '#fffdf7', panel: '#fffdf7',
-    ink: '#171a1e', muted: '#6b6f6a', faint: '#8e928a',
+    ink: '#171a1e', muted: '#6b6f6a', faint: '#72766f',
     line: '#e2ded2', line2: '#d1ccc0', grid: 'rgba(23,26,30,.06)',
     acc: '#0f766e', neg: '#b5412f', pos: '#0f766e', warn: '#c69a4a',
     tip: '#171a1e', tipInk: '#fffdf7', shadow: SHADOWS.light.md,
@@ -57,7 +57,7 @@ export const THEMES: Record<ThemeId, ThemeTokens> = {
   /** Pulse · 炭黑底 + 荧光绿强调 */
   dark: {
     bg: '#0d0e0a', paper: '#131410', panel: '#131410',
-    ink: '#ede9dc', muted: '#9aa08a', faint: '#5e6450',
+    ink: '#ede9dc', muted: '#9aa08a', faint: '#7c8170',
     line: '#23261d', line2: '#2e3323', grid: 'rgba(237,233,220,.05)',
     acc: '#c6f13f', neg: '#ff6b4a', pos: '#c6f13f', warn: '#ffb224',
     tip: '#ede9dc', tipInk: '#0d0e0a', shadow: SHADOWS.dark.md,
@@ -65,7 +65,7 @@ export const THEMES: Record<ThemeId, ThemeTokens> = {
   /** Minimal · 极简卡片：冷灰白底 + 细边框 + 蓝 accent（参考 shadcn new-york） */
   minimal: {
     bg: '#f8fafc', paper: '#ffffff', panel: '#ffffff',
-    ink: '#0f172a', muted: '#475569', faint: '#8291a8',
+    ink: '#0f172a', muted: '#475569', faint: '#6a7689',
     line: '#e2e8f0', line2: '#cbd5e1', grid: 'rgba(15,23,42,.05)',
     acc: '#2563eb', neg: '#dc2626', pos: '#16a34a', warn: '#d97706',
     tip: '#0f172a', tipInk: '#ffffff', shadow: SHADOWS.minimal.md,
@@ -73,7 +73,7 @@ export const THEMES: Record<ThemeId, ThemeTokens> = {
   /** Sketch · 手绘草图：暖纸底 + 蜡笔色 + 墨线（参考 roughviz） */
   sketch: {
     bg: '#f6efdd', paper: '#fdf8ec', panel: '#fdf8ec',
-    ink: '#40392c', muted: '#6e6353', faint: '#968a70',
+    ink: '#40392c', muted: '#6e6353', faint: '#7a705b',
     line: '#ddd0b4', line2: '#cbbd97', grid: 'rgba(96,82,55,.09)',
     acc: '#c05f3c', neg: '#b5433a', pos: '#56805a', warn: '#b98d2f',
     tip: '#40392c', tipInk: '#fdf8ec', shadow: SHADOWS.sketch.md,
@@ -81,7 +81,7 @@ export const THEMES: Record<ThemeId, ThemeTokens> = {
   /** Pastel · 现代柔彩：浅蓝白底 + 低饱和柔和色块（参考 nivo） */
   pastel: {
     bg: '#f4f5fa', paper: '#ffffff', panel: '#ffffff',
-    ink: '#2f3a55', muted: '#5a6a8c', faint: '#8694b0',
+    ink: '#2f3a55', muted: '#5a6a8c', faint: '#6b768c',
     line: '#e3e6f0', line2: '#cfd4e6', grid: 'rgba(47,58,85,.05)',
     acc: '#7a6fd0', neg: '#d96a7f', pos: '#5aa98c', warn: '#d9a05b',
     tip: '#2f3a55', tipInk: '#ffffff', shadow: SHADOWS.pastel.md,
@@ -89,7 +89,7 @@ export const THEMES: Record<ThemeId, ThemeTokens> = {
   /** Tech · 深色科技：深蓝灰底 + 适度明亮数据色（参考 Highcharts dark stock） */
   tech: {
     bg: '#0a1120', paper: '#101a30', panel: '#101a30',
-    ink: '#dbe6f7', muted: '#8fa1c4', faint: '#6b7a99',
+    ink: '#dbe6f7', muted: '#8fa1c4', faint: '#7583a0',
     line: '#1d2c4d', line2: '#2a3d68', grid: 'rgba(110,150,230,.09)',
     acc: '#56c8f5', neg: '#ff7a7a', pos: '#4ade80', warn: '#fbbf24',
     tip: '#1b2a4a', tipInk: '#dbe6f7', shadow: SHADOWS.tech.md,

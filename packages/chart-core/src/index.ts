@@ -7,3 +7,4 @@ export * from './canvas.js';
 export * from './hit.js';
 export * from './labels.js';
 export * from './interpolate.js';
+export * from './linepath.js';

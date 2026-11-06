@@ -9,7 +9,7 @@ import { VIEW_IDS } from '../views.js';
 // （组 = template.html 里的 <span class="label">，themeSeg 在 header 不计入）。
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
-const TPL = path.join(REPO, 'legacy-vizscape', 'templates');
+const TPL = path.join(REPO, 'archive/legacy-vizscape', 'templates');
 
 /** 模板目录名 → view id（特例：bar-matrix→matrix3d；其余去 -basic 后缀） */
 function templateToView(dir: string): string {

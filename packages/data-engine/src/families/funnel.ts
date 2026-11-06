@@ -1,5 +1,5 @@
 // funnel.to_funnel 移植：行序 = 阶段序；step/cum/drop/drop_rate/worst。
-import { esc } from '../legacy-core.js';
+import { esc, parseNumber } from '../legacy-core.js';
 import { toChart, type Raw, type BarlineModel } from './barline.js';
 
 export interface FunnelStage {
@@ -10,13 +10,36 @@ export interface FunnelModel {
   stages: FunnelStage[]; top: number; bottom: number; overall: number;
   worst: { label: string; drop_rate: number; drop: number } | null;
   mode: unknown; mapping: Record<string, string>; series_n: number;
+  seriesStages?: { name: string; stages: { label: string; value: number; step: number | null }[] }[];
   quality: BarlineModel['quality']; kinds: string[];
 }
 
 export function toFunnel(raw: Raw): FunnelModel {
   const chart = toChart(raw);
-  const { labels, series } = chart;
-  const totals = labels.map((_, i) => series.reduce((a, s) => a + s.values[i], 0));
+  let { labels, series } = chart;
+  // 漏斗兜底：label + 第二文本维（月份/渠道等，不在通用 series 别名）+ 数值 → 当系列用，让 multi 变体可用
+  if (series.length <= 1 && Array.isArray(raw) && raw.length) {
+    const cols = Object.keys(raw[0] as Record<string, unknown>);
+    const labelKey = String(chart.quality.mapping.label ?? cols[0]);
+    const valueKey = cols.filter((c) => c !== labelKey).reverse().find((c) => raw.some((r) => parseNumber((r as Record<string, unknown>)[c])[1] === 'ok'));
+    const seriesKey = cols.find((c) => c !== labelKey && c !== valueKey && typeof (raw[0] as Record<string, unknown>)[c] === 'string');
+    if (seriesKey && valueKey) {
+      const labArr: string[] = [];
+      const cell = new Map<string, number>();
+      for (const r of raw as Record<string, unknown>[]) {
+        const lab = String(r[labelKey] ?? ''); if (!lab) continue;
+        if (!labArr.includes(lab)) labArr.push(lab);
+        const [v, st] = parseNumber(r[valueKey]);
+        if (st === 'ok' || st === 'percent') cell.set(`${lab}|${String(r[seriesKey] ?? '')}`, v);
+      }
+      const names = [...new Set(raw.map((r) => String((r as Record<string, unknown>)[seriesKey] ?? '')))].filter(Boolean);
+      if (names.length > 1) {
+        labels = labArr;
+        series = names.map((name) => ({ name, values: labArr.map((l) => cell.get(`${l}|${name}`) ?? 0) }));
+      }
+    }
+  }
+  const totals = labels.map((_, i) => series.reduce((a, s) => a + (s.values[i] ?? 0), 0));
   const warnings = [...chart.quality.warnings];
   const keep: number[] = [], neg: number[] = [], zero: number[] = [];
   totals.forEach((v, i) => {
@@ -56,6 +79,15 @@ export function toFunnel(raw: Raw): FunnelModel {
     overall: top ? keptVals[keptVals.length - 1] / top : 0,
     worst: worst ? { label: worst.label, drop_rate: worst.drop_rate, drop: worst.drop } : null,
     mode: chart.quality.mode, mapping: chart.quality.mapping,
-    series_n: series.length, quality: chart.quality, kinds: chart.kinds,
+    series_n: series.length,
+    seriesStages: series.length > 1 ? series.map((s) => ({
+      name: s.name,
+      stages: keep.map((ki, i) => {
+        const v = s.values[ki] ?? 0;
+        const prev = i ? s.values[keep[i - 1]] : null;
+        return { label: keptLabels[i], value: v, step: prev ? v / prev : null };
+      }),
+    })) : undefined,
+    quality: chart.quality, kinds: chart.kinds,
   };
 }

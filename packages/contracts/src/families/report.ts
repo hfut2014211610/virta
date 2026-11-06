@@ -25,4 +25,5 @@ export const CONTRACT_REPORT: ChartContract = {
   example: { csv: '' },
   staticExport: true,
   legacyTemplate: 'report-basic',
+  flow: true,
 };

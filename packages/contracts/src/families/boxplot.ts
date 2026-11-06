@@ -28,6 +28,12 @@ export const CONTRACT_BOXPLOT: ChartContract = {
       description: 'observations 模式叠加抖动散点' },
     { key: 'mean', label: '均值', type: 'boolean', group: 'display', static: true, default: true,
       description: '叠加均值菱形标记' },
+    { key: 'valueLabels', label: '数值标注', type: 'boolean', group: 'display', static: true, default: false,
+      description: '中位数/箱沿/须端数值' },
+    { key: 'texture', label: '纹理', type: 'enum', group: 'style', static: true, default: 'none',
+      values: [{ value: 'none', label: '无' }, { value: 'hatch', label: '斜纹' }, { value: 'dots', label: '点纹' }, { value: 'grid', label: '网格' }] },
+    { key: 'colorMode', label: '配色', type: 'enum', group: 'style', static: true, default: 'multi',
+      values: [{ value: 'multi', label: '多色' }, { value: 'mono', label: '单色' }, { value: 'gradient', label: '渐变' }] },
   ],
   inference: [
     'type-7 分位数',

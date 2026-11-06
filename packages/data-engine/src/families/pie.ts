@@ -14,7 +14,7 @@ export interface PieModel {
 export function toPie(raw: Raw): PieModel {
   const chart = toChart(raw);
   const { labels, series } = chart;
-  const totals = labels.map((_, i) => series.reduce((a, s) => a + s.values[i], 0));
+  const totals = labels.map((_, i) => series.reduce((a, s) => a + (s.values[i] ?? 0), 0));
   const warnings = [...chart.quality.warnings];
   const keepIdx: number[] = [], negIdx: number[] = [], zeroIdx: number[] = [];
   totals.forEach((v, i) => {

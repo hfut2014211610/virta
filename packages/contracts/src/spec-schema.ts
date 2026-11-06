@@ -57,6 +57,7 @@ export const VIEW_SPEC_SCHEMA = {
         azimuth: { type: 'number' },
         tilt: { type: 'number' },
         zoom: { type: 'number' },
+        explode: { type: 'number' },
         time: { type: ['string', 'number'] },
       },
     },

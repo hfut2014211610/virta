@@ -3,7 +3,8 @@ import {
   firstKey, LABEL_ALIASES, normKey, parseGanttDate, parseNumber, TYPE_ALIAS,
 } from '../legacy-core.js';
 import {
-  GANTT_DEPS_ALIAS, GANTT_DUR_ALIAS, GANTT_END_ALIAS, GANTT_GROUP_ALIAS,
+  GANTT_ACTUAL_ALIAS, GANTT_BASELINE_ALIAS, GANTT_DEPS_ALIAS, GANTT_DUR_ALIAS,
+  GANTT_END_ALIAS, GANTT_GROUP_ALIAS,
   GANTT_MILESTONE_TOKENS, GANTT_OWNER_ALIAS, GANTT_PROGRESS_ALIAS, GANTT_START_ALIAS,
   GANTT_STATUS_ALIAS, GANTT_STATUS_MAP, GANTT_TASK_ALIAS,
 } from '../aliases.js';
@@ -17,12 +18,24 @@ const cell = (v: unknown) => (v !== null && v !== undefined && v !== '' ? String
 interface GItem {
   label: string; group: string; s: number; s_date: boolean;
   e: number | null; e_date: boolean; dur: number | null;
+  /** A8：基线截止（原计划）/ 实际完成日 */
+  b_e: number | null; b_e_date: boolean; act: number | null; act_date: boolean;
   milestone: boolean; progress: number | null; status: string | null;
   owner: string; deps_raw: string; deps?: number[];
 }
 export interface GanttModel {
   tasks: { i: number; label: string; group: string; s: number; e: number; dur: number;
+           /** 基线截止（同相对天坐标系）；null=无基线 */
+           baseline: number | null;
+           /** 实际完成日；null=未上报 */
+           actual: number | null;
+           /** 当前截止 − 基线截止（正=滑期）；无基线为 null */
+           slipDays: number | null;
+           /** 实际完成 − 当前截止（正=晚于计划；实际缺失时用今日线计逾期） */
+           lateDays: number | null;
            progress: number | null; status: string | null; milestone: boolean; owner: string; deps: number[] }[];
+  /** 数据中是否存在 baseline / actual 列 */
+  hasBaseline: boolean; hasActual: boolean;
   groups: string[]; base: string | null; baseOrd: number | null; span: number; today: number | null;
   counts: { milestones: number; delayed: number; avg_progress: number | null; deps: number };
   quality: { rows: number; kept: number; warnings: string[]; confidence: string; mapping: Record<string, string> };
@@ -41,6 +54,8 @@ export function toGantt(raw: Raw): GanttModel {
   const statusKey = firstKey(sample, GANTT_STATUS_ALIAS);
   const ownerKey = firstKey(sample, GANTT_OWNER_ALIAS);
   const depsKey = firstKey(sample, GANTT_DEPS_ALIAS);
+  const baselineKey = firstKey(sample, GANTT_BASELINE_ALIAS);
+  const actualKey = firstKey(sample, GANTT_ACTUAL_ALIAS);
   const typeKey = firstKey(sample, TYPE_ALIAS);
   if (groupKey && groupKey === taskKey) groupKey = null;
   if (!startKey) throw new Error('未找到开始时间列（start / 开始 / 开始日期）；甘特图至少需要 任务 + 开始（+ 结束或工期）');
@@ -60,6 +75,16 @@ export function toGantt(raw: Raw): GanttModel {
     if (durKey) {
       const [dv, dst] = parseNumber(row[durKey]);
       if ((dst === 'ok' || dst === 'percent') && dv >= 0) durV = dv;
+    }
+    let bOrd: number | null = null, bOff: number | null = null, bSt = 'missing';
+    if (baselineKey) {
+      [bOrd, bOff, bSt] = parseGanttDate(row[baselineKey]);
+      if (bSt === 'invalid') bSt = 'missing';
+    }
+    let aOrd: number | null = null, aOff: number | null = null, aSt = 'missing';
+    if (actualKey) {
+      [aOrd, aOff, aSt] = parseGanttDate(row[actualKey]);
+      if (aSt === 'invalid') aSt = 'missing';
     }
     let milestone = false;
     if (typeKey && GANTT_MILESTONE_TOKENS.has(normKey(row[typeKey]))) { milestone = true; msByType += 1; }
@@ -85,6 +110,8 @@ export function toGantt(raw: Raw): GanttModel {
       group: groupKey && cell(row[groupKey]) ? cell(row[groupKey]) : '未分组',
       s: sSt === 'date' ? sOrd! : sOff!, s_date: sSt === 'date',
       e: eSt === 'date' ? eOrd : eSt === 'offset' ? eOff : null, e_date: eSt === 'date',
+      b_e: bSt === 'date' ? bOrd : bSt === 'offset' ? bOff : null, b_e_date: bSt === 'date',
+      act: aSt === 'date' ? aOrd : aSt === 'offset' ? aOff : null, act_date: aSt === 'date',
       dur: durV, milestone, progress: prog, status,
       owner: ownerKey ? cell(row[ownerKey]) : '',
       deps_raw: depsKey ? cell(row[depsKey]) : '',
@@ -111,6 +138,9 @@ export function toGantt(raw: Raw): GanttModel {
         x.e = base0 + x.e;
         mixed += 1;
       }
+      // baseline/actual 的相对天数同样对齐到 base0
+      if (x.b_e !== null && !x.b_e_date) x.b_e += base0;
+      if (x.act !== null && !x.act_date) x.act += base0;
     }
     if (mixed) warnings.push(`${mixed} 处使用相对天数，已按「最早日期 + N 天」对齐`);
   }
@@ -124,8 +154,12 @@ export function toGantt(raw: Raw): GanttModel {
     if (x.e === x.s) x.milestone = true;
   }
   const minS = Math.min(...items.map((x) => x.s));
-  for (const x of items) { x.s -= minS; x.e! -= minS; }
-  const span = Math.max(...items.map((x) => x.e!)) + 1;
+  for (const x of items) {
+    x.s -= minS; x.e! -= minS;
+    if (x.b_e !== null) x.b_e -= minS;
+    if (x.act !== null) x.act -= minS;
+  }
+  const span = Math.max(...items.map((x) => Math.max(x.e!, x.b_e ?? 0, x.act ?? 0))) + 1;
   const baseOrd = hasReal ? Math.floor(minS) : null;
   const baseIso = hasReal ? isoOf(baseOrd!) : null;
   let today: number | null = null;
@@ -169,11 +203,19 @@ export function toGantt(raw: Raw): GanttModel {
   const progs = items.filter((x) => x.progress !== null).map((x) => x.progress!);
   const avgProg = progs.length ? progs.reduce((a, b) => a + b, 0) / progs.length : null;
   return {
-    tasks: items.map((x, i) => ({
-      i, label: x.label, group: x.group, s: x.s, e: x.e!, dur: x.e! - x.s,
-      progress: x.progress, status: x.status, milestone: x.milestone,
-      owner: x.owner, deps: x.deps!,
-    })),
+    tasks: items.map((x, i) => {
+      // lateDays：有实际 → 实际−当前截止；无实际且有今日线 → max(0, 今日−截止)
+      const late = x.act !== null ? x.act - x.e! : (today !== null ? Math.max(0, today - x.e!) : null);
+      return {
+        i, label: x.label, group: x.group, s: x.s, e: x.e!, dur: x.e! - x.s,
+        baseline: x.b_e, actual: x.act,
+        slipDays: x.b_e !== null ? x.e! - x.b_e : null,
+        lateDays: late,
+        progress: x.progress, status: x.status, milestone: x.milestone,
+        owner: x.owner, deps: x.deps!,
+      };
+    }),
+    hasBaseline: baselineKey !== null, hasActual: actualKey !== null,
     groups, base: baseIso, baseOrd, span: Math.floor(span), today,
     counts: {
       milestones: items.filter((x) => x.milestone).length,
@@ -187,6 +229,7 @@ export function toGantt(raw: Raw): GanttModel {
       mapping: {
         task: taskKey ?? '?', start: startKey,
         end: endKey ?? (durKey ? `${durKey}（工期）` : '—（里程碑）'),
+        baseline: baselineKey ?? '—', actual: actualKey ?? '—',
         group: groupKey ?? '—', progress: progKey ?? '—',
         status: statusKey ?? '—', deps: depsKey ?? '—',
       },

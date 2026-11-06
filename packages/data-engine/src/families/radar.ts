@@ -48,21 +48,21 @@ export function toRadar(raw: Raw): RadarModel {
   }
   const nax = labels.length;
   if (nax < 3) throw new Error(`雷达图至少需要 3 个轴（当前 ${nax} 个）；请提供 ≥3 行数据，每行是一个维度轴`);
-  const axisMax = labels.map((_, i) => (series.length ? Math.max(...series.map((s) => s.values[i])) : 0));
-  const negAxes = labels.filter((_, i) => series.some((s) => s.values[i] < 0));
+  const axisMax = labels.map((_, i) => (series.length ? Math.max(...series.map((s) => (s.values[i] ?? 0))) : 0));
+  const negAxes = labels.filter((_, i) => series.some((s) => (s.values[i] ?? 0) < 0));
   const warnings = [...chart.quality.warnings];
   if (negAxes.length) {
     warnings.push(`${negAxes.length} 个轴含负值（${negAxes.slice(0, 3).join(', ')}），归一化时按该轴最小值平移，占比仅在该轴内可比`);
   }
   const axes: RadarAxis[] = labels.map((lab, i) => {
     const vals = series.map((s) => s.values[i]);
-    const mn = Math.min(...vals);
+    const mn = Math.min(...vals.map((v) => v ?? 0));
     return { label: lab, max: axisMax[i], min: mn < 0 ? mn : 0 };
   });
   const items: RadarItem[] = series.map((s) => {
-    const pts = axes.map((a, i) => norm(a, s.values[i]));
+    const pts = axes.map((a, i) => norm(a, s.values[i] ?? 0));
     return {
-      name: s.name, values: s.values, norm: pts,
+      name: s.name, values: s.values.map((v) => v ?? 0), norm: pts,
       area: polyArea(pts), avg: pts.reduce((a, b) => a + b, 0) / nax,
       min_i: pts.indexOf(Math.min(...pts)), max_i: pts.indexOf(Math.max(...pts)),
     };

@@ -9,6 +9,7 @@ export const ZH = {
   } as Record<string, string>,
   variant: '变体',
   palette: '配色',
+  preset: '预设色',
   export: '导出',
   settings: '⚙ 选项',
   fullscreen: '⛶ 全屏',

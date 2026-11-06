@@ -1,6 +1,6 @@
 import type { ChartContract } from '../contract.js';
 
-// bar-basic：分组/堆叠/100%堆叠/Pareto/瀑布 + 11 表面 + 9 形状 + 伪3D
+// bar-basic：分组/堆叠/100%堆叠/Pareto/瀑布 + 3 表面 × 3 配色 + 3 形状 + 伪3D
 export const CONTRACT_BAR: ChartContract = {
   version: 1,
   view: 'bar',
@@ -21,22 +21,21 @@ export const CONTRACT_BAR: ChartContract = {
     { id: 'waterfall', label: '瀑布', description: '增减贡献桥，absolute 行为锚点/小计' },
   ],
   options: [
-    { key: 'finish', label: '表面', type: 'enum', group: 'style', static: true, default: 'gradient',
+    { key: 'missingValue', label: '缺失值', type: 'enum', group: 'data', static: true, default: 'gap',
+      values: [{ value: 'gap', label: '留空' }, { value: 'zero', label: '补 0' }],
+      description: '未观测点（无行/空值）默认不绘制；zero 恢复补 0' },
+    { key: 'finish', label: '表面', type: 'enum', group: 'style', static: true, default: 'flat',
       values: [
-        { value: 'gradient', label: '渐变' }, { value: 'flat', label: '纯色' }, { value: 'outline', label: '描边' },
-        { value: 'hatch', label: '斜纹' }, { value: 'glass', label: '玻璃' }, { value: 'papercut', label: '纸雕' },
-        { value: 'ribbed', label: '竖纹' }, { value: 'dotted', label: '点阵' }, { value: 'metal', label: '金属' },
-        { value: 'neon', label: '霓虹' }, { value: 'carve', label: '浮雕' },
-      ], description: '柱体表面质感；hatch/dotted/outline 适合不依赖颜色的场景' },
-    { key: 'colorBy', label: '着色', type: 'enum', group: 'style', static: true, default: 'series',
+        { value: 'flat', label: '纯色' }, { value: 'outline', label: '描边' }, { value: 'hatch', label: '斜纹' },
+      ], description: '柱体表面质感；hatch 适合不依赖颜色的场景' },
+    { key: 'colorMode', label: '配色', type: 'enum', group: 'style', static: true, default: 'gradient',
       values: [
-        { value: 'series', label: '按系列' }, { value: 'value', label: '按数值' },
-      ], description: '按数值着色即色阶（顺序色带，|值| 越大越饱和）；瀑布图保持涨跌语义色' },
+        { value: 'mono', label: '单色' }, { value: 'gradient', label: '渐变' },
+        { value: 'multi', label: '多色' }, { value: 'value', label: '按数值' },
+      ], description: '单色=预设主色；渐变=系列色纵向渐变；多色=系列色平涂；按数值=顺序色阶（|值| 越大越饱和）。预设色板为二级输入 spec.palette' },
     { key: 'shape', label: '形状', type: 'enum', group: 'style', static: true, default: 'round',
       values: [
         { value: 'round', label: '圆角' }, { value: 'rect', label: '直角' }, { value: 'pill', label: '胶囊' },
-        { value: 'dome', label: '穹顶' }, { value: 'taper', label: '梯形' }, { value: 'skew', label: '斜切' },
-        { value: 'crystal', label: '尖顶' }, { value: 'barrel', label: '收腰' }, { value: 'notch', label: '缺口' },
       ], description: '柱体轮廓；伪 3D 仅 round/rect 且 grouped/stacked/pct 时可用' },
     { key: 'depth3d', label: '伪 3D', type: 'boolean', group: 'style', static: true, default: false,
       description: '侧向厚度立体效果；非 round/rect 形状或 pareto/waterfall 时自动关闭' },
@@ -46,10 +45,10 @@ export const CONTRACT_BAR: ChartContract = {
   inference: [
     '数值列 = 解析率 ≥80% 的列',
     '重复 label+series 组合求和并警告',
-    '缺失/NA 按 0 计并警告',
-    'label 命中时间格式时推荐引擎给 line 加分',
+    '缺失/NA 默认不绘制（gap），可设 options.missingValue=zero 恢复补 0line 加分',
     '百分号保留原刻度（10% = 10）并警告',
     'pct/pareto 在可见系列含负值时禁用并回退 grouped',
+    'colorMode=value（按数值）时斜纹失效；waterfall 锁定涨跌语义色；渐变需纯色底（描边/斜纹下回退多色）',
   ],
   example: { csv: '月份,产品A,产品B\n1月,120,80\n2月,150,95' },
   staticExport: true,

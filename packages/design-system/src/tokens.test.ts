@@ -23,7 +23,7 @@ describe('主题语义色', () => {
     it(`${theme}: ink/muted/faint 在 paper 上满足对比度`, () => {
       expect(contrastRatio(t.ink, t.paper)).toBeGreaterThanOrEqual(4.5);
       expect(contrastRatio(t.muted, t.paper)).toBeGreaterThanOrEqual(4.5);
-      expect(contrastRatio(t.faint, t.paper)).toBeGreaterThanOrEqual(3.0);
+      expect(contrastRatio(t.faint, t.paper)).toBeGreaterThanOrEqual(4.5);
     });
     it(`${theme}: 必要语义色齐全`, () => {
       for (const k of ['bg', 'paper', 'ink', 'muted', 'faint', 'line', 'line2', 'grid', 'acc', 'neg', 'pos', 'tip', 'tipInk', 'shadow'] as const) {

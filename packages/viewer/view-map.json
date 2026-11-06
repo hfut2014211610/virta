@@ -179,5 +179,35 @@
     "renderer": "parallelRenderer",
     "adapter": "families/t2",
     "toModel": "toParallel"
+  },
+  "er": {
+    "charts": "t3",
+    "renderer": "erRenderer",
+    "adapter": "families/t3",
+    "toModel": "toEr"
+  },
+  "flowchart": {
+    "charts": "t3",
+    "renderer": "flowchartRenderer",
+    "adapter": "families/t3",
+    "toModel": "toFlowchart"
+  },
+  "sequence": {
+    "charts": "t3",
+    "renderer": "sequenceRenderer",
+    "adapter": "families/t3",
+    "toModel": "toSequence"
+  },
+  "burndown": {
+    "charts": "t3",
+    "renderer": "burndownRenderer",
+    "adapter": "families/t3",
+    "toModel": "toBurndown"
+  },
+  "formula": {
+    "charts": "t3",
+    "renderer": "formulaRenderer",
+    "adapter": "families/t3",
+    "toModel": "toFormula"
   }
 }

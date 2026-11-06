@@ -14,6 +14,11 @@ export const CONTRACT_LINE: ChartContract = {
   ],
   variants: [],
   options: [
+    { key: 'missingValue', label: '缺失值', type: 'enum', group: 'data', static: true, default: 'gap',
+      values: [{ value: 'gap', label: '留空' }, { value: 'zero', label: '补 0' }],
+      description: '未观测点（无行/空值）默认不绘制；zero 恢复补 0' },
+    { key: 'connectGaps', label: '连接缺口', type: 'boolean', group: 'display', static: true, default: false,
+      description: '缺口处用虚线连接相邻观测段' },
     { key: 'lineStyle', label: '线形', type: 'enum', group: 'view', static: true, default: 'smooth',
       values: [
         { value: 'smooth', label: '平滑' }, { value: 'straight', label: '直线' }, { value: 'step', label: '阶梯' },
@@ -45,7 +50,7 @@ export const CONTRACT_LINE: ChartContract = {
     '数值列 = 解析率 ≥80% 的列',
     'label 命中时间格式 → 时间轴语义，推荐时 ≥12 个点加分',
     '重复 label+series 组合求和并警告',
-    '缺失/NA 按 0 计并警告',
+    '缺失/NA 默认不绘制（gap），可设 options.missingValue=zero 恢复补 0',
   ],
   example: { csv: '月份,线上,线下\n1月,420,300\n2月,460,330' },
   staticExport: true,

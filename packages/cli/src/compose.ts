@@ -4,8 +4,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { build } from 'esbuild';
 import type { PaletteId, Table, Theme, ViewId, ViewSpec } from '@virta/contracts';
-import { THEME_IDS } from '@virta/contracts';
-import { ADAPTERS, DOC_ADAPTER, rawToTable } from '@virta/data-engine';
+import { getContract, THEME_IDS } from '@virta/contracts';
+import { ADAPTERS, adaptInput, rawToTable } from '@virta/data-engine';
 import { readInput } from '@virta/data-engine/node';
 import { getRenderer } from '@virta/charts';
 import { g, scene as mkScene, toSVG, type Node } from '@virta/chart-core';
@@ -44,9 +44,7 @@ function composeEntrySource(views: string[]): string {
     return `import { ${m.renderer} as R${i} } from './packages/charts/src/${m.charts}.js';
 import { ${m.toModel} as A${i} } from './packages/data-engine/src/${m.adapter}.js';`;
   }).join('\n');
-  const map = uniq.map((v, i) => v === 'report'
-    ? `${JSON.stringify(v)}:{renderer:R${i},buildDoc:(t:string,n:string)=>A${i}(t,n)}`
-    : `${JSON.stringify(v)}:{renderer:R${i},adapt:(t:{passthrough?:{kind:string;data:unknown};rows:unknown})=>A${i}(t.passthrough?.kind==='echarts'?{__echarts:t.passthrough.data}:t.rows)}`
+  const map = uniq.map((v, i) => `${JSON.stringify(v)}:{renderer:R${i},flow:${getContract(v as never)?.flow === true},adapt:(i:{table?:{passthrough?:{kind:string;data:unknown};rows:unknown};doc?:string})=>i.doc!==undefined?A${i}(i.doc,'doc'):A${i}(i.table!.passthrough?.kind==='echarts'?{__echarts:i.table!.passthrough.data}:i.table!.rows)}`
   ).join(',');
   return `import { bootCompose } from './packages/viewer/src/runtime-compose.js';
 ${imps}
@@ -90,7 +88,7 @@ export interface ComposeFileShape {
   links?: { column: string }[];
 }
 
-export async function runCompose(job: ComposeJob): Promise<{ files: { format: string; path: string; bytes: number }[]; payload: ComposePayload; panels: number; views: string[] }> {
+export async function runCompose(job: ComposeJob): Promise<{ files: { format: string; path: string; bytes: number }[]; payload: ComposePayload; panels: number; panelResults: { id: string; rendered: boolean; error?: string }[]; views: string[] }> {
   const cjPath = job.file;
   if (!existsSync(cjPath)) fail('INPUT_NOT_FOUND', `compose.json 不存在：${cjPath}`);
   let cf: ComposeFileShape;
@@ -100,7 +98,7 @@ export async function runCompose(job: ComposeJob): Promise<{ files: { format: st
 }
 
 /** 直接以内存 ComposeFile 运行（demo 等调用方用）；dir 用于解析 pack.json 与数据文件。 */
-export async function runComposeFile(cf: ComposeFileShape, dir: string, job: ComposeJob): Promise<{ files: { format: string; path: string; bytes: number }[]; payload: ComposePayload; panels: number; views: string[] }> {
+export async function runComposeFile(cf: ComposeFileShape, dir: string, job: ComposeJob): Promise<{ files: { format: string; path: string; bytes: number }[]; payload: ComposePayload; panels: number; panelResults: { id: string; rendered: boolean; error?: string }[]; views: string[] }> {
   const packPath = join(dir, 'pack.json');
   const pack: PackJson | null = existsSync(packPath) ? JSON.parse(readFileSync(packPath, 'utf8')) as PackJson : null;
   const defs: (ComposePanelDef & { file: string; spec: ViewSpec })[] = [];
@@ -121,9 +119,9 @@ export async function runComposeFile(cf: ComposeFileShape, dir: string, job: Com
   const palette = cf!.palette ?? 'signal';
   const W = cf!.size?.width ?? 1440;
 
-  // 逐面板：读数 → adapt → 记录 payload/模型
+  // 逐面板：读数 → adaptInput（A7 统一入口）→ 预渲染校验（rendered/error，F5）
   const views: string[] = [];
-  const panelData: { id: string; view: ViewId; spec: ViewSpec; table: Table; doc?: string; question?: string; insights: ComposePayload['panels'][0]['insights']; model: unknown; w?: number; h?: number }[] = [];
+  const panelData: { id: string; view: ViewId; spec: ViewSpec; table: Table; doc?: string; question?: string; insights: ComposePayload['panels'][0]['insights']; model: unknown; w?: number; h?: number; rendered: boolean; error?: string; flow: boolean }[] = [];
   for (const [i, d] of defs.entries()) {
     const fpath = join(dir, d.file);
     if (!existsSync(fpath)) fail('INPUT_NOT_FOUND', `面板 ${i} 数据文件不存在：${fpath}`);
@@ -134,25 +132,35 @@ export async function runComposeFile(cf: ComposeFileShape, dir: string, job: Com
     views.push(view);
     const renderer = getRenderer(view);
     if (!renderer) fail('UNKNOWN_VIEW', `面板 ${i} 视图 ${view} 无渲染器`);
-    if (loaded.docText !== undefined) {
-      if (view !== 'report') fail('UNSUPPORTED_FORMAT', `面板 ${i} 文档输入仅支持 report 视图`);
-      const dm = DOC_ADAPTER.buildDoc(loaded.docText, d.file);
-      panelData.push({ id: d.chart ?? `p${i}`, view, spec, table: { columns: [], rows: [], source: { name: d.file, format: 'md', rows: 0 } }, doc: loaded.docText, question: d.question, insights: [], model: dm, w: d.w, h: d.h });
-      continue;
+    if (loaded.docText === undefined && !ADAPTERS[view]) fail('UNKNOWN_VIEW', `面板 ${i} 视图 ${view} 无适配器`);
+    const flow = getContract(view)?.flow === true;
+    const table = loaded.docText === undefined ? rawToTable(loaded.result!.raw as never, loaded.source) : { columns: [], rows: [], source: { name: d.file, format: 'md' as const, rows: 0 } };
+    const entry: { id: string; view: ViewId; spec: ViewSpec; table: Table; doc?: string; question?: string; insights: ComposePayload['panels'][0]['insights']; model: unknown; w?: number; h?: number; rendered: boolean; error?: string; flow: boolean } =
+      { id: d.chart ?? `p${i}`, view, spec, table, doc: loaded.docText, question: d.question, insights: [], model: undefined, w: d.w, h: d.h, rendered: true, flow };
+    try {
+      const out = adaptInput({ table: loaded.docText === undefined ? table : undefined, doc: loaded.docText, name: d.file }, view, spec);
+      entry.model = out.model;
+      entry.insights = out.insights;
+      // CLI 端预渲染：布局一遍确认面板可渲（避免「CLI 成功但 HTML 坏」）
+      renderer!.layout(out.model as never, {
+        width: 560, height: 320, plot: { x: 0, y: 0, w: 560, h: 320 },
+        theme, palette, tokens, variant: spec.variant, mode: spec.mode,
+        options: spec.options ?? {}, state: spec.state, format: spec.format,
+        annotations: spec.annotations, text: spec.text,
+      } as never);
+    } catch (e) {
+      entry.rendered = false;
+      entry.error = (e as Error).message;
     }
-    const table = rawToTable(loaded.result!.raw as never, loaded.source);
-    const adapter = ADAPTERS[view];
-    if (!adapter) fail('UNKNOWN_VIEW', `面板 ${i} 视图 ${view} 无适配器`);
-    const { model } = adapter!.adapt(table, spec);
-    const insights = adapter!.insights(model, spec);
-    panelData.push({ id: d.chart ?? `p${i}`, view, spec, table, question: d.question, insights, model, w: d.w, h: d.h });
+    panelData.push(entry);
   }
 
-  // 布局合并
+  // 布局合并：flow 面板在 grid 布局下独占整行（ADR-0009/§4.4）
   const isGrid = (cf!.layout ?? 'grid') === 'grid';
   const padX = 24, topY = 92;
+  const layoutDefs = defs.map((d, i) => ({ w: panelData[i]?.flow ? 12 : d.w, h: d.h }));
   const { rects, bottom } = isGrid
-    ? packGrid(defs, W, topY, padX)
+    ? packGrid(layoutDefs, W, topY, padX)
     : packStory(defs, W, topY, padX);
   const H = bottom + 24;
   const children: Node[] = [
@@ -170,6 +178,11 @@ export async function runComposeFile(cf: ComposeFileShape, dir: string, job: Com
     const first = p.insights[0];
     if (first) pn.push({ type: 'text', x: r.x + 14, y: ty + 24, text: `◆ ${first.text}`, font: 'body', size: 10.5, baseline: 'top', fill: tokens.muted });
     const inner = { x: r.x + 12, y: ty + (first ? 42 : 28), w: r.w - 24, h: r.h - (ty + (first ? 42 : 28) - r.y) - 12 };
+    if (!p.rendered) {
+      pn.push({ type: 'text', x: inner.x + 10, y: inner.y + 20, text: `✗ 面板渲染失败：${p.error}`, font: 'body', size: 12, baseline: 'top', fill: tokens.warn });
+      children.push(g(pn));
+      return;
+    }
     const rend = getRenderer(p.view)!;
     const sc = rend.layout(p.model as never, {
       width: inner.w, height: inner.h, plot: inner,
@@ -203,7 +216,7 @@ export async function runComposeFile(cf: ComposeFileShape, dir: string, job: Com
       const payload: ComposePayload = {
         title: cf!.title, layout: cf!.layout ?? 'grid', theme, palette,
         links: cf!.links ?? [],
-        panels: panelData.map((p) => ({ id: p.id, view: p.view, spec: p.spec, table: p.table, doc: p.doc, question: p.question, insights: p.insights, w: p.w, h: p.h })),
+        panels: panelData.map((p) => ({ id: p.id, view: p.view, spec: p.spec, table: p.table, doc: p.doc, question: p.question, insights: p.insights, w: p.w, h: p.h, flow: p.flow })),
       };
       const res = await build({
         stdin: { contents: composeEntrySource(views), resolveDir: process.cwd(), loader: 'ts' },
@@ -217,7 +230,13 @@ export async function runComposeFile(cf: ComposeFileShape, dir: string, job: Com
       files.push({ format: 'html', path, bytes: 0 });
     }
   }
-  return { files, payload: { title: cf!.title, layout: cf!.layout ?? 'grid', theme, palette, links: cf!.links ?? [], panels: panelData.map((p) => ({ id: p.id, view: p.view, spec: p.spec, table: p.table, doc: p.doc, question: p.question, insights: p.insights, w: p.w, h: p.h })) }, panels: panelData.length, views: [...new Set(views)] };
+  return {
+    files,
+    payload: { title: cf!.title, layout: cf!.layout ?? 'grid', theme, palette, links: cf!.links ?? [], panels: panelData.map((p) => ({ id: p.id, view: p.view, spec: p.spec, table: p.table, doc: p.doc, question: p.question, insights: p.insights, w: p.w, h: p.h, flow: p.flow })) },
+    panels: panelData.length,
+    panelResults: panelData.map((p) => ({ id: p.id, rendered: p.rendered, error: p.error })),
+    views: [...new Set(views)],
+  };
 }
 
 export const stemOfCompose = (p: string) => p.replace(/\\/g, '/').split('/').pop()!.replace(/\.[^.]+$/, '');

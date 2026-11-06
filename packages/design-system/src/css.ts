@@ -52,6 +52,7 @@ h1 em{font-style:normal;color:var(--acc);font-weight:500}
 .seg{display:flex;background:var(--paper);border:1px solid var(--line2);border-radius:99px;padding:3px;box-shadow:var(--shadow)}
 .seg button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:13px;padding:8px 14px;border-radius:99px;cursor:pointer}
 .seg button.on{background:var(--ink);color:var(--paper)}
+.seg button:disabled,.toggle:disabled{opacity:.38;cursor:not-allowed}
 .deck{display:flex;flex-direction:column;gap:10px;margin:16px 0}
 .trow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-panel,16px);padding:9px 12px}
 .trow .label{min-width:34px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}

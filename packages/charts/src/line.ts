@@ -1,7 +1,7 @@
 // line 图族 layout：smooth/straight/step × none/area/stack × window × marker × endLabels。
 import type { ViewId } from '@virta/contracts';
 import type { Node, Scene } from '@virta/chart-core';
-import { g, measureText, scaleLinear, scalePoint, scene } from '@virta/chart-core';
+import { g, linePath as segPath, scaleLinear, scalePoint, scene } from '@virta/chart-core';
 import { annotationNodes, axisTitle, formatNumber, xAxisTicks, yAxis, type LegendItem } from '@virta/chart-skin';
 import { paletteColors } from '@virta/design-system';
 import type { BarlineModel } from '@virta/data-engine';
@@ -15,28 +15,9 @@ function windowSlice(m: BarlineModel, w: string | undefined): BarlineModel {
   return { ...m, labels: idx.map((i) => m.labels[i]), series: m.series.map((s) => ({ ...s, values: idx.map((i) => s.values[i]) })) };
 }
 
-function linePath(xs: number[], ys: number[], style: string): string {
-  if (!xs.length) return '';
-  if (style === 'step') {
-    let d = `M${xs[0].toFixed(2)} ${ys[0].toFixed(2)}`;
-    for (let i = 1; i < xs.length; i++) d += ` L${xs[i].toFixed(2)} ${ys[i - 1].toFixed(2)} L${xs[i].toFixed(2)} ${ys[i].toFixed(2)}`;
-    return d;
-  }
-  if (style === 'smooth' && xs.length > 2) {
-    // Catmull-Rom → 三次贝塞尔
-    let d = `M${xs[0].toFixed(2)} ${ys[0].toFixed(2)}`;
-    for (let i = 0; i < xs.length - 1; i++) {
-      const p0 = i > 0 ? [xs[i - 1], ys[i - 1]] : [xs[i], ys[i]];
-      const p1 = [xs[i], ys[i]], p2 = [xs[i + 1], ys[i + 1]];
-      const p3 = i + 2 < xs.length ? [xs[i + 2], ys[i + 2]] : p2;
-      const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
-      const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
-      d += ` C${c1[0].toFixed(2)} ${c1[1].toFixed(2)} ${c2[0].toFixed(2)} ${c2[1].toFixed(2)} ${p2[0].toFixed(2)} ${p2[1].toFixed(2)}`;
-    }
-    return d;
-  }
-  return xs.map((x, i) => `${i ? 'L' : 'M'}${x.toFixed(2)} ${ys[i].toFixed(2)}`).join(' ');
-}
+// ADR-0011/A9：折线路径统一走 chart-core linePath（step-middle + null 缺口分段 + connectGaps 虚线桥接）
+const paths = (xs: number[], pts: ({ x: number; y: number } | null)[], style: 'smooth' | 'straight' | 'step', connectGaps: boolean) =>
+  segPath(pts, style, { connectGaps });
 
 export const lineRenderer: FamilyRenderer<BarlineModel> = {
   view: 'line' as ViewId,
@@ -63,17 +44,18 @@ export const lineRenderer: FamilyRenderer<BarlineModel> = {
     const defs: Scene['defs'] = { gradients: [], radials: [], patterns: [], clips: [] };
 
     const stacked = fillMode === 'stack';
-    // 累计基线（stack 模式下逐层垫高）
+    const connectGaps = ctx.options?.['connectGaps'] === true;
+    // 累计基线（stack 模式下逐层垫高）；未观测(null)跳过，不参与值域/堆叠（ADR-0011）
     const baseAcc = labels.map(() => 0);
     let vMin = 0, vMax = 0;
     if (stacked) {
       labels.forEach((_, li) => {
         let pos = 0, neg = 0;
-        visSeries.forEach((s) => { const v = s.values[li]; if (v >= 0) pos += v; else neg += v; });
+        visSeries.forEach((s) => { const v = s.values[li]; if (v === null) return; if (v >= 0) pos += v; else neg += v; });
         vMax = Math.max(vMax, pos); vMin = Math.min(vMin, neg);
       });
     } else {
-      visSeries.forEach((s) => s.values.forEach((v) => { vMin = Math.min(vMin, v); vMax = Math.max(vMax, v); }));
+      visSeries.forEach((s) => s.values.forEach((v) => { if (v === null) return; vMin = Math.min(vMin, v); vMax = Math.max(vMax, v); }));
     }
     if (vMax === vMin) vMax = vMin + 1;
     if (ctx.options?.['yMax'] !== undefined) vMax = Number(ctx.options['yMax']);
@@ -93,29 +75,40 @@ export const lineRenderer: FamilyRenderer<BarlineModel> = {
     visSeries.forEach((s, si) => {
       const color = colors[m.series.indexOf(s) % colors.length];
       const xs = labels.map((l) => xOf(l));
-      const ysTop = labels.map((_, li) => {
+      const pts = labels.map((_, li) => {
         const v = s.values[li];
-        return stacked ? y(baseAcc[li] + Math.max(0, v)) : y(v);
+        return v === null ? null : { x: xs[li], y: stacked ? y(baseAcc[li] + Math.max(0, v)) : y(v) };
       });
       const ysBase = labels.map((_, li) => stacked ? y(baseAcc[li]) : y(0));
-      if (stacked) labels.forEach((_, li) => { baseAcc[li] += Math.max(0, s.values[li]); });
+      if (stacked) labels.forEach((_, li) => { const v = s.values[li]; if (v !== null) baseAcc[li] += Math.max(0, v); });
+      const segs = paths(xs, pts, lineStyle as 'smooth' | 'straight' | 'step', connectGaps);
 
-      // 面积填充
-      if (fillMode !== 'none') {
+      // 面积填充（按缺口分段闭合；gap 桥接段不填充）
+      if (fillMode !== 'none' && pts.some(Boolean)) {
         const gid = `area${si}`;
         defs.gradients.push({ id: gid, x1: 0, y1: 0, x2: 0, y2: 1, stops: [{ offset: 0, color, opacity: stacked ? 0.75 : 0.32 }, { offset: 1, color, opacity: stacked ? 0.55 : 0.05 }] });
-        const top = linePath(xs, ysTop, lineStyle).replace(/^M/, 'M');
-        const bottom = xs.map((x2, i) => `L${x2.toFixed(2)} ${ysBase[i].toFixed(2)}`).reverse().join(' ');
-        nodes.push({ type: 'path', d: `${top} ${bottom} Z`, fill: { ref: gid } });
+        // 逐段：实段顶线 + 原路折返到基线
+        for (const seg of segs) {
+          if (seg.gap) continue;
+          const nums = seg.d.match(/-?\d+\.?\d*/g)!.map(Number);
+          const segXs = nums.filter((_, i) => i % 2 === 0);
+          const firstX = segXs[0]!, lastX = segXs[segXs.length - 1]!;
+          const b0 = y(stacked ? ysBase[labels.findIndex((_, li) => Math.abs(xs[li] - firstX) < 0.01)]! : 0);
+          const b1 = y(stacked ? ysBase[labels.findIndex((_, li) => Math.abs(xs[li] - lastX) < 0.01)]! : 0);
+          nodes.push({ type: 'path', d: `${seg.d} L${lastX.toFixed(2)} ${b1.toFixed(2)} L${firstX.toFixed(2)} ${b0.toFixed(2)} Z`, fill: { ref: gid } });
+        }
       }
       const dash = hatch ? [6, 3] : undefined;
-      nodes.push({ type: 'path', d: linePath(xs, ysTop, lineStyle), fill: 'none', stroke: color, strokeWidth: lw, dash });
+      for (const seg of segs) {
+        nodes.push({ type: 'path', d: seg.d, fill: 'none', stroke: color, strokeWidth: seg.gap ? Math.max(1, lw * 0.6) : lw, dash: seg.gap ? [5, 4] : dash });
+      }
 
-      // 标记
+      // 标记（null=未观测：不画点，tooltip 显示「未观测」）
       labels.forEach((lab, li) => {
         const v = s.values[li];
-        const py = ysTop[li];
-        const datum = { kind: 'point', index: li, series: s.name, label: lab, value: v, tooltip: { title: lab, rows: [{ swatch: color, name: s.name, value: fmt(v) }] } };
+        const py = pts[li]?.y ?? y(0);
+        const datum = { kind: 'point', index: li, series: s.name, label: lab, value: v ?? undefined, tooltip: { title: lab, rows: [{ swatch: color, name: s.name, value: v === null ? '未观测' : fmt(v) }] } };
+        if (v === null) { hits.push({ shape: { type: 'circle', cx: xs[li], cy: py, r: Math.max(8, lw + 5) }, datum }); return; }
         if (marker !== 'none' && labels.length <= 60) {
           if (marker === 'square') nodes.push({ type: 'rect', x: xs[li] - 3, y: py - 3, w: 6, h: 6, fill: color, datum });
           else if (marker === 'diamond') nodes.push({ type: 'path', d: `M${xs[li]} ${py - 4} L${xs[li] + 4} ${py} L${xs[li]} ${py + 4} L${xs[li] - 4} ${py} Z`, fill: color, datum });
@@ -123,10 +116,10 @@ export const lineRenderer: FamilyRenderer<BarlineModel> = {
         }
         hits.push({ shape: { type: 'circle', cx: xs[li], cy: py, r: Math.max(8, lw + 5) }, datum });
       });
-      // 端点标签
-      if (endLabels && labels.length) {
-        const li = labels.length - 1;
-        nodes.push({ type: 'text', x: xs[li] + 8, y: ysTop[li], text: fmt(s.values[li]), font: 'mono', size: 10.5, baseline: 'middle', fill: color });
+      // 端点标签：最后一个有观测的点
+      if (endLabels) {
+        const li = labels.reduce((a, _, i) => (s.values[i] !== null ? i : a), -1);
+        if (li >= 0) nodes.push({ type: 'text', x: xs[li] + 8, y: pts[li]!.y, text: fmt(s.values[li]!), font: 'mono', size: 10.5, baseline: 'middle', fill: color });
       }
     });
 

@@ -27,11 +27,35 @@ virta render <input> --view <v> --export html,svg,png --out out/ --json   # 3. �
   "text": {"title": "…", "subtitle": "…", "source": "…", "unit": "…"},
   "annotations": [{"type": "refLine", "axis": "y", "value": 80, "label": "目标"}],
   "format": {"style": "auto|thousands|wan|percent|currency"},
-  "size": {"width": 1200, "height": 675} }
+  "time": {"asOf": "2025-10-20T09:00:00+08:00", "tz": "Asia/Shanghai",
+           "weekStart": 1, "workdays": [1,2,3,4,5], "holidays": [], "extraWorkdays": []},
+  "derive": [{"type": "dueStatus", "due": "截止日期", "as": "状态"},
+             {"type": "dateDiff", "from": "开始", "to": "截止", "unit": "day", "as": "滑期"}],
+  "size": {"width": 1200, "height": 675},
+  "page": {"height": 1600, "break": "auto|section|none"} }
 ```
 
 `--set` 语法：`key=value`，点号分层（`options.finish=glass`、`state.sort=desc`），值能 JSON.parse 就按 JSON。
 合并优先级：`--set` > 专用参数（`--theme` 等）> `--spec` > 默认值。
+
+## Phase 2a 能力（Agent 直用，无需外部脚本）
+
+- **时间契约**：`--as-of <ISO>` / `--tz <IANA>` 钉死报告时刻与时区，回执 `spec.time` 写回；
+  缺省时按系统时区解析并在 `warnings` 给 `TZ_ASSUMED`/`ASOF_ASSUMED`。甘特今日线用 `asOf`。
+  `derive`：`dueStatus`（逾期/今日/临期/未到期/已完成/已逾期完成/提前）与 `dateDiff`（天/工作日）。
+- **缺失值**：时序视图（line/combo/control/compare/kpi/rank）+ bar 的 `options.missingValue`
+  默认 `gap`（未观测不画、洞察跳过、tooltip 显示「未观测」）；`=zero` 恢复补 0。
+  `options.connectGaps=true` 用虚线桥接缺口段。阶梯线 `lineStyle=step` 为 step-middle。
+- **长内容**：grid/report 为 flow 视图——HTML 里是语义 DOM（`<table>`/搜索/筛选/排序/链接），
+  不再截断；静态导出 `--height auto` 给自然高度，或 `page.height`（默认 1600）分页输出多页
+  SVG/PNG，回执 `files[]` 带 `page/pages`。
+- **compose 三态面板**：md 文档面板（report）整行 DOM 渲染且不参与联动；
+  面板级 `rendered/error`——任一面板失败 `ok:false`（RENDER_FAILED）。
+- **甘特三时间点**：列 `baseline`（基线截止）画幽灵基线、`actual`（实际完成）画 ◆ 标记；
+  `end` 是当前截止（不再当完成日期）；模型出 `slipDays/lateDays`，洞察报滑期与未上报。
+  `baselineMark=false`/`varianceLabel=false` 可关。
+- **截止日报示例**：`examples/packs/delivery/deadline.{csv,brief.md,compose.json}`
+  （asOf 已钉死，可复现）；`virta demo delivery` 一键生成。
 
 ## 错误码 → 退出码 → 修复
 

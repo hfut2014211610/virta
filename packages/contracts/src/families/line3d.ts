@@ -17,10 +17,31 @@ export const CONTRACT_LINE3D: ChartContract = {
     { id: 'curve', label: '三维曲线', description: 'x/y/z 数值列的三维空间轨迹线' },
   ],
   options: [
+    { key: 'lineStyle', label: '线形', type: 'enum', group: 'view', static: true, default: 'smooth',
+      values: [
+        { value: 'smooth', label: '平滑' }, { value: 'straight', label: '直线' }, { value: 'step', label: '阶梯' },
+      ], description: '插值方式（屏幕空间，与 2D 折线一致）' },
+    { key: 'window', label: '窗口', type: 'enum', group: 'view', static: false, default: 'all',
+      values: [
+        { value: 'all', label: '全部' }, { value: 'first6', label: '前 6 点' },
+        { value: 'last6', label: '近 6 点' }, { value: 'last12', label: '近 12 点' },
+      ], description: '显示的数据窗口' },
+    { key: 'marker', label: '标记', type: 'enum', group: 'style', static: true, default: 'circle',
+      values: [
+        { value: 'circle', label: '圆点' }, { value: 'square', label: '方块' },
+        { value: 'diamond', label: '菱形' }, { value: 'none', label: '无' },
+      ] },
+    { key: 'lineWidth', label: '线宽', type: 'enum', group: 'style', static: true, default: '2.4',
+      values: [
+        { value: '1.6', label: '细' }, { value: '2.4', label: '中' }, { value: '3.4', label: '粗' },
+      ] },
+    { key: 'hatch', label: '纹理线', type: 'boolean', group: 'style', static: true, default: false,
+      description: '线为纹理虚线样式，配合 mono 配色可无颜色辨识' },
+    { key: 'ribbon', label: '飘带填充', type: 'boolean', group: 'style', static: true, default: true },
+    { key: 'endLabels', label: '端点数值', type: 'boolean', group: 'display', static: true, default: false,
+      description: '末端显示数值标签' },
     { key: 'floorGrid', label: '地面网格', type: 'boolean', group: 'display', static: true, default: true },
     { key: 'axes3d', label: '三轴', type: 'boolean', group: 'display', static: true, default: true },
-    { key: 'ribbon', label: '飘带填充', type: 'boolean', group: 'style', static: true, default: true },
-    { key: 'dots', label: '数据点', type: 'boolean', group: 'display', static: true, default: true },
   ],
   inference: [
     '缺省：宽表每个数值列=一个系列；长表按系列列分组；xAxis/series 的 ECharts JSON 也支持',

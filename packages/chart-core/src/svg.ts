@@ -40,7 +40,7 @@ function clip(c: ClipDef): string {
   return `<clipPath id="${esc(c.id)}">${c.nodes.map(node).join('')}</clipPath>`;
 }
 
-export function node(n: Node): string {
+function nodeInner(n: Node): string {
   const a = commonAttrs(n);
   switch (n.type) {
     case 'group': {
@@ -66,6 +66,12 @@ export function node(n: Node): string {
       return `<text x="${f2(n.x)}" y="${f2(n.y)}"${fam}${size}${w}${an}${dy}${rot}${a}>${esc(n.text)}</text>`;
     }
   }
+}
+
+export function node(n: Node): string {
+  const inner = nodeInner(n);
+  // ADR-0009：link 节点包一层 <a href>；URL 只允许 http(s)/mailto（上游已过滤，此处再兜底）
+  return n.link && /^(https?:|mailto:)/i.test(n.link) ? `<a href="${esc(n.link)}" target="_blank" rel="noopener noreferrer">${inner}</a>` : inner;
 }
 
 export function toSVG(sc: Scene): string {

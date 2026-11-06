@@ -10,6 +10,10 @@ export {
   ADAPTERS, ADAPTED_VIEWS, DOC_ADAPTER, TO_MODEL, makeAdapter, projectQuality, tableToRaw,
 } from './families/index.js';
 export type { FamilyAdapter, ScoreResult } from './families/types.js';
+export { applyDerives, resolveTime, type DueStatus } from './derive.js';
+export { zonedParts, fromZoned, parseInstant, tzValid, instantOf, ordinalOf, dateOrdinal } from './time/zoned.js';
+export { isWorkday, workdaysBetween, type WorkCal } from './time/workday.js';
+export type { ErModel, FlowchartModel, SequenceModel, BurndownModel, FormulaModel } from './families/t3.js';
 export type { BarlineModel, BarlineSeries, Raw } from './families/barline.js';
 export type { ScatterModel, ScatterPoint, ScatterFit } from './families/scatter.js';
 export type { PieModel, PieSlice } from './families/pie.js';
@@ -27,6 +31,8 @@ export type { GridModel } from './families/grid.js';
 export type { Pie3dModel } from './families/pie3d.js';
 export type { Line3dModel } from './families/line3d.js';
 export type { DocModel } from './families/docmd.js';
+export { inlineHtml } from './families/docmd.js';
+export { adaptInput, type AdaptInput, type Adapted } from './adapt-input.js';
 export type {
   CohortModel, CohortRow, CompareItem, CompareModel, HistBin, HistGroup,
   HistogramModel, KpiItem, KpiModel, RankModel,

@@ -118,7 +118,7 @@ export const treeRenderer: FamilyRenderer<TreeModel> = {
       const label = showV && nd.value !== undefined ? `${nd.name} ${fm(ctx)(nd.value)}` : nd.name;
       if (variant === 'org') {
         const w = Math.max(64, label.length * 12 + 16), h = 30;
-        nodes.push({ type: 'rect', x: p.x - w / 2, y: p.y - h / 2, w, h, r: 4, fill: isRoot ? col : t.tip, stroke: col, strokeWidth: isRoot ? 0 : 1.2 });
+        nodes.push({ type: 'rect', x: p.x - w / 2, y: p.y - h / 2, w, h, r: 4, fill: isRoot ? col : t.paper, stroke: col, strokeWidth: isRoot ? 0 : 1.2 });
         nodes.push({ type: 'text', x: p.x, y: p.y, text: label, font: 'body', size: 11, anchor: 'middle', baseline: 'middle', fill: isRoot ? t.tipInk : t.ink });
         hits.push({ shape: { type: 'rect', x: p.x - w / 2, y: p.y - h / 2, w, h }, datum: { kind: 'node', index: di, label: nd.name, value: nd.value, tooltip: { title: nd.name, rows: [{ name: '汇总', value: nd.value !== undefined ? fm(ctx)(nd.value) : '—' }] } } });
       } else {
@@ -143,7 +143,7 @@ export const treeRenderer: FamilyRenderer<TreeModel> = {
 // ── network ─────────────────────────────────────────────────────────
 export const networkRenderer: FamilyRenderer<NetworkModel> = {
   view: 'network' as ViewId,
-  interactions: ['drag-node'],
+  interactions: ['drag-node', 'select'],
   layout(m: NetworkModel, ctx: LayoutContext): Scene {
     const t = ctx.tokens, colors = paletteColors(ctx.palette, ctx.theme);
     const nodes: Node[] = [];
@@ -217,7 +217,7 @@ export const networkRenderer: FamilyRenderer<NetworkModel> = {
         d: variant === 'circular'
           ? `M${a.x} ${a.y} Q${cx} ${cy} ${b.x} ${b.y}`
           : `M${a.x} ${a.y} L${b.x} ${b.y}`,
-        fill: 'none', stroke: t.line2, strokeWidth: w, opacity: 0.65,
+        fill: 'none', stroke: t.line2, strokeWidth: w, opacity: (ctx.state?.focus != null && l.source !== ctx.state.focus && l.target !== ctx.state.focus) ? 0.12 : 0.65,
       });
       hits.push({ shape: { type: 'path', d: `M${a.x} ${a.y} L${b.x} ${b.y}` }, datum: { kind: 'edge', index: ei, label: `${l.source} → ${l.target}`, value: l.value, tooltip: { title: `${l.source} → ${l.target}`, rows: [{ name: '权重', value: fm(ctx)(l.value) }] } } });
     })
@@ -227,9 +227,10 @@ export const networkRenderer: FamilyRenderer<NetworkModel> = {
       const p = pos.get(nd.id)!;
       const r = 5 + 11 * Math.sqrt(nd.flow / maxFlow);
       const col = colors[Math.abs([...nd.id].reduce((a, c) => a + c.charCodeAt(0), 0)) % colors.length];
-      nodes.push({ type: 'circle', cx: p.x, cy: p.y, r, fill: col, stroke: t.tip, strokeWidth: 1.5 });
-      if (showLbl) nodes.push({ type: 'text', x: p.x, y: p.y + r + 9, text: nd.id, font: 'body', size: 11, anchor: 'middle', baseline: 'middle', fill: t.ink });
-      hits.push({ shape: { type: 'circle', cx: p.x, cy: p.y, r: r + 3 }, datum: { kind: 'node', index: ni, label: nd.id, value: nd.flow, tooltip: { title: nd.id, rows: [{ name: '流量', value: fm(ctx)(nd.flow) }] } } });
+      const ndDim = ctx.state?.focus != null && ctx.state.focus !== nd.id;
+      nodes.push({ type: 'circle', cx: p.x, cy: p.y, r, fill: col, stroke: t.tip, strokeWidth: 1.5, opacity: ndDim ? 0.25 : 1 });
+      if (showLbl) nodes.push({ type: 'text', x: p.x, y: p.y + r + 9, text: nd.id, font: 'body', size: 11, anchor: 'middle', baseline: 'middle', fill: t.ink, opacity: ndDim ? 0.3 : 1 });
+      hits.push({ shape: { type: 'circle', cx: p.x, cy: p.y, r: r + 3 }, datum: { kind: 'node', index: ni, series: nd.id, label: nd.id, value: nd.flow, tooltip: { title: nd.id, rows: [{ name: '流量', value: fm(ctx)(nd.flow) }] } } });
     });
     const sc = scene(ctx.width, ctx.height, [g(nodes)]);
     sc.hits = hits;
@@ -240,13 +241,15 @@ export const networkRenderer: FamilyRenderer<NetworkModel> = {
 // ── control ─────────────────────────────────────────────────────────
 export const controlRenderer: FamilyRenderer<ControlModel> = {
   view: 'control' as ViewId,
-  interactions: ['brush'],
+  interactions: ['brush', 'select'],
   layout(m: ControlModel, ctx: LayoutContext): Scene {
     const t = ctx.tokens, colors = paletteColors(ctx.palette, ctx.theme);
     const nodes: Node[] = [];
     const hits: Scene['hits'] = [];
-    const bands = ctx.options?.['showSigmaBands'] !== false;
-    const weRules = ctx.options?.['weRules'] !== false;
+    // 变体差异：xbar 均值图用规范限 → 不画 σ 估计带与 WE 判异标记；i/p 保留
+    const variant = String(ctx.variant ?? 'i');
+    const bands = ctx.options?.['showSigmaBands'] !== false && variant !== 'xbar';
+    const weRules = ctx.options?.['weRules'] !== false && variant !== 'xbar';
     // 右缘预留限线标签位：多系列时标签带系列名（"UCL·3号线" ≈66px），单系列仅 "UCL"
     const rpad = m.lines.some((ln) => ln.name) ? 76 : 34;
     const plot = { x: ctx.plot.x + 50, y: ctx.plot.y + 14, w: ctx.plot.w - 50 - rpad, h: ctx.plot.h - 52 };
@@ -279,7 +282,8 @@ export const controlRenderer: FamilyRenderer<ControlModel> = {
       nodes.push({ type: 'text', x: plot.x + plot.w + 4, y: y(ln.lcl), text: limTag('LCL'), font: 'mono', size: 9, anchor: 'start', baseline: 'middle', fill: col });
       // 折线 + 点
       const pts = ln.points.map((p) => ({ p, x: x(p.x), y: y(p.v) }));
-      nodes.push({ type: 'path', d: pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' '), fill: 'none', stroke: col, strokeWidth: 2 });
+      const lDim = ctx.state?.focus != null && ctx.state.focus !== ln.name;
+      nodes.push({ type: 'path', d: pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' '), fill: 'none', stroke: col, strokeWidth: 2, opacity: lDim ? 0.15 : 1 });
       pts.forEach(({ p, x: px, y: py }, pi) => {
         const bad = weRules && (p.flag === 'r1' || p.flag === 'r2');
         nodes.push({ type: 'circle', cx: px, cy: py, r: bad ? 5 : 3, fill: bad ? t.warn : col, ...(bad ? { stroke: t.tip, strokeWidth: 1.5 } : {}) });
@@ -295,7 +299,7 @@ export const controlRenderer: FamilyRenderer<ControlModel> = {
 // ── parallel ────────────────────────────────────────────────────────
 export const parallelRenderer: FamilyRenderer<ParallelModel> = {
   view: 'parallel' as ViewId,
-  interactions: ['brush'],
+  interactions: ['brush', 'select'],
   layout(m: ParallelModel, ctx: LayoutContext): Scene {
     const t = ctx.tokens, colors = paletteColors(ctx.palette, ctx.theme);
     const nodes: Node[] = [];
@@ -317,7 +321,7 @@ export const parallelRenderer: FamilyRenderer<ParallelModel> = {
     m.rows.forEach((r, ri) => {
       const col = gcol.get(r.group)!;
       const pts = r.vals.map((v, i) => ({ x: plot.x + i * step, y: scales[i](v) }));
-      nodes.push({ type: 'path', d: pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' '), fill: 'none', stroke: col, strokeWidth: 1.4, opacity });
+      nodes.push({ type: 'path', d: pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' '), fill: 'none', stroke: col, strokeWidth: 1.4, opacity: (ctx.state?.focus != null && ctx.state.focus !== r.group) ? opacity * 0.15 : opacity });
       hits.push({ shape: { type: 'path', d: pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ') }, datum: { kind: 'row', index: ri, label: r.label ?? r.group, series: r.group || undefined, tooltip: { title: r.label ?? '—', rows: axes.map((a, i) => ({ swatch: col, name: a.key, value: fm(ctx)(r.vals[i]) })) } } });
     });
     // 轴

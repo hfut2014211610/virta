@@ -43,6 +43,8 @@ body{padding:18px 28px}
 #opt-row .glab:first-child{border-left:0;padding-left:0;margin-left:0}
 .opt-num{width:64px;appearance:none;border:1px solid var(--line2);background:var(--paper);color:var(--ink);border-radius:99px;padding:7px 12px;font:12px var(--mono)}
 .opt-text{width:120px;appearance:none;border:1px solid var(--line2);background:var(--paper);color:var(--ink);border-radius:99px;padding:7px 12px;font:12px var(--body)}
+.opt-sel{appearance:none;border:1px solid var(--line2);background:var(--paper);color:var(--muted);border-radius:99px;padding:6px 10px;font:11px var(--body);cursor:pointer}
+.opt-sel:hover{color:var(--acc);border-color:var(--acc)}
 #opt-row .opt-sub{display:inline-flex;flex-wrap:nowrap;gap:6px;align-items:center}
 #opt-row .opt-sub>label{font:11px var(--body);color:var(--muted);white-space:nowrap}
 .insights{display:flex;gap:18px;flex-wrap:wrap;margin:8px 0 0}
@@ -54,8 +56,58 @@ details.fold{margin-top:14px}
 details.fold summary{cursor:pointer;font:12.5px var(--body);color:var(--muted)}
 #datatable table{border-collapse:collapse;width:100%;font:12px var(--mono)}
 #datatable th,#datatable td{border-bottom:1px solid var(--line);padding:5px 10px;text-align:left;color:var(--muted)}
+#datatable th.num,#datatable td.num{text-align:right}
+.render-err{display:grid;place-items:center;min-height:320px;text-align:center;color:var(--warn);font:14px var(--body)}
+.render-err small{color:var(--faint);font:11px var(--mono)}
+/* ADR-0009 流式视图 DOM（flow-doc / flow-table） */
+#chart-box .flow-doc{max-width:760px;margin:0 auto;padding:8px 4px;font:14px/1.75 var(--body)}
+.flow-doc h2,.flow-doc h3,.flow-doc h4{font-family:var(--display);margin:1.1em 0 .4em;color:var(--ink)}
+.flow-doc p{margin:.3em 0;color:var(--muted)}
+.flow-doc a{color:var(--acc)}
+.fd-metrics{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:10px 0}
+.fd-metric{background:var(--grid);border-radius:10px;padding:10px 12px}
+.fd-mlabel{font:11px var(--mono);color:var(--muted)}
+.fd-mval{font:600 20px var(--display);color:var(--ink)}
+.fd-mval small{font:11px var(--body);color:var(--faint);margin-left:4px}
+.fd-toc{display:flex;flex-wrap:wrap;gap:4px 14px;margin:8px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.fd-toc a{font:12.5px var(--body);color:var(--acc);text-decoration:none}
+.fd-toc a:hover{text-decoration:underline}
+.flow-doc table{border-collapse:collapse;width:100%;font:12px var(--mono);margin:8px 0}
+.flow-doc th,.flow-doc td{border-bottom:1px solid var(--line);padding:5px 10px;text-align:left;color:var(--muted)}
+.flow-doc th{color:var(--ink);font-weight:600;background:var(--grid)}
+.flow-doc td.num{text-align:right}
+.flow-doc ul,.flow-doc ol{color:var(--muted);margin:.3em 0;padding-left:1.6em}
+.flow-doc blockquote{border-left:3px solid var(--acc);margin:.4em 0;padding:2px 12px;color:var(--faint)}
+.flow-doc pre{background:var(--grid);border-radius:8px;padding:10px 12px;font:11.5px var(--mono);overflow:auto;color:var(--muted)}
+.flow-doc hr{border:none;border-top:1px solid var(--line);margin:12px 0}
+.fd-img{border:1px dashed var(--line2);border-radius:8px;padding:8px 12px;margin:6px 0;font:11px var(--mono);color:var(--faint)}
+.img-ph{font:11px var(--mono);color:var(--faint)}
+#chart-box .flow-table{font:12px var(--mono)}
+.ft-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+.ft-q{flex:0 1 220px;padding:5px 9px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);font:12px var(--body)}
+.ft-f{padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--muted);font:11px var(--body);max-width:150px}
+.ft-badge{margin-left:auto;font:11px var(--mono);color:var(--faint)}
+.ft-wrap{max-height:70vh;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.flow-table table{border-collapse:collapse;width:100%}
+.flow-table th{position:sticky;top:0;background:var(--paper);color:var(--ink);font-weight:600;text-align:left;padding:7px 10px;border-bottom:1.5px solid var(--ink);white-space:nowrap;cursor:pointer;user-select:none;z-index:1}
+.flow-table th.num{text-align:right}
+.flow-table th[data-sort="asc"] .ft-si::after{content:" ↑"}
+.flow-table th[data-sort="desc"] .ft-si::after{content:" ↓"}
+.flow-table td{border-bottom:1px solid var(--line);padding:5px 10px;color:var(--muted)}
+.flow-table td.num{text-align:right}
+.flow-table tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--grid) 45%,transparent)}
+.flow-table tr.ft-head td{font-weight:600;color:var(--ink);background:color-mix(in srgb,var(--acc) 10%,transparent)}
+.flow-table tr.ft-tone-danger td:first-child{box-shadow:inset 3px 0 0 var(--warn)}
+.flow-table tr.ft-tone-warn td:first-child{box-shadow:inset 3px 0 0 #d99a06}
+.flow-table tr.ft-tone-ok td:first-child{box-shadow:inset 3px 0 0 #16a34a}
+.flow-table tr.ft-tone-info td:first-child{box-shadow:inset 3px 0 0 var(--acc)}
+.flow-table a{color:var(--acc)}
 @media(max-width:720px){body{padding:14px}}
-@media print{header .seg,#toolbar,#opt-row{display:none}#chart-box svg{width:100%}}
+@media print{header .seg,#toolbar,#opt-row,#detail,details.fold,.ft-bar{display:none!important}#chart-box svg{width:100%}
+.ft-wrap{max-height:none;overflow:visible;border:none}
+.flow-table thead{display:table-header-group}.flow-table tbody tr{break-inside:avoid}
+.flow-doc h2,.flow-doc h3,.flow-doc h4{break-after:avoid}
+.flow-doc tr,.flow-doc blockquote,.flow-doc pre{break-inside:avoid}}
 @media(prefers-reduced-motion:no-preference){.lg-chip{transition:opacity .15s}}
 </style></head>
 <body data-theme="${theme}">
@@ -72,9 +124,9 @@ details.fold summary{cursor:pointer;font:12.5px var(--body);color:var(--muted)}
   <div class="trow" id="toolbar">
     <span id="quick-segs" style="display:contents"></span>
     <span class="spacer"></span>
-    <span class="subseg"><span class="label">${ZH.export}</span><div class="seg" id="exp-menu"><button type="button" data-exp="svg">SVG</button><button type="button" data-exp="png">PNG</button><button type="button" data-exp="csv">CSV</button><button type="button" data-exp="spec">spec</button></div><button class="toggle" id="btn-opts" type="button">${ZH.settings}</button><button class="toggle" id="btn-full" type="button">${ZH.fullscreen}</button></span>
+    <span class="subseg"><span class="label">${ZH.export}</span><div class="seg" id="exp-menu"><button type="button" data-exp="svg">SVG</button><button type="button" data-exp="png">PNG</button><button type="button" data-exp="csv">CSV</button><button type="button" data-exp="spec">spec</button></div><button class="toggle" id="btn-full" type="button">${ZH.fullscreen}</button></span>
   </div>
-  <div class="trow" id="opt-row"></div>
+  <div class="trow open" id="opt-row"></div>
   <div class="card" style="margin-top:10px">
     <div id="legend"></div>
     <div id="chart-box">${svg}<div id="tooltip" aria-live="polite"></div></div>

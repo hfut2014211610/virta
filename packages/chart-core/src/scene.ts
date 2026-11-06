@@ -15,6 +15,8 @@ interface Base {
   opacity?: number; dash?: number[]; clip?: string; shadow?: Shadow; datum?: DatumRef;
   /** ADR-0008：描边端点形状（dot 网格等需要 round cap） */
   linecap?: 'butt' | 'round' | 'square';
+  /** ADR-0009：SVG 输出时包一层 <a href>（仅 http(s)/mailto 应到达这里） */
+  link?: string;
 }
 export type Node =
   | (Base & { type: 'group'; children: Node[]; transform?: [number, number, number, number, number, number] })

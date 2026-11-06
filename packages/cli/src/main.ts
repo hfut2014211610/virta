@@ -7,7 +7,7 @@ import { parseArgs } from 'node:util';
 import { execFile } from 'node:child_process';
 import type { Envelope, Table, Theme, ViewId, ViewSpec, VizError } from '@virta/contracts';
 import { CONTRACTS, EXIT_CODES, getContract, THEME_IDS, VIEW_IDS, VIEW_SPEC_SCHEMA } from '@virta/contracts';
-import { ADAPTERS, profileTable, rawToTable, recommend, validate } from '@virta/data-engine';
+import { ADAPTERS, profileTable, rawToTable, recommend, validate, resolveTime, parseInstant, tzValid } from '@virta/data-engine';
 import { readInput, readInline } from '@virta/data-engine/node';
 import { RENDERED_VIEWS } from '@virta/charts';
 import { CliError, fail, renderChart } from './render.js';
@@ -20,6 +20,7 @@ const EXIT_MAP: Record<VizError['code'], number> = {
   MISSING_COLUMN: 4, AMBIGUOUS_MAPPING: 4,
   UNSUPPORTED_EXPORT: 5, RENDER_FAILED: 5, EXPORT_FAILED: 5,
   INTERNAL: 1,
+  INVALID_TIME: 2,
 };
 
 function out<T>(cmd: string, data: T, json: boolean, warnings: import('@virta/contracts').QualityIssue[] = []): void {
@@ -104,8 +105,25 @@ function buildSpec(args: PV, table?: Table): ViewSpec {
     const x = v(args, k); if (x) spec.text = { ...spec.text, [k]: x };
   }
   const w = v(args, 'width'), h = v(args, 'height');
-  if (w || h) spec.size = { width: w ? Number(w) : 1200, height: h ? Number(h) : 675 };
+  if (w || h) {
+    const hh = h === 'auto' ? 'auto' as const : h ? Number(h) : 675;
+    if (hh !== 'auto' && (!Number.isFinite(hh) || hh <= 0)) fail('INVALID_OPTION', `--height 需为正数或 auto：${h}`, '如 --height 1600 或 --height auto');
+    spec.size = { width: w ? Number(w) : 1200, height: hh };
+  }
   for (const kv of multi(args, 'set')) applySet(spec, kv);
+  // ADR-0010：--as-of/--tz 等价 --set time.*；不可解析报 INVALID_TIME
+  const asOf = v(args, 'as-of');
+  if (asOf !== undefined) {
+    if (!parseInstant(asOf)) fail('INVALID_TIME', `无法解析 --as-of：${asOf}`, '示例：2026-11-05T17:00:00+08:00 或 2026-11-05T09:00:00Z');
+    spec.time = { ...spec.time, asOf };
+  }
+  const tz = v(args, 'tz');
+  if (tz !== undefined) {
+    if (!tzValid(tz)) fail('INVALID_TIME', `未知时区 --tz：${tz}`, 'IANA 时区名，如 Asia/Shanghai、UTC、America/New_York');
+    spec.time = { ...spec.time, tz };
+  }
+  if (spec.time?.asOf !== undefined && !parseInstant(spec.time.asOf)) fail('INVALID_TIME', `无法解析 time.asOf：${spec.time.asOf}`, '需 ISO 8601 且带时区偏移或 Z');
+  if (spec.time?.tz !== undefined && !tzValid(spec.time.tz)) fail('INVALID_TIME', `未知时区 time.tz：${spec.time.tz}`, 'IANA 时区名');
   if (spec.view !== 'auto' && !VIEW_IDS.includes(spec.view as ViewId)) {
     fail('UNKNOWN_VIEW', `未知视图 ${spec.view}`, 'virta list 查看全部视图', { candidates: [...VIEW_IDS] });
   }
@@ -183,6 +201,11 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
     }
     const view = spec.view as ViewId;
     if (docText === undefined && !ADAPTERS[view]) return outErr('render', { code: 'UNKNOWN_VIEW', message: `视图 ${view} 暂不支持`, hint: 'virta list', recoverable: true }, json);
+    // ADR-0010：time 缺省时解析后写回回执 spec（asOf/tz 可重放）
+    const rt = resolveTime(spec);
+    spec.time = { ...spec.time, asOf: spec.time?.asOf ?? rt.asOfIso, tz: spec.time?.tz ?? rt.tz };
+    const tWarns = rt.assumed.map((c) => ({ code: c, level: 'info' as const,
+      message: c === 'TZ_ASSUMED' ? `未指定时区，按系统时区 ${rt.tz} 处理` : `未指定 asOf，按当前时刻 ${rt.asOfIso} 处理` }));
     // mapping 前置校验：列不存在 → MISSING_COLUMN；必需角色多列歧义 → AMBIGUOUS_MAPPING（§4.5 DATA 类）
     if (docText === undefined) {
       const rec = validate(table, spec);
@@ -217,7 +240,7 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
         summaryMd: `${payload.spec.text?.title ?? view} · ${view}${spec.variant ? ':' + spec.variant : ''} · ${docText !== undefined ? '1 篇文档' : `${table.rows.length} 行`} → ${files.map((f) => f.format).join('/')}`,
       };
       if (!json) for (const f of files) console.log(`✓ 生成 ${f.path} · ${receipt.reason}`);
-      out('render', receipt, json, warnings as never);
+      out('render', receipt, json, [...warnings, ...tWarns] as never);
       return 0;
     } catch (e) {
       if (e instanceof CliError) return outErr('render', e.viz, json);
@@ -255,7 +278,16 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
         scale: Number(v(args, 'scale') ?? 2),
         fontFiles: multi(args, 'font-file'),
       });
-      const receipt = { title: r.payload.title, layout: r.payload.layout, panels: r.panels, views: r.views, links: r.payload.links, files: r.files, summaryMd: `${r.payload.title ?? '组合页'} · ${r.payload.layout} · ${r.panels} 面板 → ${r.files.map((x) => x.format).join('/')}` };
+      // §4.4：任一面板预渲染失败 → ok:false（不再「CLI 成功但 HTML 坏」）
+      const failed = r.panelResults.filter((p) => !p.rendered);
+      if (failed.length) {
+        return outErr('compose', {
+          code: 'RENDER_FAILED',
+          message: `面板渲染失败：${failed.map((f) => f.id).join('、')} — ${failed[0]!.error}`,
+          hint: 'virta render 单独渲该面板排查', recoverable: false,
+        }, json);
+      }
+      const receipt = { title: r.payload.title, layout: r.payload.layout, panels: r.panels, panelResults: r.panelResults, views: r.views, links: r.payload.links, files: r.files, summaryMd: `${r.payload.title ?? '组合页'} · ${r.payload.layout} · ${r.panels} 面板 → ${r.files.map((x) => x.format).join('/')}` };
       if (!json) for (const x of r.files) console.log(`✓ 生成 ${x.path}`);
       out('compose', receipt, json);
       return 0;
@@ -296,8 +328,8 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
     const json = Boolean(args.values['json']);
     try {
       const { runGallery } = await import('./gallery.js');
-      const r = await runGallery({ out: v(args, 'out') ?? 'out/gallery', scale: Number(v(args, 'scale') ?? 1), fontFiles: multi(args, 'font-file'), theme: v(args, 'theme') as Theme | undefined, palette: v(args, 'palette') as 'signal' | 'patina' | 'mono' | undefined });
-      if (!json) console.log(`✓ 画廊生成 ${r.index}（${r.views} 图族 / ${r.packs} 场景 / ${r.items} 卡片）`);
+      const r = await runGallery({ out: v(args, 'out') ?? 'out/gallery', scale: Number(v(args, 'scale') ?? 1), fontFiles: multi(args, 'font-file'), theme: v(args, 'theme') as Theme | undefined, palette: v(args, 'palette') as 'signal' | 'patina' | 'mono' | undefined, only: v(args, 'only'), force: Boolean(args.values['force']) });
+      if (!json) console.log(`✓ 画廊生成 ${r.index}（${r.views} 图族 / ${r.packs} 场景 / ${r.items} 卡片${r.reused ? `，增量复用 ${r.reused} 项` : ''}）`);
       out('gallery', r, json);
       return 0;
     } catch (e) {
@@ -323,6 +355,7 @@ async function main(): Promise<number> {
            [--export html,svg,png] [--out dir] [--width 1200] [--height 675] [--scale 2]
            [--frame card|chart] [--font-file ttf]... [--json]
   compose <compose.json>               （M5）  demo/gallery（M8）
+  gallery [--out dir] [--only 图族|场景|关键词] [--force]   增量生成画廊（默认复用未变更产物）
   preview <file.html>                  用系统浏览器打开
   guide [--agent]                      Agent 使用指南`);
     return cmd ? 0 : 2;
@@ -343,7 +376,9 @@ async function main(): Promise<number> {
         export: { type: 'string' }, out: { type: 'string' },
         width: { type: 'string' }, height: { type: 'string' }, scale: { type: 'string' },
         frame: { type: 'string' }, 'font-file': { type: 'string', multiple: true },
+        'as-of': { type: 'string' }, tz: { type: 'string' },
         'spec-schema': { type: 'boolean' }, agent: { type: 'boolean' }, all: { type: 'boolean' },
+        only: { type: 'string' }, force: { type: 'boolean' },
       },
     });
   } catch (e) {

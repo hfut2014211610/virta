@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { build } from 'esbuild';
 import type { PaletteId, Table, Theme, ViewId, ViewSpec, VizError } from '@virta/contracts';
 import { getContract, THEME_IDS } from '@virta/contracts';
-import { ADAPTERS, DOC_ADAPTER, projectQuality } from '@virta/data-engine';
+import { ADAPTERS, adaptInput, projectQuality, resolveTime, parseInstant, zonedParts } from '@virta/data-engine';
 import { getRenderer } from '@virta/charts';
 import { FACETABLE, facetGroups, facetLayout } from '@virta/viewer';
 import { scene as mkScene, toSVG } from '@virta/chart-core';
@@ -35,7 +35,7 @@ export interface RenderJob {
 }
 
 export interface RenderResult {
-  files: { format: 'html' | 'svg' | 'png'; path: string; bytes: number; width?: number; height?: number }[];
+  files: { format: 'html' | 'svg' | 'png'; path: string; bytes: number; width?: number; height?: number; page?: number; pages?: number }[];
   warnings: { code: string; level: 'info' | 'warn' | 'error'; message: string }[];
 }
 
@@ -70,7 +70,7 @@ const deps = {
   renderer: ${m.renderer},
   ${isDoc
     ? `buildDoc: (text, name) => ${m.toModel}(text, name),`
-    : `adapt: (t, s) => ${m.toModelCurve ? `(s?.variant === 'curve' ? ${m.toModelCurve} : ${m.toModel})` : m.toModel}(t.passthrough?.kind === 'echarts' ? { __echarts: t.passthrough.data } : t.rows),`}
+    : `adapt: (t, s) => { const raw = t.passthrough?.kind === 'echarts' ? { __echarts: t.passthrough.data } : t.rows; if (s?.mapping && Array.isArray(raw)) for (const [r, c] of Object.entries(s.mapping)) { if (typeof c === 'string' && c !== r) for (const row of raw) { if (row[r] === undefined && row[c] !== undefined) row[r] = row[c]; } } return ${m.toModelCurve ? `(s?.variant === 'curve' ? ${m.toModelCurve} : ${m.toModel})` : m.toModel}(raw); },`}
 };
 boot(window.__VIRTA__, deps);
 `;
@@ -105,26 +105,23 @@ export async function renderChart(job: RenderJob): Promise<RenderResult & { svgS
   const theme: Theme = spec.theme ?? 'light';
   if (!THEME_IDS.includes(theme)) fail('INVALID_SPEC', `未知主题 ${theme}`, `支持：${THEME_IDS.join(' | ')}`);
   const tokens = resolveTheme(theme);
-  let model: unknown, quality: ReturnType<typeof projectQuality> | undefined;
-  let insights: import('@virta/contracts').Insight[];
-  let counts: Record<string, number>;
-  if (isDoc) {
-    const dm = DOC_ADAPTER.buildDoc(job.doc!, job.stem);
-    model = dm;
-    quality = projectQuality(dm.quality);
-    insights = [
-      { kind: 'distribution', text: `共 ${dm.stats.sections} 个章节、${dm.stats.paragraphs} 段`, importance: 50 },
-      { kind: 'target', text: `识别 ${dm.metrics.length} 个指标`, importance: 40 },
-    ];
-    counts = { 章节: dm.stats.sections, 段落: dm.stats.paragraphs, 表格: dm.stats.tables, 指标: dm.metrics.length };
-  } else {
-    const adapt = adapter!;
-    const a = adapt.adapt(table, spec);
-    model = a.model;
-    quality = a.quality;
-    insights = adapt.insights(model, spec);
-    counts = adapt.counts(model);
-  }
+  // A7 统一适配入口：表格/文档同一条路径（与 compose、运行期共用）
+  const adapted = adaptInput({ table, doc: job.doc, name: job.stem }, view, spec);
+  const model = adapted.model;
+  const quality: ReturnType<typeof projectQuality> | undefined = adapted.quality;
+  const insights = adapted.insights;
+  const counts = adapted.counts;
+
+  // 行数驱动图族（甘特等）：静态导出撑高到期望高度，行不被压缩/不丢尾部
+  const prefH = (rend as { preferredHeight?: (m: unknown, r: { width: number; variant?: string; options?: Record<string, string | number | boolean>; state?: ViewSpec['state'] }) => number | null })
+    .preferredHeight?.(model, { width: job.width, variant: spec.variant, options: spec.options ?? {}, state: spec.state });
+  // ADR-0009 流式视图：静态导出用自然高度（内容不受画布钳制）；'--height auto' 同理
+  const isFlow = contract?.flow === true;
+  const measured = isFlow ? rend.measure?.(model as never, { width: job.width, variant: spec.variant, options: spec.options ?? {}, format: spec.format }) : undefined;
+  const frameOverhead = 1000 - frameStatic(job.width, 1000, { text: spec.text, insights, theme: tokens, frame: job.frame }).plot.h;
+  if (measured) job.height = Math.max(spec.size?.height === 'auto' ? 0 : job.height, measured.height + frameOverhead);
+  else if (spec.size?.height === 'auto' && prefH) job.height = prefH;
+  else if (prefH && prefH > job.height) job.height = Math.min(prefH, 5000);
 
   // 卡片框 → 绘图区 → 图族布局（图例项先行：model.series/groups 可直接枚举）
   const palette = spec.palette ?? 'signal';
@@ -137,8 +134,17 @@ export async function renderChart(job: RenderJob): Promise<RenderResult & { svgS
   const legend: LegendItem[] | undefined = legendNames.length > 1
     ? legendNames.map((name, i) => ({ name, color: paletteColors(palette, theme)[i % paletteColors(palette, theme).length], hidden: hiddenS.has(name) }))
     : undefined;
+  // ADR-0010：有 asOf 时静态卡脚注显示「数据截至 …（tz）」
+  const textWithAsOf = (() => {
+    if (!spec.time?.asOf) return spec.text;
+    const { tz } = resolveTime(spec);
+    const zp = zonedParts(parseInstant(spec.time.asOf)!, tz);
+    const p = (n: number) => String(n).padStart(2, '0');
+    const note = `数据截至 ${zp.y}-${p(zp.mo)}-${p(zp.d)} ${p(zp.h)}:${p(zp.mi)}（${tz}）`;
+    return { ...spec.text, source: [spec.text?.source, note].filter(Boolean).join(' · ') };
+  })();
   const framed = frameStatic(job.width, job.height, {
-    text: spec.text, insights, legend, theme: tokens, frame: job.frame,
+    text: textWithAsOf, insights, legend, theme: tokens, frame: job.frame,
   });
   const facetCol = spec.facet?.column;
   let inner;
@@ -170,6 +176,55 @@ export async function renderChart(job: RenderJob): Promise<RenderResult & { svgS
   applySkin(sc, tokens.skin);
   const svg = toSVG(sc);
 
+  // ADR-0009 流式静态分页：自然高度超过 page.height（默认 1600）时按页拆分，
+  // grid 走滚动窗口（每页自动重复表头），其余 flow 视图走 measure().breaks + flow 窗口
+  const pageH = Math.max(240, spec.page?.height ?? 1600);
+  const needPages = isFlow && spec.page?.break !== 'none' && measured !== undefined
+    && measured.height + frameOverhead > pageH && job.formats.some((fm) => fm === 'svg' || fm === 'png');
+  const pageSvgs: { svg: string; height: number }[] = [];
+  if (needPages) {
+    const framePage = () => frameStatic(job.width, pageH, { text: textWithAsOf, insights, legend, theme: tokens, frame: job.frame });
+    const pageLayout = (extra: Record<string, unknown>) => rend.layout(model as never, {
+      width: job.width, height: pageH, plot: framePage().plot, theme, palette, tokens,
+      variant: spec.variant, mode: spec.mode, options: spec.options ?? {}, state: spec.state,
+      format: spec.format, annotations: spec.annotations, text: spec.text, ...extra,
+    } as never);
+    const merge = (inner: ReturnType<typeof rend.layout>, fp: ReturnType<typeof framePage>) => {
+      const scp = mkScene(job.width, pageH, [], tokens.paper);
+      scp.defs = inner.defs; scp.hits = inner.hits;
+      scp.root.children = [...fp.scene.root.children, ...inner.root.children];
+      applySkin(scp, tokens.skin);
+      return toSVG(scp);
+    };
+    if (view === 'grid' || spec.view === 'grid') {
+      for (let start = 0, guard = 0; guard < 4000; guard++) {
+        const fp = framePage();
+        const inner = rend.layout(model as never, {
+          width: job.width, height: pageH, plot: fp.plot, theme, palette, tokens,
+          variant: spec.variant, mode: spec.mode, options: spec.options ?? {},
+          state: { ...(spec.state ?? {}), range: [start, 0] },
+          format: spec.format, annotations: spec.annotations, text: spec.text,
+        });
+        pageSvgs.push({ svg: merge(inner, fp), height: pageH });
+        const scroll = (inner as unknown as { scroll?: { total: number; page: number; start: number } }).scroll;
+        if (!scroll || scroll.page <= 0 || start + scroll.page >= scroll.total) break;
+        start += scroll.page;
+      }
+    } else {
+      const fp = framePage();
+      const plotH = fp.plot.h;
+      const offs = [0];
+      for (let cur = 0; cur + plotH < measured!.height;) {
+        const nxt = measured!.breaks.filter((b) => b > cur && b <= cur + plotH).pop() ?? cur + plotH;
+        offs.push(nxt); cur = nxt;
+      }
+      for (const off of offs) {
+        const inner = pageLayout({ flow: { offset: off, height: plotH } });
+        pageSvgs.push({ svg: merge(inner, fp), height: pageH });
+      }
+    }
+  }
+
   const payload: Payload = {
     spec, table, insights, reason: 'explicit', doc: job.doc, viewTitle: contract?.title,
     counts,
@@ -183,28 +238,38 @@ export async function renderChart(job: RenderJob): Promise<RenderResult & { svgS
   const mkdir = (p: string) => { mkdirSync(p, { recursive: true }); };
   const fontFiles = [fontPath('display-light'), fontPath('display-medium'), fontPath('mono'), ...job.fontFiles];
   for (const fmt of job.formats) {
-    const path = `${join(job.out, stem)}.${fmt === 'png' ? 'png' : fmt}`;
     mkdir(job.out);
-    if (fmt === 'svg') {
-      writeFileSync(path, svg, 'utf8');
-      files.push({ format: 'svg', path, bytes: Buffer.byteLength(svg), width: job.width, height: job.height });
-    } else if (fmt === 'png') {
-      if (!fontFallbackOk(fontFiles)) {
-        warnings.push({ code: 'FONT_FALLBACK', level: 'warn', message: '中文字形缺失：请用 --font-file 指定覆盖中文的字体' });
+    if (fmt === 'svg' || fmt === 'png') {
+      const sheets = pageSvgs.length ? pageSvgs : [{ svg, height: job.height }];
+      for (let pi = 0; pi < sheets.length; pi++) {
+        const suffix = sheets.length > 1 ? `-p${pi + 1}` : '';
+        const path = `${join(job.out, stem)}${suffix}.${fmt}`;
+        const meta = { page: sheets.length > 1 ? pi + 1 : undefined, pages: sheets.length > 1 ? sheets.length : undefined };
+        if (fmt === 'svg') {
+          writeFileSync(path, sheets[pi]!.svg, 'utf8');
+          files.push({ format: 'svg', path, bytes: Buffer.byteLength(sheets[pi]!.svg), width: job.width, height: sheets[pi]!.height, ...meta });
+        } else {
+          if (!fontFallbackOk(fontFiles) && pi === 0) {
+            warnings.push({ code: 'FONT_FALLBACK', level: 'warn', message: '中文字形缺失：请用 --font-file 指定覆盖中文的字体' });
+          }
+          try {
+            const r = new Resvg(sheets[pi]!.svg, {
+              font: { fontFiles, loadSystemFonts: true, defaultFontFamily: 'sans-serif' },
+              background: tokens.paper,
+              fitTo: { mode: 'zoom', value: job.scale },
+            });
+            const png = r.render().asPng();
+            writeFileSync(path, png);
+            files.push({ format: 'png', path, bytes: png.length, width: job.width * job.scale, height: sheets[pi]!.height * job.scale, ...meta });
+          } catch (e) {
+            fail('EXPORT_FAILED', `PNG 导出失败：${(e as Error).message}`, '检查 --font-file 与尺寸参数');
+          }
+        }
       }
-      try {
-        const r = new Resvg(svg, {
-          font: { fontFiles, loadSystemFonts: true, defaultFontFamily: 'sans-serif' },
-          background: tokens.paper,
-          fitTo: { mode: 'zoom', value: job.scale },
-        });
-        const png = r.render().asPng();
-        writeFileSync(path, png);
-        files.push({ format: 'png', path, bytes: png.length, width: job.width * job.scale, height: job.height * job.scale });
-      } catch (e) {
-        fail('EXPORT_FAILED', `PNG 导出失败：${(e as Error).message}`, '检查 --font-file 与尺寸参数');
-      }
-    } else if (fmt === 'html') {
+      continue;
+    }
+    const path = `${join(job.out, stem)}.${fmt}`;
+    if (fmt === 'html') {
       const html = singleFileHtml({ payload, svg, runtimeJs: await viewerRuntime(view), theme });
       writeFileSync(path, html, 'utf8');
       files.push({ format: 'html', path, bytes: Buffer.byteLength(html), width: job.width, height: job.height });

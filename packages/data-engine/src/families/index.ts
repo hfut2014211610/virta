@@ -24,9 +24,13 @@ import { toTreemap } from './treemap.js';
 import { buildDoc } from './docmd.js';
 import { toCohort, toCompare, toHistogram, toKpi, toRank } from './t1.js';
 import { toControl, toNetwork, toParallel, toTree } from './t2.js';
+import { toBurndown, toEr, toFlowchart, toFormula, toSequence } from './t3.js';
 import { scoreView } from '../score.js';
 import { insights as familyInsights } from '../insights.js';
 import { counts as familyCounts } from '../counts.js';
+import { applyDerives, resolveTime } from '../derive.js';
+import { ordinalOf } from '../time/zoned.js';
+import type { GanttModel } from './gantt.js';
 
 export const TO_MODEL: Partial<Record<ViewId, (raw: Raw) => unknown>> = {
   bar: toChart, line: toChart, matrix3d: toChart,
@@ -39,6 +43,8 @@ export const TO_MODEL: Partial<Record<ViewId, (raw: Raw) => unknown>> = {
   rank: toRank, histogram: toHistogram, kpi: toKpi, compare: toCompare, cohort: toCohort,
   // T2（M7）
   tree: toTree, network: toNetwork, control: toControl, parallel: toParallel,
+  // T3（简版）
+  er: toEr, flowchart: toFlowchart, sequence: toSequence, burndown: toBurndown, formula: toFormula,
 };
 
 /** Table.rows → legacy Raw（含 ECharts 透传）。 */
@@ -80,7 +86,9 @@ export function makeAdapter<M>(view: ViewId, toModel: (raw: Raw) => M, extras?: 
     view,
     adaptRaw: toModel,
     adapt(table: Table, spec: ViewSpec) {
-      const raw = tableToRaw(table);
+      // ADR-0010 派生列：适配前统一执行，新列进入 columns 后可被 mapping/model 引用
+      const derived = spec?.derive?.length ? applyDerives(table, spec) : null;
+      const raw = tableToRaw(derived?.table ?? table);
       // spec.mapping 显式映射：把映射列的值复制到角色名键上（角色名本身在别名表内，
       // 如 bullet 的 actual/target），让 --set mapping.x=列 / spec.mapping 真正生效；
       // 只写未存在的键——数据里已有同名列时不覆盖（显式同名列优先）。
@@ -94,8 +102,24 @@ export function makeAdapter<M>(view: ViewId, toModel: (raw: Raw) => M, extras?: 
         }
       }
       const model = toModel(raw);
+      // ADR-0011 缺失值：默认 gap（null=未观测）；missingValue=zero 回填 0（legacy 行为）
+      const series = (model as { series?: { name: string; values: (number | null)[] }[] }).series;
+      if (series?.length) {
+        const zero = spec?.options?.['missingValue'] === 'zero';
+        let gaps = 0;
+        for (const s of series) {
+          if (zero) s.values = s.values.map((v) => v ?? 0);
+          else gaps += s.values.filter((v) => v === null).length;
+        }
+        if (gaps) {
+          const q2 = (model as { quality?: { warnings?: string[] } }).quality;
+          q2?.warnings?.push(`${gaps} 个未观测点按 gap 处理（--set options.missingValue=zero 恢复补 0）`);
+        }
+      }
       const mq = (model as { quality?: unknown })?.quality;
-      return { model, quality: mq ? projectQuality(mq) : (undefined as unknown as QualityReport) };
+      const quality = mq ? projectQuality(mq) : (undefined as unknown as QualityReport);
+      if (derived?.issues.length && quality) quality.issues.push(...derived.issues);
+      return { model, quality };
     },
     score: extras?.score ?? ((profile, table) => scoreView(view, profile, table)),
     insights: extras?.insights ?? ((model, spec) => familyInsights(view, model, spec)),
@@ -112,6 +136,22 @@ for (const [view, fn] of Object.entries(TO_MODEL)) {
 export const DOC_ADAPTER = { buildDoc };
 
 export const ADAPTED_VIEWS = Object.keys(TO_MODEL) as ViewId[];
+
+// gantt 今日线（ADR-0010/F3）：给 spec.time 时按 asOf+tz 计算（默认实现是 UTC 的 Date.now()）。
+{
+  const g = ADAPTERS['gantt' as ViewId];
+  const prev = g!.adapt.bind(g!);
+  g!.adapt = (table: Table, spec: ViewSpec) => {
+    const out = prev(table, spec);
+    if (spec?.time?.asOf || spec?.time?.tz) {
+      const { asOfMs, tz } = resolveTime(spec);
+      const m = out.model as GanttModel;
+      const rel = ordinalOf(asOfMs, tz) - (m.baseOrd ?? 0);
+      m.today = m.baseOrd !== null && rel >= 0 && rel <= m.span ? Math.floor(rel) : null;
+    }
+    return out;
+  };
+}
 
 // line3d curve 变体：x/y/z 数值列 → 三维空间轨迹模型（其余变体走通用 adapt）。
 {

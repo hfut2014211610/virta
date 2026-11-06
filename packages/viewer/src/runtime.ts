@@ -5,6 +5,9 @@ import { applySkin } from '@virta/chart-skin';
 import { getContract, resolveTheme, PALETTE_IDS } from './deps.js';
 import type { ViewSpec, Table } from '@virta/contracts';
 import { facetGroups, facetLayout, FACETABLE } from './facet.js';
+import { renderFlowDoc } from './flow-doc.js';
+import { renderFlowTable } from './flow-table.js';
+import type { DocModel, GridModel } from '@virta/data-engine';
 import { ZH } from './i18n/zh-CN.js';
 
 export interface Payload {
@@ -22,6 +25,7 @@ export interface Payload {
 
 const $ = <T extends HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector(sel) as T;
 const $$ = <T extends HTMLElement>(sel: string, root: ParentNode = document) => Array.from(root.querySelectorAll(sel)) as T[];
+const escHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 function getState(spec: ViewSpec): { sort: 'none' | 'asc' | 'desc'; hiddenSeries: string[] } {
   return { sort: spec.state?.sort ?? 'none', hiddenSeries: spec.state?.hiddenSeries ?? [] };
@@ -33,8 +37,12 @@ export interface RuntimeDeps {
   adapt?: (table: Table, spec?: ViewSpec) => unknown;
   /** 文档原文 → DocModel（report 等文档视图） */
   buildDoc?: (text: string, name: string) => unknown;
-  /** 图族 renderer（interactions 声明的拖拽/缩放能力在此接线） */
-  renderer: { layout: (model: never, ctx: never) => Scene; interactions?: string[] } | undefined;
+  /** 图族 renderer（interactions 声明的拖拽/缩放能力在此接线；resolve 声明生效值供控件置灰） */
+  renderer: {
+    layout: (model: never, ctx: never) => Scene;
+    interactions?: string[];
+    resolve?: (model: never, req: { variant?: string; options?: Record<string, string | number | boolean>; state?: ViewSpec['state'] }) => { variant: string; options: Record<string, string | number | boolean> };
+  } | undefined;
 }
 
 export function boot(payload: Payload, deps: RuntimeDeps): void {
@@ -60,19 +68,34 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
     history.replaceState(null, '', `#s=${b64}`);
   };
 
-  function layoutScene() {
+  /** 最近一次 adapt 成功的图族模型：工具栏置灰探测与 layout 共用。 */
+  let lastModel: unknown;
+
+  // 主题/角标同步（flow DOM 渲染也走这里）
+  function syncThemeDataset() {
     const theme = spec.theme ?? 'light';
-    const tokens = resolveTheme(theme);
     document.documentElement.dataset['theme'] = theme;
     document.documentElement.dataset['palette'] = spec.palette ?? 'signal';
     document.body.dataset['theme'] = theme;
+    const eyebrow = document.querySelector('header .eyebrow');
+    if (eyebrow) eyebrow.textContent = `${ZH.eyebrow} · ${view} · ${theme.toUpperCase()}`;
+  }
+
+  function layoutScene() {
+    const theme = spec.theme ?? 'light';
+    const tokens = resolveTheme(theme);
+    syncThemeDataset();
     const box = $('#chart-box');
     const width = Math.max(360, box.clientWidth || 960);
-    const height = Math.min(640, Math.max(360, Math.round(window.innerHeight * 0.58)));
     const facetCol = spec.facet?.column;
     const model = payload.doc !== undefined
       ? deps.buildDoc!(payload.doc, payload.spec.text?.title ?? 'doc')
       : deps.adapt!(payload.table, spec);
+    lastModel = model;
+    const canScroll = renderer?.interactions?.includes('scroll') ?? false;
+    const prefH = canScroll ? null : (renderer as { preferredHeight?: (m: unknown, r: { width: number; variant?: string; options?: Record<string, string | number | boolean>; state?: ViewSpec['state'] }) => number | null } | null)
+      ?.preferredHeight?.(model, { width, variant: spec.variant, options: spec.options ?? {}, state: spec.state });
+    const height = Math.min(2800, Math.max(Math.min(640, Math.max(360, Math.round(window.innerHeight * 0.58))), prefH ?? 0));
     const facetSubs = payload.doc === undefined && facetCol && FACETABLE.has(view) && payload.table.columns.includes(facetCol)
       ? facetGroups(payload.table.rows as Record<string, unknown>[], facetCol)
           .map((gr: { name: string; rows: Record<string, unknown>[] }) => ({ name: gr.name, model: deps.adapt!({ ...payload.table, rows: gr.rows } as Table, spec) }))
@@ -99,11 +122,40 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
   }
 
   function render() {
-    const sc = layoutScene();
     const box = $('#chart-box');
+    // ADR-0009 流式视图：HTML 端用语义化 DOM（<table>/<a>/<h*>），不再走 SVG
+    if (contract?.flow) {
+      try {
+        const model = payload.doc !== undefined
+          ? deps.buildDoc!(payload.doc, payload.spec.text?.title ?? 'doc')
+          : deps.adapt!(payload.table, spec);
+        lastModel = model;
+        syncThemeDataset();
+        if (payload.doc !== undefined) renderFlowDoc(box, model as DocModel);
+        else renderFlowTable(box, model as GridModel, spec);
+      } catch (e) {
+        box.innerHTML = `<div class="render-err">当前数据不支持该组合<br><small>${escHtml((e as Error).message)}</small></div>`;
+      }
+      (box as HTMLElement & { __scene?: unknown }).__scene = undefined;
+      renderLegend(undefined);
+      buildTable();
+      syncHash();
+      syncChrome();
+      return;
+    }
+    let sc: ReturnType<typeof layoutScene>;
+    try {
+      sc = layoutScene();
+    } catch (e) {
+      $('#chart-box').innerHTML = `<div class="render-err">当前数据不支持该组合<br><small>${escHtml((e as Error).message)}</small></div>`;
+      syncHash();
+      syncChrome();
+      return;
+    }
     box.innerHTML = toSVG(sc);
     (box.firstElementChild as SVGElement | null)?.setAttribute('width', '100%');
-    (box.firstElementChild as SVGElement | null)?.setAttribute('height', 'auto');
+    // SVG 的 height 属性只接受长度不接受 auto → 走 CSS（属性写法会报 Expected length）
+    if (box.firstElementChild instanceof SVGElement) box.firstElementChild.style.height = 'auto';
     (box as HTMLElement & { __scene?: unknown }).__scene = sc;
     renderLegend((sc as { legend?: { name: string; color: string; hidden?: boolean }[] }).legend);
     buildTable();
@@ -128,6 +180,43 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
       } else {
         const inp = $(`#opt-row [data-k="${opt.key}"]`) as HTMLInputElement | null;
         if (inp && document.activeElement !== inp) inp.value = String(cur ?? '');
+      }
+    }
+    $$<HTMLSelectElement>('#opt-row select[data-pal]').forEach((s) => { s.value = String(spec.palette ?? 'signal'); });
+
+    // —— 变体条件选项：opt.variants 限定展示变体（如甘特"粒度"仅日历变体）——
+    for (const opt of contract?.options ?? []) {
+      if (!opt.variants) continue;
+      const el = $(`#opt-row [data-optkey="${opt.key}"]`) as HTMLElement | null;
+      if (el) el.style.display = opt.variants.includes(String(spec.variant ?? '')) ? '' : 'none';
+    }
+
+    // —— 生效性置灰：renderer.resolve 返回实际生效值，候选值被回退/自动关闭即禁用 ——
+    const resolve = renderer?.resolve;
+    if (resolve && lastModel !== undefined) {
+      const probe = (variant?: string, options?: Record<string, string | number | boolean>) => {
+        try { return resolve(lastModel as never, { variant: variant ?? spec.variant, options: options ?? spec.options ?? {}, state: spec.state }); }
+        catch { return null; }
+      };
+      $$<HTMLButtonElement>('#variant-seg button').forEach((b) => {
+        const cand = b.dataset['v']!;
+        const r = probe(cand);
+        b.disabled = r !== null && r.variant !== cand;
+      });
+      for (const opt of contract?.options ?? []) {
+        if (opt.type === 'boolean') {
+          const b = $(`#opt-row [data-b="${opt.key}"]`) as HTMLButtonElement | null;
+          if (!b) continue;
+          const cand = !(spec.options?.[opt.key] ?? opt.default ?? false);
+          const r = probe(undefined, { ...spec.options, [opt.key]: cand });
+          b.disabled = r !== null && r.options[opt.key] !== cand;
+        } else if (opt.type === 'enum') {
+          $$<HTMLButtonElement>(`#opt-row [data-e="${opt.key}"] button`).forEach((b) => {
+            const cand = b.dataset['v']!;
+            const r = probe(undefined, { ...spec.options, [opt.key]: cand });
+            b.disabled = r !== null && String(r.options[opt.key] ?? opt.default) !== cand;
+          });
+        }
       }
     }
   }
@@ -181,6 +270,40 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
   // —— 3D 交互：拖拽旋转（rotate）/ 滚轮缩放（zoom）/ 自动旋转（options.autoRotate）——
   {
     const inter = renderer?.interactions ?? [];
+    // 选择放大：点击扇区/元素 → state.explode 切换（再点同个取消）
+    if (inter.includes('select')) {
+      const box = $('#chart-box');
+      box.style.cursor = 'pointer';
+      box.addEventListener('click', (e) => {
+        const sc = (box as HTMLElement & { __scene?: ReturnType<typeof layoutScene> }).__scene;
+        if (!sc) return;
+        const rect = box.getBoundingClientRect();
+        const dpr = (sc.width || rect.width) / rect.width;
+        const d = hitTest(sc, (e.clientX - rect.left) * dpr, (e.clientY - rect.top) * dpr);
+        if (typeof d?.series === 'string' && d.series) {
+          spec = { ...spec, state: { ...spec.state, focus: spec.state?.focus === d.series ? undefined : d.series } };
+          render();
+        } else if (typeof d?.index === 'number') {
+          spec = { ...spec, state: { ...spec.state, explode: spec.state?.explode === d.index ? undefined : d.index } };
+          render();
+        }
+      });
+    }
+    // 行窗口滚动（甘特等）：滚轮调整 state.range=[start,page]，渲染器绘滚动条
+    if (inter.includes('scroll')) {
+      const box = $('#chart-box');
+      box.addEventListener('wheel', (e) => {
+        const sc = (box as HTMLElement & { __scene?: unknown }).__scene as { scroll?: { total: number; page: number; start: number; step?: number } } | undefined;
+        const info = sc?.scroll;
+        if (!info || info.total <= info.page) return;
+        e.preventDefault();
+        const step = info.step ?? 3;
+        const next = Math.max(0, Math.min(info.total - info.page, info.start + (e.deltaY > 0 ? step : -step)));
+        if (next === info.start) return;
+        spec = { ...spec, state: { ...spec.state, range: [next, next + info.page] } };
+        render();
+      }, { passive: false });
+    }
     if (inter.includes('rotate') || inter.includes('zoom')) {
       const box = $('#chart-box');
       box.style.cursor = 'grab';
@@ -214,14 +337,12 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
           queue();
         }, { passive: false });
       }
-      if (spec.options?.['autoRotate']) {
-        setInterval(() => {
-          if (drag || document.hidden) return;
-          const az = (Number(spec.state?.azimuth ?? 45) + 0.7) % 360;
-          spec = { ...spec, state: { ...spec.state, azimuth: az } };
-          queue();
-        }, 80);
-      }
+      setInterval(() => {
+        if (drag || document.hidden || !spec.options?.['autoRotate']) return;
+        const az = (Number(spec.state?.azimuth ?? 45) + 0.7) % 360;
+        spec = { ...spec, state: { ...spec.state, azimuth: az } };
+        queue();
+      }, 80);
     }
   }
 
@@ -229,9 +350,10 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
   $$('#theme-seg button').forEach((b) => {
     b.onclick = () => { spec = { ...spec, theme: b.dataset['t'] as ViewSpec['theme'] }; render(); };
   });
-  $('#btn-opts').onclick = () => {
+  const btnOpts = $('#btn-opts');
+  if (btnOpts) btnOpts.onclick = () => {
     const open = $('#opt-row').classList.toggle('open');
-    $('#btn-opts').classList.toggle('on', open);
+    btnOpts.classList.toggle('on', open);
   };
   $('#btn-full').onclick = () => { document.fullscreenElement ? document.exitFullscreen() : root.requestFullscreen(); };
 
@@ -262,12 +384,20 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
     mkSeg(ZH.variant, 'variant-seg', contract!.variants.map((v) => ({ v: v.id, label: v.label })),
       (v) => { spec = { ...spec, variant: v }; });
   }
-  mkSeg(ZH.palette, 'palette-seg', PALETTE_IDS.map((p) => ({ v: p, label: ZH.paletteNames[p] ?? p })),
-    (p) => { spec = { ...spec, palette: p as never }; });
+  // 预设色板是二级输入：声明 colorMode 的图族由配色三态接管，画廊不展示预设 seg（CLI 仍可用 spec.palette）
+  if (!contract?.options?.some((o) => o.key === 'colorMode')) {
+    mkSeg(ZH.palette, 'palette-seg', PALETTE_IDS.map((p) => ({ v: p, label: ZH.paletteNames[p] ?? p })),
+      (p) => { spec = { ...spec, palette: p as never }; });
+  }
 
   // —— 折叠选项行：contract.options 全量映射为 seg/toggle/小输入（旧版工具栏形态）——
   const optRow = $('#opt-row');
-  const setOpt = (k: string, v: string | number | boolean) => { spec = { ...spec, options: { ...spec.options, [k]: v } }; render(); };
+  const setOpt = (k: string, v: string | number | boolean) => {
+    spec = { ...spec, options: { ...spec.options, [k]: v } };
+    // 同名 state 键会覆盖选项（如拖拽后的 tilt/azimuth/zoom）：显式选预设即清除临时态
+    if (k === 'tilt' || k === 'azimuth' || k === 'zoom') spec = { ...spec, state: { ...spec.state, [k]: undefined } };
+    render();
+  };
   {
     const groups = new Map<string, import('@virta/contracts').OptionSpec[]>();
     for (const opt of contract?.options ?? []) {
@@ -287,6 +417,7 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
           b.type = 'button';
           b.className = 'toggle';
           b.dataset['b'] = opt.key;
+          b.dataset['optkey'] = opt.key;
           b.textContent = opt.label;
           b.title = opt.description ?? '';
           b.onclick = () => setOpt(opt.key, !(spec.options?.[opt.key] ?? opt.default));
@@ -294,6 +425,7 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
         } else if (opt.type === 'enum' && (opt.values?.length ?? 0) > 0) {
           const sub = document.createElement('span');
           sub.className = 'opt-sub';
+          sub.dataset['optkey'] = opt.key;
           const lab = document.createElement('label');
           lab.textContent = opt.label;
           const seg = document.createElement('div');
@@ -310,9 +442,31 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
           sub.appendChild(lab);
           sub.appendChild(seg);
           optRow.appendChild(sub);
+          // 配色二级输入：预设色板下拉（声明 colorMode 的图族才有此选项）
+          if (opt.key === 'colorMode') {
+            const sub2 = document.createElement('span');
+            sub2.className = 'opt-sub';
+            const lab2 = document.createElement('label');
+            lab2.textContent = ZH.preset;
+            const sel = document.createElement('select');
+            sel.className = 'opt-sel';
+            sel.dataset['pal'] = '1';
+            for (const p of PALETTE_IDS) {
+              const o = document.createElement('option');
+              o.value = p;
+              o.textContent = ZH.paletteNames[p] ?? p;
+              sel.appendChild(o);
+            }
+            sel.value = String(spec.palette ?? 'signal');
+            sel.onchange = () => { spec = { ...spec, palette: sel.value as never }; render(); };
+            sub2.appendChild(lab2);
+            sub2.appendChild(sel);
+            optRow.appendChild(sub2);
+          }
         } else {
           const sub = document.createElement('span');
           sub.className = 'opt-sub';
+          sub.dataset['optkey'] = opt.key;
           const lab = document.createElement('label');
           lab.textContent = opt.label;
           const inp = document.createElement('input');
@@ -352,8 +506,8 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
     tail.appendChild(cp);
     tail.appendChild(rs);
     optRow.appendChild(tail);
-    // 无 options 时隐藏「选项」按钮
-    if (!(contract?.options?.length)) ($('#btn-opts') as HTMLElement).style.display = 'none';
+    // 无 options 时整行隐藏（选项行默认常开）
+    if (!(contract?.options?.length)) optRow.style.display = 'none';
   }
 
   // —— 导出 ——
@@ -394,8 +548,14 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
   function buildTable() {
     const el = $('#datatable');
     const t = payload.table;
-    el.innerHTML = '<table><thead><tr>' + t.columns.map((c) => `<th>${c}</th>`).join('') + '</tr></thead><tbody>' +
-      t.rows.slice(0, 200).map((r) => '<tr>' + t.columns.map((col) => `<td>${String((r as Record<string, unknown>)[col] ?? '')}</td>`).join('') + '</tr>').join('') + '</tbody></table>' +
+    // 数值列右对齐（采样前 50 行，≥80% 为 number 判定）
+    const num = t.columns.map((c) => {
+      const vs = t.rows.slice(0, 50).map((r) => (r as Record<string, unknown>)[c]).filter((v) => v !== null && v !== undefined && v !== '');
+      return vs.length > 0 && vs.filter((v) => typeof v === 'number').length / vs.length >= 0.8;
+    });
+    const th = t.columns.map((c, i) => `<th${num[i] ? ' class="num"' : ''}>${c}</th>`).join('');
+    el.innerHTML = `<table><thead><tr>${th}</tr></thead><tbody>` +
+      t.rows.slice(0, 200).map((r) => '<tr>' + t.columns.map((col, i) => `<td${num[i] ? ' class="num"' : ''}>${String((r as Record<string, unknown>)[col] ?? '')}</td>`).join('') + '</tr>').join('') + '</tbody></table>' +
       (t.rows.length > 200 ? `<small>仅显示前 200 / ${t.rows.length} 行</small>` : '');
   }
   // —— 键盘 ——

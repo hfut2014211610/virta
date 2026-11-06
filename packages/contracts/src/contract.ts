@@ -13,6 +13,8 @@ export interface RoleSpec {
   /** 原始别名（中英文），比较前统一 normKey */
   aliases: string[];
   note?: string;
+  /** ADR-0010 时刻语义：日期角色只有日期时落到当天起点（00:00）或末时刻（23:59:59.999） */
+  instant?: 'start' | 'end';
 }
 /** 互斥的输入模式（取代伪列名） */
 export interface ModeSpec { id: string; label: string; requires: string[]; when: string }
@@ -36,6 +38,8 @@ export interface OptionSpec {
   /** 静态导出是否生效 */
   static: boolean;
   description?: string;
+  /** 仅在指定变体下展示/生效（缺省 = 所有变体）。如甘特"粒度"仅日历变体有意义 */
+  variants?: string[];
 }
 export interface ChartContract {
   version: 1;
@@ -52,4 +56,6 @@ export interface ChartContract {
   example: { csv: string; spec?: Partial<ViewSpec> };
   staticExport: boolean;
   legacyTemplate?: string;
+  /** ADR-0009 流式视图：内容高度由内容决定，HTML 端用 DOM 渲染 */
+  flow?: boolean;
 }

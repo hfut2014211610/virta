@@ -29,9 +29,12 @@ const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
 const ins = (kind: Insight['kind'], text: string, importance: number, extra?: Partial<Insight>): Insight =>
   ({ kind, text, importance, ...extra });
 
+// ADR-0011：洞察只基于真实观测（null=未观测）；汇总时未观测贡献 0
+const obs = (s: { values: (number | null)[] }) => s.values.map((v, i) => ({ v, i })).filter((p): p is { v: number; i: number } => p.v !== null);
+
 function barlineInsights(m: BarlineModel): Insight[] {
   const { labels, series } = m;
-  const totals = labels.map((_, i) => series.reduce((a, s) => a + s.values[i], 0));
+  const totals = labels.map((_, i) => series.reduce((a, s) => a + (s.values[i] ?? 0), 0));
   const grand = totals.reduce((a, b) => a + b, 0);
   const order = totals.map((v, i) => [v, i] as const).sort((a, b) => b[0] - a[0]);
   const out: Insight[] = [];
@@ -47,10 +50,13 @@ function barlineInsights(m: BarlineModel): Insight[] {
     const neg = totals.filter((v) => v < 0).length;
     if (neg) out.push(ins('outlier', `${neg} 个分类为负值`, 0.65));
   }
-  // 系列首末变化率（line 语义）
+  // 系列首末变化率（line 语义；首末取真实观测点）
   for (const s of series.slice(0, 2)) {
-    const f = s.values[0], l = s.values[s.values.length - 1];
-    if (f !== 0) out.push(ins('change', `「${s.name}」首末变化 ${pct((l - f) / Math.abs(f))}（${labels[0]}→${labels[labels.length - 1]}）`, 0.6, { ref: { series: s.name } }));
+    const o = obs(s);
+    if (o.length >= 2) {
+      const f = o[0]!.v, l = o[o.length - 1]!.v;
+      if (f !== 0) out.push(ins('change', `「${s.name}」首末变化 ${pct((l - f) / Math.abs(f))}（${labels[o[0]!.i]}→${labels[o[o.length - 1]!.i]}）`, 0.6, { ref: { series: s.name } }));
+    }
   }
   return out;
 }
@@ -58,26 +64,28 @@ function barlineInsights(m: BarlineModel): Insight[] {
 function lineInsights(m: BarlineModel): Insight[] {
   const out = barlineInsights(m);
   const s0 = m.series[0];
-  if (s0 && s0.values.length >= 4) {
-    // 相对 3 点滚动均值 |z|>2.5 的异常点
-    const vs = s0.values;
+  // 观测点 <2 不输出趋势类洞察（ADR-0011）
+  const o = s0 ? obs(s0) : [];
+  if (s0 && o.length >= 4) {
+    // 相对 3 点滚动均值 |z|>2.5 的异常点（在观测序列上计算）
+    const vs = o.map((p) => p.v);
     const mean = vs.reduce((a, b) => a + b, 0) / vs.length;
     const sd = Math.sqrt(vs.reduce((a, v) => a + (v - mean) ** 2, 0) / vs.length) || 1;
-    for (let i = 3; i < vs.length; i++) {
+    for (let i = 3; i < o.length; i++) {
       const roll = (vs[i - 1] + vs[i - 2] + vs[i - 3]) / 3;
-      const z = Math.abs(vs[i] - roll) / sd;
+      const z = Math.abs(vs[i]! - roll) / sd;
       if (z > 2.5) {
-        out.push(ins('outlier', `「${s0.name}」在 ${m.labels[i]} 异常（${fmt(vs[i])}，偏离 3 点滚动均值 ${fmt(roll)}）`, 0.8, { ref: { label: m.labels[i], series: s0.name } }));
+        out.push(ins('outlier', `「${s0.name}」在 ${m.labels[o[i]!.i]} 异常（${fmt(vs[i]!)}，偏离 3 点滚动均值 ${fmt(roll)}）`, 0.8, { ref: { label: m.labels[o[i]!.i], series: s0.name } }));
         break;
       }
     }
     // 最大环比
     let mi = -1, mr = 0;
     for (let i = 1; i < vs.length; i++) {
-      const r = vs[i - 1] !== 0 ? (vs[i] - vs[i - 1]) / Math.abs(vs[i - 1]) : 0;
+      const r = vs[i - 1] !== 0 ? (vs[i]! - vs[i - 1]!) / Math.abs(vs[i - 1]!) : 0;
       if (Math.abs(r) > Math.abs(mr)) { mr = r; mi = i; }
     }
-    if (mi > 0) out.push(ins('change', `「${s0.name}」最大环比变化 ${pct(mr)}（${m.labels[mi - 1]}→${m.labels[mi]}）`, 0.72, { ref: { label: m.labels[mi], series: s0.name } }));
+    if (mi > 0) out.push(ins('change', `「${s0.name}」最大环比变化 ${pct(mr)}（${m.labels[o[mi - 1]!.i]}→${m.labels[o[mi]!.i]}）`, 0.72, { ref: { label: m.labels[o[mi]!.i], series: s0.name } }));
   }
   return out;
 }
@@ -180,7 +188,23 @@ function heatmapInsights(m: HeatmapModel): Insight[] {
   if (m.mode === 'calendar' && m.years) {
     const peak = m.counts['peak'], peakv = m.counts['peakv'];
     out.push(ins('peak', `最热日：${peak}（${fmt(Number(peakv))}）`, 0.9));
+    // 日历模式追问「哪些天为负」：负值天数 + 最长连续负值
+    const days = Object.values(m.years).flat().sort((a, b) => a[0] - b[0]);
+    let negN = 0, run = 0, longest = 0;
+    for (const [, v] of days) {
+      if (v < 0) { negN += 1; run += 1; longest = Math.max(longest, run); }
+      else run = 0;
+    }
+    if (negN) out.push(ins('outlier', `负值 ${negN} 天，最长连续 ${longest} 天`, 0.85));
   } else if (m.cells && m.xs && m.ys) {
+    // 产线×小时类：列名恰为 0-23 小时 → 报告夜班（22–06）占比
+    const hours = m.xs.map((x) => Number(x));
+    const isHourly = m.xs.length >= 20 && hours.every((h) => Number.isInteger(h) && h >= 0 && h <= 23);
+    if (isHourly) {
+      let night = 0, tot = 0;
+      for (const c of m.cells) { tot += c.v; if (c.x >= 22 || c.x <= 5) night += c.v; }
+      if (tot > 0) out.push(ins('concentration', `夜班（22:00–06:00）占比 ${fmt(Math.round((night / tot) * 1000) / 10)}%`, 0.8));
+    }
     const hot = [...m.cells].sort((a, b) => b.v - a.v)[0];
     if (hot) out.push(ins('peak', `最热格：${m.xs[hot.x]} × ${m.ys[hot.y]}（${fmt(hot.v)}）`, 0.9));
   }
@@ -194,6 +218,22 @@ function ganttInsights(m: GanttModel): Insight[] {
   out.push(ins('critical-path', `最晚结束：「${lastTask?.label}」（第 ${end} 天${m.base ? '，' + m.base : ''}）`, 0.85));
   if (m.counts.delayed) out.push(ins('outlier', `延期任务 ${m.counts.delayed} 项`, 0.8));
   if (m.counts.avg_progress !== null) out.push(ins('trend', `整体完成度 ${pct(m.counts.avg_progress)}`, 0.7));
+  // A8 基线/实际洞察（M2a.5）
+  if (m.hasBaseline) {
+    const slipped = m.tasks.filter((k) => (k.slipDays ?? 0) > 0);
+    if (slipped.length) {
+      const avg = slipped.reduce((a, k) => a + k.slipDays!, 0) / slipped.length;
+      const worst = slipped.reduce((a, k) => (k.slipDays! > a.slipDays! ? k : a));
+      out.push(ins('outlier', `${slipped.length} 项任务较基线延后，平均 ${avg.toFixed(1)} 天，最大「${worst.label}」+${worst.slipDays} 天`, 0.8));
+    }
+  }
+  if (m.hasActual) {
+    const done = m.tasks.filter((k) => k.actual !== null).length;
+    const pending = m.tasks.length - done;
+    if (pending) out.push(ins('distribution', `实际完成已上报 ${done}/${m.tasks.length} 项，${pending} 项未上报`, 0.65));
+    const overdue = m.tasks.filter((k) => k.actual === null && (k.lateDays ?? 0) > 0);
+    if (overdue.length) out.push(ins('outlier', `${overdue.length} 项已过当前截止仍未完成`, 0.75));
+  }
   return out;
 }
 
@@ -203,8 +243,9 @@ function fishboneInsights(m: FishboneModel): Insight[] {
   return out;
 }
 
-function gridInsights(m: GridModel): Insight[] {
-  return [ins('distribution', `${m.n_rows} 行 × ${m.columns.length} 列（${m.dims.length} 维度 ${m.measures.length} 度量，${m.mode} 模式）`, 0.6)];
+function gridInsights(m: GridModel, spec?: ViewSpec): Insight[] {
+  const pivot = String(spec?.variant ?? m.mode) === 'pivot' && m.mode === 'pivot';
+  return [ins('distribution', `${m.n_rows} 行 × ${m.columns.length} 列 · ${m.dims.length} 个维度 · ${m.measures.length} 个度量 · ${pivot ? '透视' : '明细'}模式`, 0.6)];
 }
 
 function pie3dInsights(m: Pie3dModel): Insight[] {
@@ -289,16 +330,21 @@ function compareInsights(m: CompareModel): Insight[] {
   return out;
 }
 
-function cohortInsights(m: CohortModel): Insight[] {
+function cohortInsights(m: CohortModel, spec?: ViewSpec): Insight[] {
   const out: Insight[] = [];
-  const p1 = m.rows.filter((r) => r.cells[1] !== null && r.size > 0)
-    .map((r) => r.cells[1]! / r.size);
+  const abs = spec?.variant === 'absolute';
+  const p1rows = m.rows.filter((r) => r.cells[1] !== null && r.size > 0);
+  const p1 = p1rows.map((r) => r.cells[1]! / r.size);
   if (p1.length) {
     const avg = p1.reduce((a, b) => a + b, 0) / p1.length;
-    out.push(ins('retention', `第 1 期平均留存 ${pct(avg)}（${p1.length} 个批次）`, 0.9));
+    if (abs) {
+      const avgAbs = p1rows.reduce((a, r) => a + r.cells[1]!, 0) / p1rows.length;
+      out.push(ins('retention', `第 1 期平均留存 ${fmt(avgAbs)} 人（${p1.length} 个批次，占批次规模 ${pct(avg)}）`, 0.9));
+    } else {
+      out.push(ins('retention', `第 1 期平均留存 ${pct(avg)}（${p1.length} 个批次）`, 0.9));
+    }
     const worstIdx = p1.indexOf(Math.min(...p1));
-    const rows1 = m.rows.filter((r) => r.cells[1] !== null && r.size > 0);
-    if (rows1[worstIdx]) out.push(ins('bottleneck', `早期留存最低批次：${rows1[worstIdx].name}（${pct(Math.min(...p1))}）`, 0.8));
+    if (p1rows[worstIdx]) out.push(ins('bottleneck', `早期留存最低批次：${p1rows[worstIdx].name}（${abs ? `${fmt(p1rows[worstIdx].cells[1]!)} 人` : pct(Math.min(...p1))}）`, 0.8));
   }
   const lastP = m.rows.map((r) => {
     let i = r.cells.length - 1;
@@ -313,17 +359,22 @@ function comboInsights(m: BarlineModel): Insight[] {
   const out: Insight[] = [];
   if (m.series.length >= 2) {
     const [a, b] = m.series;
-    const grow = (s: { values: number[] }) => {
-      const v = s.values;
-      return v.length > 1 && v[0] !== 0 ? (v[v.length - 1] - v[0]) / Math.abs(v[0]) : 0;
+    const grow = (s: { values: (number | null)[] }) => {
+      const o = obs(s);
+      return o.length >= 2 && o[0]!.v !== 0 ? (o[o.length - 1]!.v - o[0]!.v) / Math.abs(o[0]!.v) : 0;
     };
-    out.push(ins('trend', `${a.name} ${grow(a) >= 0 ? '增长' : '下降'} ${pct(Math.abs(grow(a)))}，${b.name} ${grow(b) >= 0 ? '增长' : '下降'} ${pct(Math.abs(grow(b)))}`, 0.9));
-    const corrOk = a.values.length > 2 && b.values.length > 2;
+    const ga = grow(a), gb = grow(b);
+    if (obs(a).length >= 2 || obs(b).length >= 2) {
+      out.push(ins('trend', `${a.name} ${ga >= 0 ? '增长' : '下降'} ${pct(Math.abs(ga))}，${b.name} ${gb >= 0 ? '增长' : '下降'} ${pct(Math.abs(gb))}`, 0.9));
+    }
+    // 相关：只在两系列同位置都有观测的点上计算
+    const pairs = a.values.map((va, i) => (va !== null && b.values[i] !== null ? { va: va as number, vb: b.values[i]! } : null)).filter((p): p is { va: number; vb: number } => p !== null);
+    const corrOk = pairs.length > 2;
     if (corrOk) {
-      const ma = a.values.reduce((x, y) => x + y) / a.values.length;
-      const mb = b.values.reduce((x, y) => x + y) / b.values.length;
+      const ma = pairs.reduce((x, p) => x + p.va, 0) / pairs.length;
+      const mb = pairs.reduce((x, p) => x + p.vb, 0) / pairs.length;
       let sxy = 0, sx = 0, sy = 0;
-      a.values.forEach((va, i) => { const vb = b.values[i]; sxy += (va - ma) * (vb - mb); sx += (va - ma) ** 2; sy += (vb - mb) ** 2; });
+      pairs.forEach(({ va, vb }) => { sxy += (va - ma) * (vb - mb); sx += (va - ma) ** 2; sy += (vb - mb) ** 2; });
       const r = sxy / (Math.sqrt(sx * sy) || 1);
       if (Math.abs(r) >= 0.7) out.push(ins('correlation', `两指标${r > 0 ? '正' : '负'}相关（r=${r.toFixed(2)}）`, 0.8));
       else if (Math.abs(r) < 0.3) out.push(ins('correlation', `两指标相关性弱（r=${r.toFixed(2)}）`, 0.6));
@@ -414,6 +465,6 @@ const INSIGHTERS: Partial<Record<ViewId, (m: never) => Insight[]>> = {
 
 export function insights(view: ViewId, model: unknown, _spec?: ViewSpec): Insight[] {
   const fn = INSIGHTERS[view];
-  const list = fn ? (fn as (m: unknown) => Insight[])(model) : [];
+  const list = fn ? (fn as (m: unknown, s?: ViewSpec) => Insight[])(model, _spec) : [];
   return list.sort((a, b) => b.importance - a.importance).slice(0, 8);
 }

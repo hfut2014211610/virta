@@ -17,9 +17,14 @@ export const CONTRACT_COMPARE: ChartContract = {
     { id: 'dumbbell', label: '哑铃', description: '横向 from→to 线段 + 双端点' },
   ],
   options: [
+    { key: 'missingValue', label: '缺失值', type: 'enum', group: 'data', static: true, default: 'gap',
+      values: [{ value: 'gap', label: '留空' }, { value: 'zero', label: '补 0' }],
+      description: '未观测点（无行/空值）默认不绘制；zero 恢复补 0' },
+    { key: 'connectGaps', label: '连接缺口', type: 'boolean', group: 'display', static: true, default: false,
+      description: '缺口处用虚线连接相邻观测段' },
     { key: 'highlightReversed', label: '反转高亮', type: 'boolean', group: 'view', static: true, default: true,
       description: '整体上升中下降的项用警示色' },
-    { key: 'sortByDelta', label: '按变化排序', type: 'boolean', group: 'view', static: true, default: false },
+    { key: 'sortByDelta', label: '按变化排序', type: 'boolean', group: 'view', static: true, default: false, variants: ['dumbbell'] },
     { key: 'deltaLabels', label: '变化标签', type: 'boolean', group: 'display', static: true, default: true },
   ],
   inference: [

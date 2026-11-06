@@ -31,6 +31,11 @@ import { CONTRACT_TREE } from './tree.js';
 import { CONTRACT_NETWORK } from './network.js';
 import { CONTRACT_CONTROL } from './control.js';
 import { CONTRACT_PARALLEL } from './parallel.js';
+import { CONTRACT_ER } from './er.js';
+import { CONTRACT_FLOWCHART } from './flowchart.js';
+import { CONTRACT_SEQUENCE } from './sequence.js';
+import { CONTRACT_BURNDOWN } from './burndown.js';
+import { CONTRACT_FORMULA } from './formula.js';
 
 export const CONTRACTS: Readonly<Partial<Record<ViewId, ChartContract>>> = Object.freeze({
   bar: CONTRACT_BAR,
@@ -63,6 +68,11 @@ export const CONTRACTS: Readonly<Partial<Record<ViewId, ChartContract>>> = Objec
   network: CONTRACT_NETWORK,
   control: CONTRACT_CONTROL,
   parallel: CONTRACT_PARALLEL,
+  er: CONTRACT_ER,
+  flowchart: CONTRACT_FLOWCHART,
+  sequence: CONTRACT_SEQUENCE,
+  burndown: CONTRACT_BURNDOWN,
+  formula: CONTRACT_FORMULA,
 });
 
 export function getContract(view: ViewId): ChartContract | undefined {

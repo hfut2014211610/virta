@@ -65,7 +65,10 @@ export const HEAT_DATE_ALIAS = n(['date', 'day', '日期', '时间', 'time', 'dt
 // ---- gantt ----
 export const GANTT_TASK_ALIAS = n(['task', '任务', '事项', '工作', '工作项', '活动', 'label', 'name', '名称']);
 export const GANTT_START_ALIAS = n(['start', 'begin', 'startdate', '开始', '开始日期', '开始时间', '启动']);
-export const GANTT_END_ALIAS = n(['end', 'finish', 'enddate', 'due', 'deadline', '结束', '结束日期', '截止日期', '完成日期']);
+export const GANTT_END_ALIAS = n(['end', 'finish', 'enddate', 'due', 'deadline', '结束', '结束日期', '截止日期']);
+// A8（M2a.5）：end=当前截止；baseline=基线截止；actual=实际完成（完成日期改归 actual）
+export const GANTT_BASELINE_ALIAS = n(['baseline', 'plan', 'planned', 'baseline_due', 'plan_due', '基线', '基线截止', '计划截止', '原定截止', '基线日期', '计划日期']);
+export const GANTT_ACTUAL_ALIAS = n(['actual', 'completed', 'completed_at', 'done_at', '完成日期', '实际完成', '实际完成日期', '完工', '完成时间', '交付日期']);
 export const GANTT_DUR_ALIAS = n(['duration', 'days', 'dur', '工期', '时长', '天数']);
 export const GANTT_GROUP_ALIAS = n(['phase', 'lane', 'swimlane', 'module', '阶段', '分组', '模块', '泳道', '部门', 'group', '项目']);
 export const GANTT_PROGRESS_ALIAS = n(['progress', 'pct', 'percent', '进度', '完成度', '完成率']);

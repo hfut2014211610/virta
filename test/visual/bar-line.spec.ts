@@ -16,8 +16,8 @@ test.beforeAll(() => {
   VIRT('render examples/basic/sample.json --format json --view line --export html --out ' + OUT);
   // legacy 对照（Python 渲染同一份数据）
   try {
-    execSync(`python legacy-vizscape/vizscape.py render examples/basic/sample-multi.csv --view bar --out ${OUT}/legacy-bar.html`, { stdio: 'pipe' });
-    execSync(`python legacy-vizscape/vizscape.py render examples/basic/sample.json --view line --out ${OUT}/legacy-line.html`, { stdio: 'pipe' });
+    execSync(`python archive/legacy-vizscape/vizscape.py render examples/basic/sample-multi.csv --view bar --out ${OUT}/legacy-bar.html`, { stdio: 'pipe' });
+    execSync(`python archive/legacy-vizscape/vizscape.py render examples/basic/sample.json --view line --out ${OUT}/legacy-line.html`, { stdio: 'pipe' });
   } catch { /* legacy 渲染失败不阻塞新版基线 */ }
 });
 

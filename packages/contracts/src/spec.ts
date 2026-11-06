@@ -27,9 +27,28 @@ export interface ViewSpec {
   format?: NumberFormat;
   facet?: { column: string; columns?: number; sharedScale?: boolean };
   layout?: 'read' | 'edit';
-  /** 静态导出尺寸（CSS px），默认 1200×675 */
-  size?: { width: number; height: number };
+  /** 静态导出尺寸（CSS px），默认 1200×675；height='auto' 时按内容自然高度（ADR-0009） */
+  size?: { width: number; height: number | 'auto' };
+  /** 时间契约（ADR-0010）：报告时刻与时区，CLI 缺省时解析后写回回执 */
+  time?: {
+    /** ISO 8601，必须带时区偏移或 Z，如 '2026-11-05T17:00:00+08:00' */
+    asOf?: string;
+    /** IANA 时区，如 'Asia/Shanghai'；缺省 = 系统时区 */
+    tz?: string;
+    weekStart?: 1 | 7;
+    workdays?: number[];
+    holidays?: string[];
+    extraWorkdays?: string[];
+  };
+  /** 派生列（ADR-0010）：适配前统一计算，新列进 Table.columns */
+  derive?: Derive[];
+  /** 流式视图的静态分页（ADR-0009） */
+  page?: { height?: number; break?: 'auto' | 'section' | 'none' };
 }
+
+export type Derive =
+  | { type: 'dueStatus'; due: string; done?: string; soonWorkdays?: number; as?: string }
+  | { type: 'dateDiff'; from: string; to: string; unit?: 'day' | 'workday'; as?: string };
 
 export type Annotation =
   | { type: 'refLine'; axis: 'x' | 'y' | 'y2'; value: number | string; label?: string }
@@ -57,6 +76,10 @@ export interface ViewState {
   azimuth?: number;
   tilt?: number;
   zoom?: number;
+  /** 选择放大：被点选扇区/元素的索引（饼图 explode） */
+  explode?: number;
   /** 动态排行、时间滑块的当前帧 */
   time?: string | number;
+  /** flow-table 全文搜索串（ADR-0009） */
+  query?: string;
 }

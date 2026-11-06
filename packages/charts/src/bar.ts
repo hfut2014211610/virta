@@ -12,13 +12,13 @@ type Cell = [number, number];
 
 function applySort(m: BarlineModel, s: 'none' | 'asc' | 'desc'): BarlineModel {
   if (s === 'none') return m;
-  const tot = m.labels.map((_, i) => m.series.reduce((a, sr) => a + sr.values[i], 0));
+  const tot = m.labels.map((_, i) => m.series.reduce((a, sr) => a + (sr.values[i] ?? 0), 0));
   const order = m.labels.map((_, i) => i).sort((a, b) => (s === 'desc' ? tot[b] - tot[a] : tot[a] - tot[b]));
   return {
     ...m,
     labels: order.map((i) => m.labels[i]),
     kinds: order.map((i) => m.kinds[i]),
-    series: m.series.map((sr) => ({ ...sr, values: order.map((i) => sr.values[i]) })),
+    series: m.series.map((sr) => ({ ...sr, values: order.map((i) => (sr.values[i] ?? 0)) })),
   };
 }
 
@@ -37,18 +37,45 @@ function shapePath(x: number, y: number, w: number, h: number, shape: string): s
   }
 }
 
+/** variant/options 生效值：pct/pareto 负值回退 grouped；waterfall 无行类型回退；
+ *  伪3D 受形状/变体约束；配色×表面×着色互斥（瀑布锁语义色、按数值覆盖配色、渐变需纯色底）。 */
+function resolveBar(model: BarlineModel, variant: string | undefined, options?: Record<string, string | number | boolean>): { variant: string; options: Record<string, string | number | boolean> } {
+  const neg = model.series.some((s) => s.values.some((v) => (v ?? 0) < 0));
+  let v = variant ?? 'grouped';
+  if ((v === 'pct' || v === 'pareto') && neg) v = 'grouped';
+  if (v === 'waterfall' && !model.kinds?.length) v = 'grouped';
+  const opts = { ...(options ?? {}) };
+  // 旧 spec 兼容：finish=gradient → colorMode=gradient + flat；colorBy=value → colorMode=value
+  if (opts['finish'] === 'gradient') {
+    if (opts['colorMode'] === undefined) opts['colorMode'] = 'gradient';
+    opts['finish'] = 'flat';
+  }
+  if (opts['colorBy'] === 'value' && opts['colorMode'] === undefined) opts['colorMode'] = 'value';
+  opts['colorBy'] = 'series';
+  const shape = String(opts['shape'] ?? 'round');
+  const cm = String(opts['colorMode'] ?? 'multi');
+  const fin = String(opts['finish'] ?? 'flat');
+  if (opts['depth3d']) opts['depth3d'] = ['round', 'rect'].includes(shape) && ['grouped', 'stacked', 'pct'].includes(v);
+  if (v === 'waterfall') {
+    opts['colorMode'] = 'multi';
+  } else {
+    if (cm === 'value' && fin === 'hatch') opts['finish'] = 'flat';
+    if (fin !== 'flat' && cm === 'gradient') opts['colorMode'] = 'multi';
+  }
+  return { variant: v, options: opts };
+}
+
 export const barRenderer: FamilyRenderer<BarlineModel> = {
   view: 'bar' as ViewId,
   interactions: ['brush'],
+  resolve: (model, req) => resolveBar(model, req.variant, req.options),
   layout(model: BarlineModel, ctx: LayoutContext): Scene {
     const t = ctx.tokens;
     const colors = paletteColors(ctx.palette, ctx.theme);
     const hiddenS = new Set(ctx.state?.hiddenSeries ?? []);
     const m0 = applySort(model, ctx.state?.sort ?? 'none');
-    const neg = m0.series.some((s) => s.values.some((v) => v < 0));
-    let effVariant = ctx.variant ?? 'grouped';
-    if ((effVariant === 'pct' || effVariant === 'pareto') && neg) effVariant = 'grouped';
-    if (effVariant === 'waterfall' && !m0.kinds?.length) effVariant = 'grouped';
+    const eff = resolveBar(m0, ctx.variant, ctx.options);
+    const effVariant = eff.variant;
 
     const padL = 56, padR = effVariant === 'pareto' ? 52 : 16, padT = 22, padB = 34;
     const plot = { x: ctx.plot.x + padL, y: ctx.plot.y + padT, w: ctx.plot.w - padL - padR, h: ctx.plot.h - padT - padB };
@@ -68,10 +95,10 @@ export const barRenderer: FamilyRenderer<BarlineModel> = {
         return [[0, visSeries[0]?.values[li] ?? 0]];
       }
       if (stacked) {
-        const tot = visSeries.reduce((a, s) => a + Math.abs(s.values[li]), 0);
+        const tot = visSeries.reduce((a, s) => a + Math.abs(s.values[li] ?? 0), 0);
         let pos = 0, negA = 0;
         return visSeries.map((s) => {
-          const v = pctMode && tot ? (s.values[li] / tot) * 100 : s.values[li];
+          const v = pctMode && tot ? ((s.values[li] ?? 0) / tot) * 100 : (s.values[li] ?? 0);
           const start = v >= 0 ? pos : negA;
           if (v >= 0) pos += v; else negA += v;
           return [start, v] as Cell;
@@ -110,13 +137,18 @@ export const barRenderer: FamilyRenderer<BarlineModel> = {
     nodes.push(...xAxisBand(band, { x: plot.x, y: plot.y, w: plot.w, h: plot.h }, t));
     nodes.push(...axisTitle(ctx.text?.unit, { x: plot.x, y: plot.y, w: plot.w, h: plot.h }, t));
 
-    // —— 表面 finish → defs + paint ——
-    const finish = String(ctx.options?.['finish'] ?? 'gradient');
+    // —— 配色 colorMode × 表面 finish → defs + paint ——
+    const finish = String(eff.options['finish'] ?? 'flat');
+    const colorMode = String(eff.options['colorMode'] ?? 'multi');
+    const mono = accentFor(ctx.palette, ctx.theme);
     const defs: Scene['defs'] = { gradients: [], radials: [], patterns: [], clips: [] };
     const paint = (si: number): { fill?: Paint; stroke?: string; opacity?: number } => {
-      const base = colors[m0.series.indexOf(visSeries[si]) % colors.length];
+      const base = colorMode === 'mono' ? mono : colors[m0.series.indexOf(visSeries[si]) % colors.length];
+      if (colorMode === 'gradient') {
+        defs.gradients.push({ id: `g${si}`, x1: 0, y1: 0, x2: 0, y2: 1, stops: [{ offset: 0, color: base }, { offset: 1, color: base, opacity: 0.78 }] });
+        return { fill: { ref: `g${si}` } };
+      }
       switch (finish) {
-        case 'flat': return { fill: base };
         case 'outline': case 'neon': return { fill: 'none', stroke: base };
         case 'glass': return { fill: base, opacity: 0.5 };
         case 'papercut': return { fill: base, opacity: 0.82 };
@@ -136,20 +168,16 @@ export const barRenderer: FamilyRenderer<BarlineModel> = {
           defs.gradients.push({ id: `m${si}`, x1: 0, y1: 0, x2: 0, y2: 1, stops: [{ offset: 0, color: '#ffffff' }, { offset: 0.45, color: base }, { offset: 1, color: base }] });
           return { fill: { ref: `m${si}` } };
         }
-        default: {
-          defs.gradients.push({ id: `g${si}`, x1: 0, y1: 0, x2: 0, y2: 1, stops: [{ offset: 0, color: base }, { offset: 1, color: base, opacity: 0.78 }] });
-          return { fill: { ref: `g${si}` } };
-        }
+        default: return { fill: base };
       }
     };
 
-    const shape = String(ctx.options?.['shape'] ?? 'round');
-    // 色阶：按数值给每根柱上色（|值| 越大越饱和），瀑布图保持涨跌语义色
-    const colorBy = String(ctx.options?.['colorBy'] ?? 'series');
-    const ramp = colorBy === 'value' ? rampSequential(ctx.palette, ctx.theme) : null;
-    const vabs = Math.max(1e-9, ...visSeries.flatMap((s) => s.values.map((v) => Math.abs(v))));
+    const shape = String(eff.options['shape'] ?? 'round');
+    // 色阶：colorMode=value 按数值给每根柱上色（|值| 越大越饱和），瀑布图保持涨跌语义色
+    const ramp = colorMode === 'value' ? rampSequential(ctx.palette, ctx.theme) : null;
+    const vabs = Math.max(1e-9, ...visSeries.flatMap((s) => s.values.map((v) => Math.abs(v ?? 0))));
     const rampC = (dv: number) => ramp![Math.min(ramp!.length - 1, Math.floor((Math.abs(dv) / vabs) * ramp!.length))];
-    const depth3d = Boolean(ctx.options?.['depth3d']) && ['round', 'rect'].includes(shape) && ['grouped', 'stacked', 'pct'].includes(effVariant);
+    const depth3d = eff.options['depth3d'] === true;
     const valueLabels = Boolean(ctx.options?.['valueLabels']);
     const perGroup = stacked || effVariant === 'waterfall' ? 1 : visSeries.length;
     const bw = band.bandwidth / Math.max(1, perGroup);
@@ -209,7 +237,7 @@ export const barRenderer: FamilyRenderer<BarlineModel> = {
 
     // pareto 累计线
     if (effVariant === 'pareto') {
-      const tot = labels.map((_, i) => visSeries.reduce((a, s) => a + s.values[i], 0));
+      const tot = labels.map((_, i) => visSeries.reduce((a, s) => a + (s.values[i] ?? 0), 0));
       const grand = tot.reduce((a, b) => a + b, 0) || 1;
       const pctY = scaleLinear([0, 100], [plot.y + plot.h, plot.y]);
       let acc = 0;

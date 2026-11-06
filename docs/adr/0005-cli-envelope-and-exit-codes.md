@@ -16,3 +16,9 @@
 ## 理由
 
 结构化回执（含解析补全后的完整 spec 与 `summaryMd`）让 Agent 可以无猜测地串联 inspect → validate → render；固定退出码让调用方按类别处理错误。
+
+## 2a 增量
+
+- ErrorCode 新增 `INVALID_TIME`（USAGE，退出码 2）；CLI 新增 `--as-of`/`--tz`（等价 `--set time.*`）。
+- render 回执 `files[]` 新增 `page`/`pages`（流式视图 PNG 分页）；`--size Wxauto` 用自然高度。
+- compose 回执每面板新增 `rendered: boolean` 与 `error?`；任一面板预渲染失败 → `ok:false`。

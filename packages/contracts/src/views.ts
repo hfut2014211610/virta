@@ -5,6 +5,8 @@ export const VIEW_IDS = [
   'treemap', 'gantt', 'scatter3d', 'line3d', 'fishbone', 'heatmap', 'sankey', 'boxplot', 'sunburst', 'grid',
   // 本期新增
   'combo', 'rank', 'histogram', 'kpi', 'compare', 'cohort', 'tree', 'network', 'control', 'parallel',
+  // T3 简版补充（画廊分组补齐）
+  'er', 'flowchart', 'sequence', 'burndown', 'formula',
   // 'map' 本期搁置，见 docs/plan/NEXT_PHASE.md §13；届时作为契约变更新增
 ] as const;
 export type ViewId = typeof VIEW_IDS[number];

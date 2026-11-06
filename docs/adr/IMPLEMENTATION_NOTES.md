@@ -278,3 +278,298 @@
 - 画廊：删 STYLE_CARDS 风格重复卡；新增「四套主题·同数据对比」
   （bar/line/pie/sankey/network/tree × 4 主题，PNG + 交互页）。
 - 验证：typecheck + vitest 269 全绿；20 张四主题 PNG/ SVG 抽查通过。
+
+## 画廊增量生成与导航改版
+
+- `gallery` 新增 `--only <图族|场景|关键词>` 与 `--force`（CLI 参数级变更）：
+  `out/gallery/.manifest.json` 记录每个展品的输入哈希（源文件字节 + 生效 spec +
+  scale）与产物路径；哈希未变且产物存在即复用跳过 renderChart，`--only` 仅重渲
+  命中项（按 view/pack id/key/文件/变体/标题匹配），未命中项沿用清单旧产物，
+  index.html 每轮照常重建。默认增量，`--force` 全量重渲；改了渲染源码产物不会
+  自动失效，须 `--force`。
+- 顶部导航改版：分段切换 + 分组导航合并为单行 sticky「dock」（分段控件 | 分隔线 |
+  单行横向滚动导航，隐藏滚动条、边缘渐隐、滚轮转横向、IntersectionObserver 滚动
+  高亮当前组并自动居中）；原三层 chip 面板移除。
+- **画廊柱状图改版**：「四套主题」组移至末尾；bar 族合并为单张演示卡——
+  `examples/gallery/` 新增 4 组演示数据（bar-single/bar-grouped/bar-pareto/
+  bar-waterfall，spec.mapping 显式映射），卡片 `data-ds` + `ds-seg` 点按切换
+  缩略图/标题/预览目标；pack 来源与变体卡不再单独上卡（变体进交互页切换）。
+  matrix3d（多维）并入仍保留，故 bar 组 = 合并卡 + 3D 卡。
+- **渲染器 resolve 钩子**（charts/types.ts `FamilyRenderer.resolve`）：返回
+  variant/options 实际生效值（含回退/自动关闭）；bar 实现复用 layout 同一套
+  resolveBar 规则（pct/pareto 负值→grouped、waterfall 无 kinds→grouped、
+  depth3d 受 shape∈round|rect 且 variant∈grouped|stacked|pct 约束）。
+  viewer runtime 工具栏据此置灰不可选控件（候选值被回退即 disabled），
+  未实现 resolve 的图族行为不变；render() 增加异常兜底（.render-err）。
+- **浏览器端 spec.mapping 修复**：per-view 入口模板（render.ts + scripts/build.mjs
+  两份，须同步）的 adapt 此前忽略 spec.mapping——服务端 adapt 会原地注入
+  role 键故 payload 内 rows 已带别名键，掩盖了问题；现模板内联应用 mapping。
+  注意：BAR_DEMOS 只保留必要 mapping（series 列名非别名时才声明）——mapping 注入的
+  role 键本身是数值列时会和原列并存（label+value 数据变宽表双系列），
+  别名已覆盖的列不要再 map。
+- **bar 选项精简（契约级）**：finish 11→3（flat/outline/hatch）、shape 9→3
+  （round/rect/pill）；新增 `colorMode`（mono/gradient/multi，默认 gradient 保持
+  旧观感），旧 spec finish=gradient 在 resolve 时迁移为 colorMode=gradient+flat。
+  预设色板降级为二级输入：声明 colorMode 的图族在画廊工具栏隐藏 palette seg，
+  spec.palette 仍可用（CLI 支持，不作推荐）。
+- **bar 冲突规则（resolveBar）**：waterfall 锁 colorBy=series+colorMode=multi；
+  colorBy=value 时 colorMode→multi、finish=hatch→flat；finish 非 flat 时
+  colorMode=gradient→multi；depth3d 维持 round/rect+grouped/stacked/pct 约束。
+  旧 finish 枚举值（glass/metal/hatch 等）与旧 shape 枚举值在渲染层仍兼容。
+- **交互页工具栏**：选项行默认常开（移除「选项」折叠按钮），无 options 的图族整行隐藏。
+- **bar 配色/着色合并（契约级）**：colorBy 并入 colorMode（mono/gradient/multi/value
+  四值，value=原按数值色阶）；旧 spec options.colorBy=value 在 resolve 迁移为
+  colorMode=value。冲突规则改挂 colorMode：waterfall→multi、value 下斜纹→flat、
+  非纯色底下 gradient→multi。
+- **预设色二级控件**：声明 colorMode 的图族在 opt-row 于配色 seg 旁渲染
+  「预设色」下拉（select.opt-sel，10 套色板）；palette seg 仍隐藏。
+  注意 treemap 等其它带 colorMode 选项的图族同样获得该控件（行为一致）。
+- **matrix3d 并入 bar 合并卡**：新增 `examples/gallery/bar-matrix3d.csv`
+  （大区→城市 × 产品线 × 销售额 多级分组长表）；BAR_DEMOS 增加「多维矩阵」
+  （view=matrix3d）与「双因素·曲线」（同数据 view=line）两个 ds 条目，
+  bar 组不再渲染 matrix3d 独立卡（MERGE_3D 循环按 v3 跳过）。
+  注意：ds 条目按 spec.view 渲染（修复了 it.view 曾硬编码 'bar' 覆盖
+  spec.view 的问题），合并卡机制因此支持跨视图数据集。
+- **matrix3d 改版（契约级）**：新增 variants matrix（柱阵）/curve（双因素三维曲线，
+  系列×分类空间折线+点标）；选项按组重排（外观→展示→视图→数据）与 bar 同布局。
+  渲染修复：侧面原画在远侧 x 面（几何错误）→ 按 sinA/cosA 符号选近侧 x/z 面，
+  任意方位角为正立方体；补后墙值轴（niceTicks 刻度+虚线参考）与右缘系列名。
+  resolve：topLabels 在单元格>60 时置灰。
+- **缩略图 2x**：gallery PNG 渲染 scale 1→2（1280×720），参数计入清单哈希
+  （png2），本轮全量重渲一次。
+- **runtime**：选项行设值 tilt/azimuth/zoom 时清除同名 state 键——
+  拖拽留下的 state.tilt 此前永久覆盖「视角」选项致其无效。
+- **matrix3d 观感修正**：柱体按单元格 x·sinA+z·cosA 深度排序（远先近后），
+  旋转任意方位角遮挡正确；雾化降为 0.85/0.15 弱淡化；值轴/网格加深（faint
+  描边+muted 10px 刻度文字）；curve 变体改为柱阵+三维曲线叠加而非替代。
+- **matrix3d 收尾**：autoRotate 改为常设定时器+开关内查（原仅 boot 读一次，
+  工具栏切换无效）；契约删除 height 选项（自适应柱高够用）；柱体表面加重
+  明暗（侧面 0.42 墨、顶面 0.80 白、浓淡 0.62–1.0），立方体感与可读性提升。
+- **line 合并卡**：LINE_DEMOS（单一系列/多系列/三维轨迹）并入折线图组单卡；
+  line3d 独立卡并入（MERGE_3D 循环按 v3 跳过，同 matrix3d→bar 规则）。
+  三维条目用 line3d variant=curve（x/y/z 数值列→三维空间轨迹），
+  新增 examples/gallery/line-{single,multi,curve3d}.csv。
+- **line3d 选项对齐 2D line（契约级）**：新增 lineStyle（平滑/直线/阶梯，
+  屏幕空间中点平滑）、window（all/first6/last6/last12）、marker
+  （圆/方/菱/无，替代 dots——旧 spec options.dots=false 映射为 none）、
+  lineWidth、hatch（虚线纹理）、endLabels；保留 ribbon/floorGrid/axes3d。
+  curve 变体补飘带填充（垂帘面）并把轨迹改为 defs 线性渐变单路径
+  （c0→c1 沿行进方向），bands/curve 两变体共享全部新选项。
+- **line3d curve 多轨迹**：Line3dModel.curve 改为 series[]（name+points）；
+  toLine3dCurve 按系列别名列（含 mapping.series 注入键）分组，多条轨迹各自
+  渐变/垂帘/标记/图例；演示数据改为双航线（line-curve3d.csv 加 航线 列）。
+- **pie 合并卡 + explode（契约级 ViewState.explode）**：PIE_DEMOS（环形/实心同
+  CSV/立体·多层 pie3d）并入饼图组单卡；pieRenderer 增加 interactions:['select']，
+  点击扇区沿角平分线外移 15px（再点取消），runtime 接 hitTest 点击写
+  state.explode；ViewState+spec-schema 加 explode:number。
+- **pie3d 重做为真立体饼**：椭圆压扁(k=0.55)+外缘厚度侧壁；多层改为等半径
+  实心饼垂直堆叠——下层画整圈色带（构成信息被遮挡，逐扇形侧壁会错位成锯齿），
+  顶层保留逐扇形侧壁+椭圆扇区+标签；tooltip 覆盖顶扇区与各层色带。
+- **pie3d 简化为单层伪 3D**：放弃多层堆叠，跨层按标签合并扇区为一个饼
+  （椭圆压扁 k=0.55 + 外缘厚度侧壁），与用户"只要立体感"诉求一致。
+- **pie3d 侧壁修复**：墙路径返回弧终点参数写反（wa/wb 对调后闭合成带），
+  此前退化成碎片；现为完整前半圈厚度侧壁（压暗柱色）。
+- **combo 并入柱状图合并卡**：BAR_DEMOS 增加「双轴组合」（view=combo，
+  variant=bar+line，examples/gallery/combo-dual.csv 营收×毛利率），
+  画廊图族循环跳过 combo 独立组（27→26 图族）；预览页内可切
+  bar+line/双柱/双线变体及 y2Series 等全部选项。
+- **compare 合并卡**：COMPARE_DEMOS（斜率 slope / 哑铃 dumbbell 两组
+  前后对比数据）并入对比图组单卡；FamilyRenderer.interactions 联合类型
+  补 'select'（饼图 explode 点选用，契约级）。
+- **剩余图族内部合并**：famGroups 循环收尾处统一把每家 >1 卡收进单卡，
+  ds 胶囊 = 各卡标题（样例包/示例/变体/风格/3D 并入项保持原渲染，
+  只换展示形态），130→94 卡，23 张合并卡。
+- **画廊按逻辑重新分组**：取消 26 图族分组，改为 6 逻辑组——
+  趋势·计划(line/cohort/control/gantt)、比较·对比(bar/compare/bullet/rank/radar)、
+  构成·占比(pie/treemap/sunburst/sankey/funnel)、分布·相关(scatter/heatmap/
+  boxplot/histogram/parallel)、关系·结构(network/tree/fishbone)、
+  指标·明细(kpi/grid/report)；未映射图族落「其他」兜底。删除四套主题
+  对比组（24 卡），主题切换在各交互页内完成。94→70 卡。
+- **gantt 三修（契约级 option: summary）**：
+  1) 左侧拥挤——任务按泳道分组排序，组头行（浅色带+色条+组名+
+     组内平均进度迷你条+%）分隔泳道；标签列加宽至 210px 并截断；
+  2) calendar 变体此前只有契约声明没有实现——补周泳道日历：
+     周一至周日 7 列（首列偏移对齐真实周一），周为泳道行，任务以
+     小色条压在跨越的日期格上（含进度填充/里程碑菱形/超出 +n 计数/
+     周末底纹/今日格高亮）；相对天数退化为 day%7 分桶、列名 1-7；
+     gantt 增加 resolve：calendar 下 deps 连线不适用 → 置灰；
+  3) 新增「进度汇总」组件——组头行平均进度条 + 头部右侧总进度条
+     （m.counts.avg_progress），option summary=false 时回到平铺布局；
+  另修正 statusColor 把 'doing' 当进行中（归一化后应为 'active'）。
+- **gantt 行窗口虚拟化 + 分组聚焦（charts/viewer 级）**：
+  - `FamilyRenderer.interactions` 增 'scroll'，`preferredHeight` 钩子新增：
+    行数驱动图族返回期望高度；viewer 交互页对未声明 scroll 的图族可撑高，
+    render.ts 静态导出统一用 preferredHeight 撑高（静态无法滚动）。
+  - gantt 声明 ['select','scroll']：时间轴行高固定（舒适 26/紧凑 15，放得下
+    拉伸铺满），日历泳道高固定（40/26）；放不下按 state.range=[start,page]
+    切片渲染，右缘画轨道+拇指滚动条，viewer wheel 事件驱动翻行（±3 行）。
+  - 分组聚焦：任务/组头 datum 带 series=组名，runtime select 处理器遇
+    d.series → state.focus 切换；focus 命中的组全亮、其余调至 0.12
+    （柱/标签/依赖线/组头联动）；hiddenSeries 隐藏整组（图例点击生效）。
+  - resolve 增加：m.today===null 时 todayLine 置灰（今日超出数据范围，
+    原开关无效观感）；密度差异化（行高/字号/条高随 compact 变化）。
+- **gantt 日历周/月 + 组头融合 + 删密度（契约级 option: calView，删 density）**：
+  - 契约删 density（舒适为唯一形态）；新增 calView=week|month（粒度：周历/月历，
+    仅日历变体有效——时间轴下 resolve 置灰；无真实日期锁周历）。
+  - 月历：按月分块（月标题+星期行+周行格），格内日号/邻月灰格/周末底纹/
+    今日框/任务条（跨格延续），按月滚动（scroll.step=1）；周历泳道限宽 1120 居中。
+  - 组头融合：进度改为标签列内按 pct 填充的底层色带，组名压其上、
+    百分比组色右对齐（不再单独迷你条压字）。
+  - 修既有纪元 bug：GanttModel.baseOrd 为 Python toordinal（+719163），
+    b3.ts 此前按 epoch 直接 new Date(ord*864e5) → 年 3994、星期偏 4 天；
+    统一 ORD_OFF=719163 修正 ISO/dow/周末底纹/月历/月标题。
+- **OptionSpec.variants（契约级）**：选项可声明仅对指定变体展示
+  （gantt.calView=variants:['calendar']）；viewer 选项控件打 data-optkey，
+  syncChrome 按当前变体 display 显隐（变体切换实时生效）。
+- **gantt 画廊收敛为 GANTT_DEMOS 三胶囊**：时间轴/周历/月历
+  （examples/gallery/gantt-plan.csv，自 delivery/plan.csv 复制）；
+  月历行高 34→46（任务条槽位同步放大）。
+- **月历近正方形日格**：网格限宽 840 居中，cellH=格宽（≈120px），
+  每周行可叠十余条任务；静态导出撑高上限 3200→5000（多月全展示）。
+- **T3 简版图族 ×5（契约级 ViewId 新增：er/flowchart/sequence/burndown/formula）**：
+  contracts + data-engine t3 适配 + charts t3 渲染 + viewer view-map 五注册；
+  er=实体框+字段行+FK连线；flowchart=分层节点+出度>1菱形判断+tb/lr；
+  sequence=生命线+编号消息箭头；burndown=理想斜线+实际折线；
+  formula=上下标/√/希腊字母转写排版。演示数据在 examples/gallery
+  （不入 basic 以免影响 recommend 期望表）。
+- **画廊分组重排为 7 组**：趋势(bar/line/cohort/control)、对比(compare/radar/
+  bullet/rank)、构成(pie/sunburst/funnel/treemap/sankey)、统计(histogram/
+  scatter/boxplot/heatmap/parallel)、关系(er/network/tree/fishbone)、
+  时序(flowchart/gantt/sequence/burndown)、文案(kpi/grid/formula/report)；
+  顶部按图族/按场景切换与场景分组整体移除，dock 只留分组导航。
+- **交互有效性问题修复（7项）**：cohort 对角裁剪关闭时画空壳格；control xbar
+  变体不画σ带/WE标记；compare sortByDelta 改有符号差排序且仅 dumbbell 可见
+  （OptionSpec.variants 复用）；rank race 变体接 ctx.variant + 「其他（N项）」
+  计数；radar 标签外移+select 聚焦/图例隐藏；pie3d 补 select 聚焦调光 +
+  wall 侧壁开关（契约选项补齐 legacy 组数）；sunburst select 下钻（focus
+  节点为根）并并入饼图卡。
+- **第二批交互有效性修复**：funnel 多系列（toFunnel 兜底：第二文本维
+  自动当系列——月份/渠道等不在通用别名也能触发 multi；模型补
+  seriesStages；renderer multi=并排迷你漏斗+按系列归一+legend；resolve
+  无多系列时 multi 回退 single；select 点击调光对三质感统一罩层）；
+  treemap flat/grouped 接 ctx.variant（flat 拍平 grouped 子叶）+ resolve
+  无分组时 grouped 回退 + select 调光；tree org 底色 t.tip→t.paper
+  （误用 tooltip 底色导致文字不可读）；boxplot valueLabels 选项
+  （中位/min/max 标注）；heatmap density 0.4/3 差异化 + 标注阈值放宽；
+  sequence 消息加接收方激活条（参与者色）；kpi 进度百分数移到条上方。
+- **第三批交互/视觉修复**：scatter 轴域 6% 内边距（边缘点不再裁切）；
+  fishbone 重做为标准鱼骨（主轴加粗+类别斜肋末端色块+沿肋原因短横+
+  select 调光+鱼头眼点）；flowchart 圆角肘线+淡彩节点+分层 BFS 环安全
+  （驳回回边不再塌成一行）+select；report preferredHeight（静态导出全文
+  可见，代码块/表格/图片占位不裁断）；select 交互铺开：sankey（未关联流
+  变淡）/boxplot（行罩层）/heatmap（格调光）/er（实体罩层）/network
+  （节点+关联边）。
+- **共性样式体系（charts/finish.ts）**：styleFill = 纹理（none/hatch/dots/grid
+  pattern）× 配色（multi/mono/gradient）统一填充；已接入 pie/treemap/
+  histogram/rank（契约各加 texture+colorMode 两选项）。后续图族接法：
+  defs=emptyDefs() → fill: styleFill(defs,ctx,c,i) → sc.defs=defs。
+- **select 交互铺开第二批**：sankey/boxplot/heatmap/er/network/treemap/
+  funnel/flowchart/fishbone 点击聚焦调光；parallel/compare/cohort/control 待补。
+- **收尾**：select 交互铺满（compare/cohort/control/parallel + 此前
+  sankey/boxplot/heatmap/er/network/treemap/funnel/flowchart/fishbone/
+  radar/pie3d/sunburst）；纹理+配色体系扩到 boxplot/sunburst/pie3d/er
+  （契约各+texture/colorMode，renderer 走 finish.styleFill+defs）。
+- **画廊走查修复批（2026-11-06）**：
+  - grid 真透视（契约级：`agg` 枚举选项新增 sum/count/avg/min/max，group=data；
+    summary 降级为「行×列交叉聚合、合计、滚动分页」，删去行列拖拽承诺）：
+    行维度 ≤2 级嵌套（组头=小计）× 列维度 1 级（除首维外基数最小者，>8 列
+    按合计收拢「其他」）× 度量×聚合；多余维度页脚注明「未入透视」。
+    `resolve` 在 <2 维度/无度量时把 pivot 回退 detail（按钮置灰）。
+  - grid `preferredHeight` + `interactions:['scroll']`：pageSize 行完整落进
+    plot（此前 50 被压成 19），页脚「第 a–b 行 · 共 N 行」收进绘图区；
+    明细合计标注「全部 N 行」且用千分位（53550/53672 不再同显 5.4万）；
+    斑马纹 0.35→0.8、表头/合计行 accent 底 + 数值列右对齐 + 行/格 tooltip。
+  - viewer runtime：`height="auto"` 改 CSS（SVG 属性不接受 auto，47 条
+    控制台错误）；主题切换同步重绘 `VIRTA · VIEW · THEME` 角标（含 compose）。
+  - report `wrapText` 替换按字符硬切：整词（31.5%/12.8）不断行、闭口标点
+    不置行首、开口标点不留行尾；preferredHeight 用同一函数估算。
+    指标卡标签 faint→muted；图片占位 110px 框折叠为一行说明。
+  - 设计 token：六主题 `faint` 全部提到 ≥4.5:1（原 3.0–4.0），测试阈值
+    同步提到 4.5。
+  - heatmap 色阶收进绘图区（值标不再溢出底边）、calendar 年视图垂直居中；
+    cohort 矩阵水平居中 + 补 0→vmax 不透明度图例。
+  - 画廊：demo 卡 key 并入 variant+options 哈希（甘特周历/月历不再互相覆盖）；
+    ds 按 PNG+HTML 字节去重；胶囊短标（变体名/包名首段，不放问句）、h3 固定
+    图族短名、meta/tags/alt/aria-pressed 随切换；弹窗 aria-hidden+焦点管理；
+    文案中文化（预览画廊/交互预览/加载中/离线单文件，eyebrow 用视图 ID）；
+    hero 计数改「N 张卡 · N 个视图」；manifest 收敛到本轮键 + png/html
+    孤儿文件清理（194→79）+ stem ASCII 化 + 清除 `nul` 残留；
+    `Rendered.dark` 死字段删除（双主题交互页从未生成，主题在页内切换）。
+  - 数据抽屉：数值列 ≥80% 判定右对齐；funnel resolve 返回类型修正。
+
+### M2a.1 时间契约 / M2a.2 流式排版（PHASE_2A）
+- **M2a.0**：`test/repro/phase2a.test.ts` 9 个 it.fails 锚点；ADR-0009（flow+DOM 例外）、
+  ADR-0010（asOf/tz/derive）、ADR-0011（missing gap）；0008 被主题占用故顺延编号。
+- **契约增量**：ViewSpec.time/asOf/tz/derive/page、size.height='auto'、Derive 类型、
+  RoleSpec.instant、ChartContract.flow、ViewState.query、grid link/tone 角色 + linkText
+  选项；QualityCode +TZ_ASSUMED/ASOF_ASSUMED/GAP_VALUES/LINK_UNSAFE；ErrorCode
+  +INVALID_TIME（USAGE→退出码 2）。
+- **data-engine**：`time/zoned.ts`（Intl formatToParts 迭代修正，DST 覆盖）、
+  `time/workday.ts`、`derive.ts`（dueStatus 七态/dateDiff）；adapt 前置 applyDerives；
+  gantt 今日线按 spec.time.asOf+tz（F3）。
+- **CLI**：`--as-of/--tz` + INVALID_TIME；time 缺省解析后写回回执 spec + info 警告；
+  静态卡脚注「数据截至 …（tz）」；`--height auto` 用自然高度。
+- **M2a.2 流式**：FamilyRenderer.measure {height,breaks}；grid 全量自然高、report
+  去 8/30/400 截断上限；Scene Node.link → toSVG `<a>`（白名单兜底）；report
+  `[文字](url)` 只显文字并输出 <a>（F2）；静态导出超 page.height（默认 1600）分页：
+  grid 走 state.range 滚动窗口（每页表头+页脚行号），report 走 flow 窗口（块级
+  breaks）；回执 files[] 带 page/pages。
+- **viewer**：`flow-doc.ts`（DocModel→DOM，inlineHtml 复用，指标卡/目录/语义化块）、
+  `flow-table.ts`（GridModel→<table>：搜索 state.query、distinct≤30 列筛选 state.filter、
+  点表头排序、粘性表头、行数徽章、link/tone、500 行/批、beforeprint 展开）；
+  runtime 对 contract.flow 视图直接 DOM 渲染；打印 CSS（thead 重复/tr 不断行/隐藏控件）。
+- **验证**：600 行 grid → 12 页 1600px SVG（p12 含第 551–600 行）；report 16 指标
+  全量；F1/F2/F3 锚点转正（剩余 F4–F7 为后续里程碑）。
+
+### M2a.3 adaptInput 统一入口 / M2a.4 缺失值 gap + step-middle（PHASE_2A）
+- **A7**：`adaptInput({table?,doc?,name?}, view, spec)`（data-engine/adapt-input.ts）统一
+  render/compose/运行期适配；compose 移除 report 特例，CLI 端对每面板预渲染，回执
+  `panels[]:{id,rendered,error}`，任一失败 `ok:false`（RENDER_FAILED）。
+- **compose 运行期三态**：文档面板→flow-doc DOM +「不参与联动」徽标且不参与筛选；
+  adapt 抛错→`.perr` 真实错误文案；仅「筛选后为空」显示无数据+清除筛选按钮。
+  flow 面板（grid/report）DOM 渲染、grid 布局独占整行。
+- **BarlineSeries.values → (number|null)[]**：未观测（缺行/空/invalid）→ null；
+  `options.missingValue`（gap 默认|zero 恢复 legacy）在 adapt 层回填并计数警告；
+  `connectGaps` 虚线桥接。契约：line/combo/control/compare/kpi/rank + bar。
+- **chart-core `linePath(points,style,{connectGaps})→PathSeg[]`**：null 按缺口切段；
+  step=step-middle（相邻点中点跳变，首尾半格）；gap 段 {d,gap:true} 虚线。
+  line/combo 已迁移（修 F7 `M x V y` 非法路径）；面积填充按实段闭合。
+- **null 下游**：值域/堆叠/标记/端点标签跳过未观测；tooltip「未观测」；
+  洞察只基于观测点对（trend/corr/rolling 共观测索引，<2 不出趋势）；
+  radar/pie/funnel/line3d/3d 等非时序消费方 `?? 0` 兜底（无 gap 语义）。
+- **golden**：cases 直接调 toModel，测试层归一化 null→0 比对（锁 legacy）；
+  F4 用例额外断言 missingValue=zero 回填。
+- **验证**：F4/F5/F7 锚点转正；typecheck 全绿；292 通过（剩 F6）。
+
+### M2a.5 甘特三时间点 / M2a.6 截止日报场景（PHASE_2A 收官）
+- **A8**：end=当前截止（移除「完成日期」别名）；新增 baseline（基线截止）/
+  actual（实际完成）角色与别名表；`end` 别名收缩。选项 `baselineMark`（虚线幽灵
+  基线段）、`varianceLabel`（条尾 ±N天/未上报）。模型每任务出
+  `baseline/actual/slipDays/lateDays`（同相对天系；offset 同样归一）；
+  洞察：较基线延后均值与最大者、实际完成上报率、已过截止未完成数。
+- **M2a.6**：delivery 包新增 `deadline.csv`（12 任务三时间点+未上报）、
+  `deadline.brief.md`（截止日报含链接）、`deadline.compose.json`
+  （report+gantt+grid）；pack.json 加 deadline 图（asOf 钉 2025-10-20 可复现）。
+  SKILL.md/README 增 Phase 2a 段。golden 测试对 A8 新字段剥离比对。
+- **e2e 对齐**：compose 回执 panels 保留计数 + panelResults 详表；gallery
+  `views` 按 items 去重并归并 3D→基类=29（35 契约）；demo e2e 断言更新为
+  分组导航结构。
+
+### 样例工程改造（表格向样例 + 条件格式演示面）
+- **新增样例**（examples/gallery）：`grid-pivot.csv`（sample-grid 去 BOM，146 行全组合
+  稠密透视）、`grid-detail.csv`（69 行真实明细：链接/空值/风险等级/偏差天数）、
+  `report-long.md`（5 章节 + 64 行表 + 规范指标区 + 链接 + 内嵌 SVG）。
+- **gallery.ts**：GRID_DEMOS（透视/长明细/长标签/转义/空值 5 组，edge-cases 入卡）、
+  REPORT_DEMOS（长文 + delivery 截止日报）；demo 条目支持 per-entry dir；
+  report 主样例由 showcase-report.md 换为 report-long.md。
+- **日历热力图**：finance cashflow spec 改 `scale:diverging`+unit 万元；发散图例
+  补 0 中点标注；洞察补「负值 N 天、最长连续 X 天」。
+- **产线×小时**：列名恰为 0–23 整数时自动画夜班（22–06）底纹与标签；洞察补
+  「夜班占比 X%」（惯例启发，无契约变更）。
+- **cohort**：洞察变体感知——absolute 变体报人数（含批次规模占比），pct 报百分比；
+  渲染器已有格内数值与变体图例。
+- **pack.json**：finance ledger 问题改为「各地区×渠道×品类哪格贡献最大？」；
+  saas cohort 改「第 1 期留存多少？最低批次是哪个？」+ text.note 结论。
+  （两处均已写入 generate.ts，packs:gen 可再生。）
+- **验证**：packs:check ✓、typecheck ✓、294 tests ✓、画廊重渲后 5 组表格
+  demo/长文报告/夜班洞察均出现在 index.html。

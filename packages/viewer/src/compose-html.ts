@@ -19,7 +19,7 @@ export function composeHtml(o: ComposeHtmlOpts): string {
   const panels = payload.panels.map((p, i) => {
     const title = p.spec.text?.title ?? p.id;
     const ins = p.insights.slice(0, 2).map((x) => `<span class="pins">${esc(x.text)}</span>`).join('');
-    const style = grid ? `grid-column:span ${Math.min(12, Math.max(1, p.w ?? 6))}` : '';
+    const style = grid ? `grid-column:span ${p.flow ? 12 : Math.min(12, Math.max(1, p.w ?? 6))}` : '';
     return `<section class="panel" style="${style}">
       ${p.question ? `<div class="pq">${esc(p.question)}</div>` : ''}
       <h3>${esc(title)}</h3>
@@ -48,6 +48,10 @@ export function composeHtml(o: ComposeHtmlOpts): string {
 .pbox{position:relative}
 .pbox svg{display:block;cursor:pointer}
 .perr{font:12px var(--mono);color:var(--faint);padding:40px 0;text-align:center}
+.pclr{border:1px solid var(--acc);background:none;border-radius:99px;padding:3px 12px;font:11.5px var(--body);color:var(--acc);cursor:pointer;margin-left:8px}
+.pbox-flow{overflow:auto;max-height:none}
+.pdoc{position:relative}
+.pdoc::before{content:'不参与联动';position:absolute;top:6px;right:10px;font:10px var(--mono);color:var(--faint)}
 .story .panel{margin-bottom:16px}
 @media(max-width:900px){.panel{grid-column:span 12 !important}}
 @media print{.toolbar,#flinks{display:none}}

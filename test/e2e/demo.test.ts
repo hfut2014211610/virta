@@ -38,14 +38,15 @@ describe('demo', () => {
 });
 
 describe('gallery', () => {
-  it('生成 index.html：双标签页 + 26 图族卡片（3D 并入基类）+ 真图缩略图', { timeout: 240_000 }, () => {
+  it('生成 index.html：分组导航 + 图族卡片 + 真图缩略图', { timeout: 240_000 }, () => {
     const r = cli(['gallery', '--out', 'out/e2e-gallery', '--json']);
     expect(r.ok, JSON.stringify(r.error)).toBe(true);
-    expect(r.data.views).toBe(26); // 30 视图 - 4 个 3D 并入基类组
+    expect(r.data.views).toBe(29); // 画廊卡覆盖的图族数（35 契约中的 29 个）
     expect(r.data.packs).toBe(5);
     const html = readFileSync(r.data.index, 'utf8');
-    expect(html).toContain('按场景');
-    expect(html).toContain('按图族');
+    expect(html).toContain('nav-fam'); // 分组导航（趋势/对比/构成…）
+    expect(html).toContain('趋势');
+    expect(html).toContain('文案');
     expect(html).not.toContain('http://cdn');
     // 缩略图为真实 PNG 且对应的交互 HTML 存在
     const imgCount = (html.match(/png\//g) ?? []).length;

@@ -21,6 +21,10 @@ export const CONTRACT_TREEMAP: ChartContract = {
     { key: 'showValues', label: '数值', type: 'boolean', group: 'display', static: true, default: true },
     { key: 'groupBg', label: '分组底色', type: 'boolean', group: 'style', static: true, default: true,
       description: '两层模式的分组衬底色块' },
+    { key: 'texture', label: '纹理', type: 'enum', group: 'style', static: true, default: 'none',
+      values: [{ value: 'none', label: '无' }, { value: 'hatch', label: '斜纹' }, { value: 'dots', label: '点纹' }, { value: 'grid', label: '网格' }] },
+    { key: 'colorMode', label: '配色', type: 'enum', group: 'style', static: true, default: 'multi',
+      values: [{ value: 'multi', label: '多色' }, { value: 'mono', label: '单色' }, { value: 'gradient', label: '渐变' }] },
   ],
   inference: [
     '负值/0 值剔除并警告',

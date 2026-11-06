@@ -10,7 +10,7 @@ export type Raw = RawRow[] | EchartsWrap;
 export const isEcharts = (r: Raw): r is EchartsWrap =>
   !Array.isArray(r) && typeof r === 'object' && r !== null && '__echarts' in r;
 
-export interface BarlineSeries { name: string; values: number[] }
+export interface BarlineSeries { name: string; values: (number | null)[] }
 export interface BarlineModel {
   labels: string[];
   series: BarlineSeries[];
@@ -27,10 +27,10 @@ export function toChart(raw: Raw): BarlineModel {
     let missing = 0, invalid = 0, percent = 0;
     const eSeries = (e['series'] ?? []) as Record<string, unknown>[];
     eSeries.forEach((s, i) => {
-      const vals: number[] = [];
+      const vals: (number | null)[] = [];
       for (const v of (s['data'] ?? []) as unknown[]) {
         const [num, status] = parseNumber(v);
-        vals.push(num);
+        vals.push(status === 'ok' || status === 'percent' ? num : null);
         if (status === 'missing') missing += 1;
         else if (status === 'invalid') invalid += 1;
         else if (status === 'percent') percent += 1;
@@ -47,7 +47,6 @@ export function toChart(raw: Raw): BarlineModel {
       quality.warnings.push('ECharts JSON 含缺失/非法/百分号数值，已按 0 计或原刻度保留');
       quality.confidence = invalid === 0 ? 'medium' : 'low';
     }
-    for (const s of series) s.values = s.values.map(pyInt);
     return { labels, series, quality, kinds: labels.map(() => 'delta') };
   }
   if (!raw.length) throw new Error('数据为空');
@@ -83,9 +82,9 @@ export function toChart(raw: Raw): BarlineModel {
       const sv = r[seriesKey];
       const sname = sv !== null && sv !== undefined && sv !== '' ? String(sv) : '系列';
       const rawVal = valueKey ? r[valueKey] : Object.values(r).at(-1);
-      const [val] = parseNumber(rawVal);
+      const [val, st] = parseNumber(rawVal);
       if (!labelsOrder.includes(lab)) labelsOrder.push(lab);
-      addGroup(grouped, quality, sname, lab, val);
+      if (st === 'ok' || st === 'percent') addGroup(grouped, quality, sname, lab, val); // 未观测（missing/invalid）不进 grouped → null
     }
   } else if (numericCols.length >= 2) {
     mode = 'wide';
@@ -96,8 +95,8 @@ export function toChart(raw: Raw): BarlineModel {
       const lab = labOf(r);
       if (!labelsOrder.includes(lab)) labelsOrder.push(lab);
       for (const col of numericCols) {
-        const [val] = parseNumber(r[col]);
-        addGroup(grouped, quality, col, lab, val);
+        const [val, st] = parseNumber(r[col]);
+        if (st === 'ok' || st === 'percent') addGroup(grouped, quality, col, lab, val);
       }
     }
   } else {
@@ -110,8 +109,8 @@ export function toChart(raw: Raw): BarlineModel {
     for (const r of raw) {
       const lab = labOf(r);
       if (!labelsOrder.includes(lab)) labelsOrder.push(lab);
-      const [val] = parseNumber(r[valueKey]);
-      addGroup(grouped, quality, '数值', lab, val);
+      const [val, st] = parseNumber(r[valueKey]);
+      if (st === 'ok' || st === 'percent') addGroup(grouped, quality, '数值', lab, val);
     }
   }
 
@@ -129,7 +128,8 @@ export function toChart(raw: Raw): BarlineModel {
   if ((unknownTypes || kindConflicts) && quality.confidence === 'high') quality.confidence = 'medium';
   const series: BarlineSeries[] = [...grouped.entries()].map(([name, g]) => ({
     name,
-    values: labelsOrder.map((lab) => pyInt(g[lab] ?? 0)),
+    // 未观测的 (label,series) 组合 → null（ADR-0011 gap；missingValue=zero 时在 adapt 层回填 0）
+    values: labelsOrder.map((lab) => (g[lab] === undefined ? null : pyInt(g[lab]!))),
   }));
   return { labels: labelsOrder, series, quality, kinds };
 }

@@ -21,6 +21,11 @@ export const CONTRACT_CONTROL: ChartContract = {
     { id: 'xbar', label: 'X̄ 图', description: '均值图（同 I 限算法）' },
   ],
   options: [
+    { key: 'missingValue', label: '缺失值', type: 'enum', group: 'data', static: true, default: 'gap',
+      values: [{ value: 'gap', label: '留空' }, { value: 'zero', label: '补 0' }],
+      description: '未观测点（无行/空值）默认不绘制；zero 恢复补 0' },
+    { key: 'connectGaps', label: '连接缺口', type: 'boolean', group: 'display', static: true, default: false,
+      description: '缺口处用虚线连接相邻观测段' },
     { key: 'showSigmaBands', label: 'σ 色带', type: 'boolean', group: 'display', static: true, default: true,
       description: '±1σ/±2σ 浅色带' },
     { key: 'weRules', label: 'WE 规则', type: 'boolean', group: 'view', static: true, default: true,

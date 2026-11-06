@@ -18,6 +18,11 @@ export const CONTRACT_COMBO: ChartContract = {
     { id: 'line+line', label: '双线', description: '左右轴都为线' },
   ],
   options: [
+    { key: 'missingValue', label: '缺失值', type: 'enum', group: 'data', static: true, default: 'gap',
+      values: [{ value: 'gap', label: '留空' }, { value: 'zero', label: '补 0' }],
+      description: '未观测点（无行/空值）默认不绘制；zero 恢复补 0' },
+    { key: 'connectGaps', label: '连接缺口', type: 'boolean', group: 'display', static: true, default: false,
+      description: '缺口处用虚线连接相邻观测段' },
     { key: 'y2Series', label: '右轴系列', type: 'enum', group: 'view', static: true, default: 'auto',
       values: [{ value: 'auto', label: '自动（第 2 列）' }, { value: 'first', label: '第 1 列' }, { value: 'second', label: '第 2 列' }],
       description: '哪个度量列走右轴' },

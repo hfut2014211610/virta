@@ -19,6 +19,11 @@ export const CONTRACT_KPI: ChartContract = {
     { id: 'cards+spark', label: '卡片+趋势', description: '附迷你趋势线' },
   ],
   options: [
+    { key: 'missingValue', label: '缺失值', type: 'enum', group: 'data', static: true, default: 'gap',
+      values: [{ value: 'gap', label: '留空' }, { value: 'zero', label: '补 0' }],
+      description: '未观测点（无行/空值）默认不绘制；zero 恢复补 0' },
+    { key: 'connectGaps', label: '连接缺口', type: 'boolean', group: 'display', static: true, default: false,
+      description: '缺口处用虚线连接相邻观测段' },
     { key: 'columns', label: '每行卡数', type: 'number', group: 'view', static: true, default: 3, min: 1, max: 6 },
     { key: 'targetBar', label: '目标进度条', type: 'boolean', group: 'display', static: true, default: true },
     { key: 'invertBad', label: '反向指标', type: 'enum', group: 'view', static: true, default: 'auto',

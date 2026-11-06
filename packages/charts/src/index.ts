@@ -10,6 +10,7 @@ import { heatmapRenderer, treemapRenderer, sunburstRenderer, sankeyRenderer, box
 import { ganttRenderer, fishboneRenderer, gridRenderer, reportRenderer, pie3dRenderer, line3dRenderer, scatter3dRenderer } from './b3.js';
 import { cohortRenderer, comboRenderer, compareRenderer, histogramRenderer, kpiRenderer, rankRenderer } from './t1.js';
 import { controlRenderer, networkRenderer, parallelRenderer, treeRenderer } from './t2.js';
+import { burndownRenderer, erRenderer, flowchartRenderer, formulaRenderer, sequenceRenderer } from './t3.js';
 
 const RENDERERS: Partial<Record<ViewId, FamilyRenderer<never>>> = {
   bar: barRenderer as never,
@@ -42,9 +43,15 @@ const RENDERERS: Partial<Record<ViewId, FamilyRenderer<never>>> = {
   network: networkRenderer as never,
   control: controlRenderer as never,
   parallel: parallelRenderer as never,
+  er: erRenderer as never,
+  flowchart: flowchartRenderer as never,
+  sequence: sequenceRenderer as never,
+  burndown: burndownRenderer as never,
+  formula: formulaRenderer as never,
 };
 
 export function getRenderer(view: ViewId): FamilyRenderer<never> | undefined {
   return RENDERERS[view];
 }
 export const RENDERED_VIEWS = Object.keys(RENDERERS) as ViewId[];
+export { pivotView, GRID_AGGS, wrapText, type GridRowView, type PivotView } from './b3.js';

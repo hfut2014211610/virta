@@ -15,6 +15,10 @@ export const CONTRACT_SUNBURST: ChartContract = {
   options: [
     { key: 'arcLabels', label: '弧上标签', type: 'boolean', group: 'display', static: true, default: true,
       description: '扇弧上显示层级名；过窄扇区自动隐藏' },
+    { key: 'texture', label: '纹理', type: 'enum', group: 'style', static: true, default: 'none',
+      values: [{ value: 'none', label: '无' }, { value: 'hatch', label: '斜纹' }, { value: 'dots', label: '点纹' }, { value: 'grid', label: '网格' }] },
+    { key: 'colorMode', label: '配色', type: 'enum', group: 'style', static: true, default: 'multi',
+      values: [{ value: 'multi', label: '多色' }, { value: 'mono', label: '单色' }, { value: 'gradient', label: '渐变' }] },
     { key: 'equalAngle', label: '等角', type: 'boolean', group: 'view', static: true, default: false,
       description: '同级扇区均分角度（忽略数值），默认按值占比' },
   ],
