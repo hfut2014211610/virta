@@ -1,0 +1,17 @@
+实体,字段,类型,引用
+用户,用户ID,PK,
+用户,姓名,varchar,
+用户,邮箱,varchar,
+订单,订单ID,PK,
+订单,用户ID,FK,用户
+订单,金额,decimal,
+订单明细,明细ID,PK,
+订单明细,订单ID,FK,订单
+订单明细,商品ID,FK,商品
+订单明细,数量,int,
+商品,商品ID,PK,
+商品,名称,varchar,
+商品,单价,decimal,
+支付,支付ID,PK,
+支付,订单ID,FK,订单
+支付,渠道,varchar,

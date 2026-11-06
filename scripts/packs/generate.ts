@@ -417,6 +417,52 @@ function delivery() {
   }
   emit('delivery', 'defect_density.csv', csv(['模块', '千行代码', '缺陷数', '严重缺陷'], dd));
 
+  // M2a.6 截止日报场景：start/baseline/end/actual 三时间点 + 未上报空行（固定日期，asOf 由 spec 钉死）
+  emit('delivery', 'deadline.csv', csv(['任务', '开始', '基线', '结束', '实际完成', '进度', '状态', '负责人'], [
+    ['支付网关改造', '2025-08-18', '2025-09-20', '2025-09-26', '', 45, 'delayed', '王猛'],
+    ['订单服务拆分', '2025-08-18', '2025-09-12', '2025-09-12', '2025-09-11', 100, 'done', '李倩'],
+    ['风控规则引擎', '2025-09-01', '2025-10-10', '2025-10-10', '', 30, 'active', '赵工'],
+    ['数据迁移方案', '2025-08-18', '2025-09-05', '2025-09-04', '2025-09-04', 100, 'done', '吴用'],
+    ['历史订单迁移', '2025-09-08', '2025-10-03', '2025-10-06', '', 60, 'active', '吴用'],
+    ['商户结算联调', '2025-09-29', '2025-10-24', '2025-10-24', '', 35, 'active', '李倩'],
+    ['前端新版结算页', '2025-09-08', '2025-10-17', '2025-10-20', '', 25, 'active', '周舟'],
+    ['安全编码规范', '2025-08-11', '2025-08-22', '2025-08-21', '2025-08-21', 100, 'done', '安全组'],
+    ['对账平台升级', '2025-09-15', '2025-10-31', '2025-10-31', '', 20, 'active', '吴用'],
+    ['监控告警接入', '2025-10-13', '2025-10-31', '2025-11-02', '', 15, 'active', '运维'],
+    ['集成测试', '2025-10-20', '2025-11-07', '2025-11-10', '', 0, 'todo', '测试组'],
+    ['发票服务改造', '2025-10-13', '2025-11-14', '2025-11-14', '', 0, 'todo', '王猛'],
+  ]));
+  emit('delivery', 'deadline.brief.md', `# V3.0 截止日报（2025-10-20）
+
+> 数据截至 2025-10-20 09:00（Asia/Shanghai），共 12 项任务纳入截止监控。
+
+## 截止总览
+- 已完成 3 项：订单服务拆分（提前 1 天）、数据迁移方案（提前 1 天）、安全编码规范（提前 1 天）。
+- 进行中 7 项，其中 **支付网关改造较基线延后 6 天**，是当前最大风险。
+- 待启动 2 项：集成测试、发票服务改造。
+
+## 滑期明细
+| 任务 | 基线截止 | 当前截止 | 滑期 | 负责人 |
+| --- | --- | --- | --- | --- |
+| 支付网关改造 | 2025-09-20 | 2025-09-26 | +6 天 | 王猛 |
+| 历史订单迁移 | 2025-10-03 | 2025-10-06 | +3 天 | 吴用 |
+| 前端新版结算页 | 2025-10-17 | 2025-10-20 | +3 天 | 周舟 |
+| 集成测试 | 2025-11-07 | 2025-11-10 | +3 天 | 测试组 |
+
+## 结论
+关键路径仍是支付网关改造；若本周不能收敛，集成测试窗口将被压缩。
+详见 [交付看板](./deadline.compose.json) 与 [任务明细](./deadline.csv)。
+`);
+  emit('delivery', 'deadline.compose.json', `${JSON.stringify({
+    title: 'V3.0 截止日报',
+    layout: 'grid',
+    panels: [
+      { file: 'deadline.brief.md', spec: { version: 1, view: 'report' }, w: 12, h: 8 },
+      { file: 'deadline.csv', spec: { version: 1, view: 'gantt', time: { asOf: '2025-10-20T09:00:00+08:00', tz: 'Asia/Shanghai' } }, question: '基线 vs 当前截止', w: 12, h: 5 },
+      { file: 'deadline.csv', spec: { version: 1, view: 'grid', variant: 'detail' }, question: '截止明细', w: 12, h: 6 },
+    ],
+  }, null, 2)}\n`);
+
   emit('delivery', 'weekly_report.md', `# V3.0 第 12 周周报
 
 ## 交付进度
@@ -553,7 +599,7 @@ const PACKS: Pack[] = [
     story: '6/15 协作空间上线后新用户第 4 周留存 38%→46%；企业版 CAC 上升 30%，LTV/CAC 逼近 3 倍警戒线。',
     charts: [
       { id: 'dau', file: 'dau_daily.csv', question: 'DAU 什么时候跃升？', spec: spec('heatmap', { mode: 'calendar' }), expectTop: 'heatmap' },
-      { id: 'cohort', file: 'cohort_retention.csv', question: '留存改善了吗？', spec: spec('cohort'), expectTop: 'cohort', expectInsight: 'retention' },
+      { id: 'cohort', file: 'cohort_retention.csv', question: '第 1 期留存多少？最低批次是哪个？', spec: spec('cohort', { text: { note: '6/15 上线后新批次第 4 周留存 38%→46%' } }), expectTop: 'cohort', expectInsight: 'retention' },
       { id: 'features', file: 'feature_usage.csv', question: '各版本功能使用差异？', spec: spec('radar'), expectTop: 'radar' },
       { id: 'onboarding', file: 'onboarding_paths.csv', question: '新手在哪流失？', spec: spec('sankey'), expectTop: 'sankey' },
       { id: 'arr', file: 'arr_bridge.csv', question: 'ARR 增长结构？', spec: spec('bar', { variant: 'waterfall' }), expectTop: 'bar' },
@@ -583,6 +629,7 @@ const PACKS: Pack[] = [
     story: '关键路径「支付网关改造」滞后 6 天；缺陷回流集中在集成测试阶段。',
     charts: [
       { id: 'plan', file: 'plan.csv', question: '关键路径是什么？', spec: spec('gantt'), expectTop: 'gantt', expectInsight: 'critical-path' },
+      { id: 'deadline', file: 'deadline.csv', question: '哪些任务滑出基线？', spec: spec('gantt', { time: { asOf: '2025-10-20T09:00:00+08:00', tz: 'Asia/Shanghai' } }), expectTop: 'gantt' },
       { id: 'burndown', file: 'burndown.csv', question: '燃尽偏离了吗？', spec: spec('line'), expectTop: 'line' },
       { id: 'bugflow', file: 'bug_flow.csv', question: '缺陷在哪回流？', spec: spec('network'), expectTop: 'network', expectInsight: 'concentration' },
       { id: 'effort', file: 'effort_tree.csv', question: '工时花在哪？', spec: spec('treemap'), expectTop: 'sunburst', expectInsight: 'concentration' },
@@ -601,9 +648,9 @@ const PACKS: Pack[] = [
       { id: 'bva', file: 'budget_vs_actual.csv', question: '哪些部门超支？', spec: spec('bullet', { mapping: { actual: '实际', target: '预算' } }), expectTop: 'bullet' },
       { id: 'bridge', file: 'profit_bridge.csv', question: '利润桥怎么走的？', spec: spec('bar', { variant: 'waterfall' }), expectTop: 'bar' },
       { id: 'tree', file: 'expense_tree.csv', question: '费用结构？', spec: spec('sunburst'), expectTop: 'sunburst' },
-      { id: 'ledger', file: 'ledger.csv', question: '多维明细怎么切？', spec: spec('grid', { variant: 'pivot' }), expectTop: 'grid' },
+      { id: 'ledger', file: 'ledger.csv', question: '各地区×渠道×品类哪格贡献最大？', spec: spec('grid', { variant: 'pivot' }), expectTop: 'grid' },
       { id: 'margin', file: 'revenue_margin.csv', question: '毛利率何时下滑？', spec: spec('combo'), expectTop: 'combo', expectInsight: 'trend' },
-      { id: 'cash', file: 'cashflow_daily.csv', question: '现金流哪些天为负？', spec: spec('heatmap', { mode: 'calendar' }), expectTop: 'heatmap' },
+      { id: 'cash', file: 'cashflow_daily.csv', question: '现金流哪些天为负？', spec: spec('heatmap', { mode: 'calendar', options: { scale: 'diverging' }, text: { unit: '万元' } }), expectTop: 'heatmap' },
     ],
   },
 ];

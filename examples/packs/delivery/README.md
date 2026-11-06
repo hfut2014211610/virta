@@ -5,6 +5,7 @@
 | 图 | 数据 | 回答的问题 |
 | --- | --- | --- |
 | gantt | plan.csv | 关键路径是什么？ |
+| gantt | deadline.csv | 哪些任务滑出基线？ |
 | line | burndown.csv | 燃尽偏离了吗？ |
 | network | bug_flow.csv | 缺陷在哪回流？ |
 | treemap | effort_tree.csv | 工时花在哪？ |

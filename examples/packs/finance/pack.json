@@ -41,7 +41,7 @@
     {
       "id": "ledger",
       "file": "ledger.csv",
-      "question": "多维明细怎么切？",
+      "question": "各地区×渠道×品类哪格贡献最大？",
       "spec": {
         "version": 1,
         "view": "grid",
@@ -67,7 +67,13 @@
       "spec": {
         "version": 1,
         "view": "heatmap",
-        "mode": "calendar"
+        "mode": "calendar",
+        "options": {
+          "scale": "diverging"
+        },
+        "text": {
+          "unit": "万元"
+        }
       },
       "expectTop": "heatmap"
     }

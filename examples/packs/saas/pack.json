@@ -17,10 +17,13 @@
     {
       "id": "cohort",
       "file": "cohort_retention.csv",
-      "question": "留存改善了吗？",
+      "question": "第 1 期留存多少？最低批次是哪个？",
       "spec": {
         "version": 1,
-        "view": "cohort"
+        "view": "cohort",
+        "text": {
+          "note": "6/15 上线后新批次第 4 周留存 38%→46%"
+        }
       },
       "expectTop": "cohort",
       "expectInsight": "retention"

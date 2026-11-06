@@ -5,7 +5,7 @@
 | 图 | 数据 | 回答的问题 |
 | --- | --- | --- |
 | heatmap | dau_daily.csv | DAU 什么时候跃升？ |
-| cohort | cohort_retention.csv | 留存改善了吗？ |
+| cohort | cohort_retention.csv | 第 1 期留存多少？最低批次是哪个？ |
 | radar | feature_usage.csv | 各版本功能使用差异？ |
 | sankey | onboarding_paths.csv | 新手在哪流失？ |
 | bar | arr_bridge.csv | ARR 增长结构？ |

@@ -1,0 +1,40 @@
+{
+  "title": "V3.0 截止日报",
+  "layout": "grid",
+  "panels": [
+    {
+      "file": "deadline.brief.md",
+      "spec": {
+        "version": 1,
+        "view": "report"
+      },
+      "w": 12,
+      "h": 8
+    },
+    {
+      "file": "deadline.csv",
+      "spec": {
+        "version": 1,
+        "view": "gantt",
+        "time": {
+          "asOf": "2025-10-20T09:00:00+08:00",
+          "tz": "Asia/Shanghai"
+        }
+      },
+      "question": "基线 vs 当前截止",
+      "w": 12,
+      "h": 5
+    },
+    {
+      "file": "deadline.csv",
+      "spec": {
+        "version": 1,
+        "view": "grid",
+        "variant": "detail"
+      },
+      "question": "截止明细",
+      "w": 12,
+      "h": 6
+    }
+  ]
+}

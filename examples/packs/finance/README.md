@@ -7,6 +7,6 @@
 | bullet | budget_vs_actual.csv | 哪些部门超支？ |
 | bar | profit_bridge.csv | 利润桥怎么走的？ |
 | sunburst | expense_tree.csv | 费用结构？ |
-| grid | ledger.csv | 多维明细怎么切？ |
+| grid | ledger.csv | 各地区×渠道×品类哪格贡献最大？ |
 | combo | revenue_margin.csv | 毛利率何时下滑？ |
 | heatmap | cashflow_daily.csv | 现金流哪些天为负？ |
