@@ -4,7 +4,7 @@
 
 ## 硬性规则（R1–R8）
 
-- R1 `legacy-vizscape/` 冻结：不加功能不修 bug，只作参考与 golden 数据来源。
+- R1 `archive/legacy-vizscape/` 冻结：不加功能不修 bug，只作参考与 golden 数据来源。
 - R2 依赖只用 `docs/adr/0007` 白名单内精确版本；新增须发布满 7 天并写 ADR。
 - R3 产物 HTML 离线可开：不引 CDN，字体/脚本/数据全内联。
 - R4 每个里程碑结束 `npm run typecheck && npm test` 全绿后本地提交，**不 push**。

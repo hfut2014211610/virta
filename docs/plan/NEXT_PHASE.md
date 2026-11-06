@@ -13,14 +13,14 @@
 ### 0.1 先读
 
 1. 本文全部章节（尤其 §1 决策、§4 契约、§10 里程碑）。
-2. `README.md`、`legacy-vizscape/docs/ARCHITECTURE.md`、`legacy-vizscape/docs/STYLE_GUIDE.md`、`legacy-vizscape/docs/ADVANCED_MODES.md`、`legacy-vizscape/docs/DATA_QUALITY.md`。
-3. 迁移某个图族前，先读 `legacy-vizscape/vizlib/charts/<family>.py`、`legacy-vizscape/templates/<tpl>/template.html` 和 `legacy-vizscape/docs/<FAMILY>_CHART.md`。
+2. `README.md`、`archive/legacy-vizscape/docs/ARCHITECTURE.md`、`archive/legacy-vizscape/docs/STYLE_GUIDE.md`、`archive/legacy-vizscape/docs/ADVANCED_MODES.md`、`archive/legacy-vizscape/docs/DATA_QUALITY.md`。
+3. 迁移某个图族前，先读 `archive/legacy-vizscape/vizlib/charts/<family>.py`、`archive/legacy-vizscape/templates/<tpl>/template.html` 和 `archive/legacy-vizscape/docs/<FAMILY>_CHART.md`。
 
 ### 0.2 硬性规则
 
 | # | 规则 |
 |---|---|
-| R1 | `legacy-vizscape/` **冻结**：不加功能、不修 bug。唯一例外是 M0.1 收口当前未提交的 `_shared.css` 重构。它只作参考实现和 golden 数据来源 |
+| R1 | `archive/legacy-vizscape/` **冻结**：不加功能、不修 bug。唯一例外是 M0.1 收口当前未提交的 `_shared.css` 重构。它只作参考实现和 golden 数据来源 |
 | R2 | 依赖只允许用 §3.3 白名单里的包，并锁定精确版本（不用 `^`/`~`）。新增依赖必须是发布满 7 天的版本，且要写进 ADR |
 | R3 | 产物 HTML 必须**离线可开**：不引 CDN，不请求网络；字体、脚本、数据全部内联 |
 | R4 | 每个里程碑结束时，`npm run typecheck && npm test` 全绿，然后在本地提交（可以分多次），**不 push** |
@@ -134,7 +134,7 @@ contracts
 | read-excel-file | 9.3.12 | xlsx 解析（`read-excel-file/node`） | data-engine（仅 node 子路径） |
 | @resvg/resvg-js | 2.6.2 | SVG → PNG | cli |
 
-Markdown 和纯文本解析**不引依赖**：移植 `legacy-vizscape/docmd.py`，保持指标抽取语义。以上之外的依赖需要先写 ADR 说明理由。地图相关依赖见 §13，本期不安装。
+Markdown 和纯文本解析**不引依赖**：移植 `archive/legacy-vizscape/docmd.py`，保持指标抽取语义。以上之外的依赖需要先写 ADR 说明理由。地图相关依赖见 §13，本期不安装。
 
 开发工具（不进 npm 依赖）：Python 3.12 + `fonttools`、`brotli`，只用于 `scripts/fonts/` 和 `scripts/golden/`，通过 `pip install` 安装即可。
 
@@ -362,7 +362,7 @@ export interface ValidateReceipt {
 - `--data '<json>'`：内联 JSON，按 JSON 规则解析。
 - `.md` / `.txt`：交给 doc 管线（移植 `docmd.py` 的 `parse_markdown`、`extract_metrics`、`build_doc`、`profile_doc`）。
 
-**数值解析 `parseNumber`**：逐条对齐 `legacy-vizscape/vizlib/core.py` 的 `parse_number`：缺失标记集合、括号负数、全角逗号、货币符号、百分号**保留原刻度**（10% 记为 10，状态为 percent）、千分位。用表驱动测试覆盖 legacy 的全部分支。
+**数值解析 `parseNumber`**：逐条对齐 `archive/legacy-vizscape/vizlib/core.py` 的 `parse_number`：缺失标记集合、括号负数、全角逗号、货币符号、百分号**保留原刻度**（10% 记为 10，状态为 percent）、千分位。用表驱动测试覆盖 legacy 的全部分支。
 
 **别名表**：迁移 `core.py` 里的全部 `RAW_*_ALIAS` 和各图族模块里的私有别名（如 `HEAT_X_ALIAS`），统一放到 `src/aliases.ts`；`normKey` 的语义与 legacy 一致（只保留 `[0-9a-zA-Z\u4e00-\u9fff]`，转小写）。
 
@@ -444,8 +444,8 @@ legacy 图族的 model 字段**结构与 legacy `to_*` 的返回值一致**（�
 ### 5.2 `@virta/design-system`
 
 **token 源**：`src/tokens.ts`（带类型）是唯一来源，导出：
-- `themes.light`（Meridian）、`themes.dark`（Pulse）的语义色：`bg paper panel ink muted faint line line2 grid acc neg pos tip tipInk shadow`。初值取自 `legacy-vizscape/templates/line-basic/template.html` 第 9–10 行的 `html[data-theme=…]`，`--neg` 取自 `_shared.css` 里的用法。
-- `palettes`：10 套 × light/dark × 8 色，**原样迁移** `legacy-vizscape/templates/bar-basic/template.html` 里的 `PALETTES` 对象（第 121 行起）；同时迁移 `_shared.css` 里各配色的 `--acc` 覆盖值。
+- `themes.light`（Meridian）、`themes.dark`（Pulse）的语义色：`bg paper panel ink muted faint line line2 grid acc neg pos tip tipInk shadow`。初值取自 `archive/legacy-vizscape/templates/line-basic/template.html` 第 9–10 行的 `html[data-theme=…]`，`--neg` 取自 `_shared.css` 里的用法。
+- `palettes`：10 套 × light/dark × 8 色，**原样迁移** `archive/legacy-vizscape/templates/bar-basic/template.html` 里的 `PALETTES` 对象（第 121 行起）；同时迁移 `_shared.css` 里各配色的 `--acc` 覆盖值。
 - `ramps`：每套配色派生顺序色阶（paper → acc，7 级）和发散色阶（neg → paper → acc，9 级）。在 OKLCH 空间插值（自己实现约 60 行的转换，不引依赖）。
 - 间距 `4 8 12 16 24 32 48`；圆角 `6 10 14 20 999`；阴影 `sm md lg`；动效时长 `fast 160 / base 320 / enter 600` ms，缓动 `cubic-bezier(.2,.7,.2,1)`。
 - 字体角色：`display`（Fraunces，仅拉丁）、`body`（中文系统栈）、`mono`（JetBrains Mono）。
@@ -834,7 +834,7 @@ examples/packs/<id>/
 - 新增：超长标签（60 字）、单行、全零、全负、重复键、缺必需列、GBK 编码 CSV、空文件、只有表头、Excel 日期序列号、混合日期格式。
 - 大数据量：10k 和 100k 行的散点和明细数据，由测试运行时生成，**不提交**。
 
-**basic**：把 `legacy-vizscape/examples/*` 原样复制到 `examples/basic/`，作为 contract 示例和 golden 对拍的输入。
+**basic**：把 `archive/legacy-vizscape/examples/*` 原样复制到 `examples/basic/`，作为 contract 示例和 golden 对拍的输入。
 
 ### 8.4 Demo 输出
 
@@ -860,7 +860,7 @@ examples/packs/<id>/
 | 性能 | vitest（单独标签） | 10k 点散点图生成 HTML < 3s；100k 行明细 grid 生成 HTML < 8s；单图族 bundle 大小预算 | `npm run test:perf` |
 | 打包 | 脚本 | 每个视图 bundle 的体积，超出 §5.7 预算时失败 | `npm run build` |
 
-**golden 导出**：`scripts/golden/dump_legacy.py`。它从外部 import `legacy-vizscape/vizlib`，不修改 legacy；对一份显式映射表（`scripts/golden/cases.json`：样例文件 → adapter 函数名）逐条执行 `to_*(read_raw(path))`，输出到 `packages/data-engine/test/golden/<case>.json`。report 用 `build_doc` 导出。golden 文件提交进仓库，之后 CI 不再需要 Python。
+**golden 导出**：`scripts/golden/dump_legacy.py`。它从外部 import `archive/legacy-vizscape/vizlib`，不修改 legacy；对一份显式映射表（`scripts/golden/cases.json`：样例文件 → adapter 函数名）逐条执行 `to_*(read_raw(path))`，输出到 `packages/data-engine/test/golden/<case>.json`。report 用 `build_doc` 导出。golden 文件提交进仓库，之后 CI 不再需要 Python。
 
 **Python 与 JS 行为差异（对拍时的常见坑，必须处理）**：
 - Python 的 `round()` 是银行家舍入：实现 `pyRound()` 用于对拍字段。
@@ -894,13 +894,13 @@ examples/packs/<id>/
   4. 提交 `legacy: extract shared css (final before freeze)`，并删除临时 worktree。
   
   **不得丢弃这些改动。**
-- [ ] **0.2 `.gitignore`**：追加 `/out/`、`**/dist/`、`*.tsbuildinfo`、`coverage/`、`playwright-report/`、`test-results/`、`.cache/`。`legacy-vizscape/out/` 继续跟踪（冻结参考），不要动。
+- [ ] **0.2 `.gitignore`**：追加 `/out/`、`**/dist/`、`*.tsbuildinfo`、`coverage/`、`playwright-report/`、`test-results/`、`.cache/`。`archive/legacy-vizscape/out/` 继续跟踪（冻结参考），不要动。
 - [ ] **0.3 工作区**：建立 §3.1 的全部包骨架（package.json 用 `"type":"module"`，exports 指向 `src/index.ts`，开发期由 tsx 和 vitest 直接用源码；cli 和 viewer 由 esbuild 构建到 dist）。
   - tsconfig 用项目引用；根 `tsconfig.json` 列出全部 references。
   - 安装 §3.3 的 dev 依赖。
   - root scripts：`build`、`typecheck`、`test`、`test:e2e`、`test:visual`、`test:visual:update`、`test:perf`、`packs:gen`、`packs:check`、`golden:dump`、`gallery`、`virta`（等价于 `tsx packages/cli/src/main.ts`）。
 - [ ] **0.4 contracts 重组**：用 §4 的类型替换现有的 `series.ts`；旧类型 `ChartData`、`Series` 保留为 bar/line model 的子集。
-- [ ] **0.5 golden**：编写 `scripts/golden/cases.json` 和 `dump_legacy.py`，覆盖 17 个图族的全部 basic 样例（含 negative、mixed、wide、waterfall、多年份热力图、boxplot 汇总模式等变体），生成 golden 文件；把 `legacy-vizscape/examples` 复制到 `examples/basic/`。
+- [ ] **0.5 golden**：编写 `scripts/golden/cases.json` 和 `dump_legacy.py`，覆盖 17 个图族的全部 basic 样例（含 negative、mixed、wide、waterfall、多年份热力图、boxplot 汇总模式等变体），生成 golden 文件；把 `archive/legacy-vizscape/examples` 复制到 `examples/basic/`。
 - [ ] **0.6 CI**：按 §9 编写 workflow；视觉测试步骤暂时允许没有用例。
 - [ ] **0.7 ADR**：在 `docs/adr/` 新建 `0001-ts-rewrite-and-legacy-freeze.md`、`0002-package-architecture.md`、`0003-scene-graph-dual-renderer.md`、`0004-contracts-v1-viewspec.md`、`0005-cli-envelope-and-exit-codes.md`、`0006-fonts-and-text-metrics.md`（含字体来源、授权、子集范围；并注明地图搁置及 §13 预留设计）、`0007-dependency-allowlist.md`，以及 `IMPLEMENTATION_NOTES.md`。内容从本文对应章节提炼，每篇 ≤ 1 页。
 - [ ] **0.8 `AGENTS.md`**（仓库根目录）：写明常用命令、验证命令、R1–R8 规则，以及本文路径。
@@ -1001,9 +1001,9 @@ M8 完成后进入 Phase 2a：长内容流式排版、`asOf` 与时区契约、�
 
 ### M9 legacy 归档（需用户确认对等清单后才执行）
 
-- [ ] `git mv legacy-vizscape archive/legacy-vizscape`；修复所有引用路径（golden 脚本、文档）。
-- [ ] 确认 CI 不依赖 Python。
-- [ ] 更新 ADR-0001 的状态为"已归档"。
+- [x] `git mv legacy-vizscape archive/legacy-vizscape`；修复所有引用路径（golden 脚本、文档）。
+- [x] 确认 CI 不依赖 Python（CI 配置无 python/golden:dump 引用；golden 静态 JSON 已入库）。
+- [x] 更新 ADR-0001 的状态为"已归档"。
 
 ---
 

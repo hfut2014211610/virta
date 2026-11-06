@@ -6,7 +6,7 @@
 
 - CLI：`virta` / `vt`（`packages/cli`，npm 包名 `virta`）
 - 包命名空间：`@virta/*`（纯 ESM TypeScript monorepo）
-- 上一代 Python 实现 `legacy-vizscape/` 已冻结，仅作参考与 golden 数据来源
+- 上一代 Python 实现 `archive/legacy-vizscape/` 已冻结，仅作参考与 golden 数据来源
 
 ## 安装与构建
 
@@ -66,6 +66,8 @@ npm run virta -- render --data '[{"月":"1月","额":120},{"月":"2月","额":24
 
 `docs/agent/SKILL.md`（`virta guide` 内联输出同文）：inspect → 取第一候选 mapping → validate → render --json 的标准流程、Envelope 结构、退出码表、错误 hint 语义。`--json` 下 stdout 只有一个 envelope，日志全走 stderr。
 
+Phase 2a（Agent 实用性）：`--as-of/--tz` 时间契约 + `derive`（dueStatus/dateDiff）、缺失值默认 gap（`options.missingValue`/`connectGaps`，step-middle 阶梯线）、grid/report 流式排版（HTML 语义 DOM + `--height auto`/静态分页 + 回执 `page/pages`）、compose 文档面板与面板级 `rendered/error`（失败 `ok:false`）、甘特 `baseline`/`actual` 三时间点（幽灵基线 + 滑期洞察）。示例：`examples/packs/delivery/deadline.*`（`npm run virta -- demo delivery`）。
+
 ## 场景包与画廊
 
 `examples/packs/` 五个场景包（retail / saas / quality / delivery / finance），由 `npm run packs:gen` 确定性生成、`npm run packs:check` 字节级比对；`pack.json` 的 `expectTop`/`expectInsight` 驱动推荐与洞察断言。画廊缩略图为真实 PNG 渲染（`npm run gallery` 可重复生成），`npm run qa` 生成 30 图族 × 2 主题 × 3 配色的视觉 QA 矩阵到 `out/qa/`。
@@ -96,7 +98,7 @@ packages/viewer         单文件 HTML 组装 / 交互运行期 / facet / compos
 packages/cli            virta/vt：list/schema/inspect/validate/render/compose/demo/gallery/preview/guide
 examples/basic|packs|edge-cases   样例 / 场景包 / 边界用例
 scripts/golden|packs|fonts|qa     golden 导出 / 场景包生成器 / 字体管线 / QA 矩阵
-legacy-vizscape/        冻结的 Python 参考实现（勿改）
+archive/legacy-vizscape/        冻结的 Python 参考实现（勿改）
 docs/adr|docs/plan|docs/agent     ADR 与实施笔记 / NEXT_PHASE 计划 / Agent 指南
 ```
 

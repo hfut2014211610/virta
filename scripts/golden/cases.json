@@ -1,5 +1,5 @@
 {
-  "comment": "golden 对拍用例表：file 为 legacy-vizscape 内样例；fn 为 adapter 函数（vizlib.charts.<mod>.<fn> 或 docmd.build_doc）；view 为契约视图。model 与 quality 一并导出；已知的 Python/JS 行为差异见 NEXT_PHASE.md §9。",
+  "comment": "golden 对拍用例表：file 为 archive/legacy-vizscape 内样例；fn 为 adapter 函数（vizlib.charts.<mod>.<fn> 或 docmd.build_doc）；view 为契约视图。model 与 quality 一并导出；已知的 Python/JS 行为差异见 NEXT_PHASE.md §9。",
   "cases": [
     { "id": "bar-sample",          "file": "examples/sample.csv",                  "view": "bar",      "fn": "barline.to_chart" },
     { "id": "bar-sample-json",     "file": "examples/sample.json",                 "view": "bar",      "fn": "barline.to_chart" },

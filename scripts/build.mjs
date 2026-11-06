@@ -20,7 +20,7 @@ const deps = {
   renderer: ${m.renderer},
   ${isDoc
     ? `buildDoc: (text, name) => ${m.toModel}(text, name),`
-    : `adapt: (t, s) => ${m.toModelCurve ? `(s?.variant === 'curve' ? ${m.toModelCurve} : ${m.toModel})` : m.toModel}(t.passthrough?.kind === 'echarts' ? { __echarts: t.passthrough.data } : t.rows),`}
+    : `adapt: (t, s) => { const raw = t.passthrough?.kind === 'echarts' ? { __echarts: t.passthrough.data } : t.rows; if (s?.mapping && Array.isArray(raw)) for (const [r, c] of Object.entries(s.mapping)) { if (typeof c === 'string' && c !== r) for (const row of raw) { if (row[r] === undefined && row[c] !== undefined) row[r] = row[c]; } } return ${m.toModelCurve ? `(s?.variant === 'curve' ? ${m.toModelCurve} : ${m.toModel})` : m.toModel}(raw); },`}
 };
 boot(window.__VIRTA__, deps);
 `;

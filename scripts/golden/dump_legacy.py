@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """golden 导出：对 cases.json 逐条执行 legacy 的 to_*(read_raw(path))，输出 model+quality JSON。
 
-- 从外部 import legacy-vizscape/vizlib，不修改 legacy（R1 冻结）。
+- 从外部 import archive/legacy-vizscape/vizlib，不修改 legacy（R1 冻结）。
 - 产物提交进 packages/data-engine/test/golden/，之后 CI 不再需要 Python。
 - 用法：npm run golden:dump（仓库根目录执行）。
 """
@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent.parent
-LEGACY = REPO / "legacy-vizscape"
+LEGACY = REPO / "archive/legacy-vizscape"
 CASES = json.loads((REPO / "scripts" / "golden" / "cases.json").read_text(encoding="utf-8"))["cases"]
 OUT_DIR = REPO / "packages" / "data-engine" / "test" / "golden"
 
