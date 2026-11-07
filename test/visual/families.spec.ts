@@ -1,11 +1,9 @@
 // M4 全图族视觉测试：每个视图渲染 HTML → 浏览器验证 SVG 可见 + 首屏底边 ≤800px + 截图基线。
-import { execFileSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
+import { virt as VIRT } from './virt.js';
 
 const OUT = 'out/visual';
-const VIRT = (args: string) =>
-  execFileSync('npx', ['tsx', 'packages/cli/src/main.ts', ...args.split(' ')], { encoding: 'utf8', shell: true });
 
 // view → 输入样例（第 3 项=用例标签，第 4 项=variant）
 const CASES: [string, string, string?, string?][] = [

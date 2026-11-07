@@ -1,15 +1,13 @@
 // M2b.0 XSS 端到端（B1）：全视图 + 组合页，数据驱动文本必须转义；
 // 同时验证 CSP 拦截内联事件处理器（纵深防御，非唯一防线）。
-import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, expect } from '@playwright/test';
+import { virt as VIRT } from './virt.js';
 
 const OUT = 'out/visual/xss';
 const EDGE = 'examples/edge-cases';
 const CWD = () => process.cwd().replace(/\\/g, '/');
-const VIRT = (args: string[]) =>
-  execFileSync('npx', ['tsx', 'packages/cli/src/main.ts', ...args], { encoding: 'utf8', shell: true });
 
 const PAYLOADS = ['<img src=x onerror=window.__xss=1>', '><svg onload=window.__xss=2>'];
 

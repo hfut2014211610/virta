@@ -1,6 +1,6 @@
 // M2b.1 运行期一致性（C4）：浏览器 window.__VIRTA__.modelHash 必须等于
 // Node 端 adaptInput + modelHash 的计算结果（静态导出与交互页同一条适配管线）。
-import { execFileSync } from 'node:child_process';
+import { virt as VIRT } from './virt.js';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 import { adaptInput } from '@virta/data-engine';
@@ -11,9 +11,6 @@ import type { Table, ViewSpec } from '@virta/contracts';
 
 const OUT = 'out/visual/parity';
 const CWD = () => process.cwd().replace(/\\/g, '/');
-const VIRT = (args: string[]) =>
-  execFileSync('npx', ['tsx', 'packages/cli/src/main.ts', ...args], { encoding: 'utf8', shell: true });
-
 const spec = (view: string, extra: Partial<ViewSpec> = {}): ViewSpec =>
   ({ version: 1, view: view as never, ...extra }) as ViewSpec;
 

@@ -1,13 +1,13 @@
 // M3 视觉测试：bar/line 首屏断言 + snapshots/compare 新旧并排。
 // 前置：virta render 产 HTML（beforeAll 生成）；legacy 用 python vizscape.py render。
 import { execFileSync, execSync } from 'node:child_process';
+import { virt as VIRT_HELPER } from './virt.js';
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 
 const OUT = 'out/visual';
 const CMP = 'snapshots/compare';
-const VIRT = (args: string, stdin?: string) =>
-  execFileSync('npx', ['tsx', 'packages/cli/src/main.ts', ...args.split(' ')], { encoding: 'utf8', input: stdin, shell: true });
+const VIRT = (args: string, stdin?: string) => VIRT_HELPER(args, stdin);
 
 test.beforeAll(() => {
   mkdirSync(OUT, { recursive: true });

@@ -1,5 +1,5 @@
 // M5 compose 联动测试：retail 仪表盘 HTML → 点击图元 → 联动筛选生效。
-import { execFileSync } from 'node:child_process';
+import { virt } from './virt.js';
 import { mkdirSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 
@@ -8,7 +8,7 @@ const F = `${OUT}/compose-grid-light.html`;
 
 test.beforeAll(() => {
   mkdirSync(OUT, { recursive: true });
-  execFileSync('npx', ['tsx', 'packages/cli/src/main.ts', 'compose', 'examples/packs/retail/compose.json', '--export', 'html', '--out', OUT], { encoding: 'utf8', shell: true });
+  virt(['compose', 'examples/packs/retail/compose.json', '--export', 'html', '--out', OUT]);
 });
 
 test('compose 仪表盘：全部面板首屏渲染', async ({ page }) => {

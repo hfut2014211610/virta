@@ -38,3 +38,20 @@ jobs:
           name: visual-snapshots
           path: snapshots/
           retention-days: 30
+
+  # PHASE_2C §4.5：三平台验证「构建 → npm pack → 仓库外安装 → .bin 命令」全链路（G3）
+  dist:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:dist

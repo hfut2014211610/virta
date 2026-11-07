@@ -1,0 +1,78 @@
+# PHASE_2C §4.5（E11）：推 v* tag → 全门禁 + 三平台 dist 冒烟 → GitHub Release。
+name: release
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: 校验 tag 与 packages/cli/package.json 版本一致
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(node -p "require('./packages/cli/package.json').version")
+          echo "tag=$TAG pkg=$PKG"
+          [ "$TAG" = "$PKG" ] || { echo "::error tag 与 package.json 版本不一致"; exit 1; }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run test:e2e
+      - run: npm run test:perf
+
+  dist:
+    needs: gate
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:dist
+
+  publish:
+    needs: [gate, dist]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: 打包 + SHA256SUMS
+        run: |
+          cd packages/cli && npm pack --pack-destination "$GITHUB_WORKSPACE"
+          cd "$GITHUB_WORKSPACE"
+          VER=$(node -p "require('./packages/cli/package.json').version")
+          sha256sum "virta-${VER}.tgz" > SHA256SUMS
+          cat SHA256SUMS
+      - name: Release 说明取自 CHANGELOG 本版本一节
+        run: |
+          VER=$(node -p "require('./packages/cli/package.json').version")
+          awk "/^## \[${VER}\]/{f=1;next} /^## \[/{f=0} f" CHANGELOG.md > release-notes.md
+          [ -s release-notes.md ] || echo "Release ${GITHUB_REF_NAME}" > release-notes.md
+      - name: gh release create
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VER=$(node -p "require('./packages/cli/package.json').version")
+          PRE=""
+          case "$VER" in *-rc*) PRE="--prerelease";; esac
+          gh release create "$GITHUB_REF_NAME" "virta-${VER}.tgz" SHA256SUMS \
+            --title "$GITHUB_REF_NAME" --notes-file release-notes.md $PRE

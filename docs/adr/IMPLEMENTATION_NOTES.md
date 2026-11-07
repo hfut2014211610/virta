@@ -753,3 +753,15 @@
 - `test/docs/readme.test.ts`：视图 ID 集合 = VIEW_IDS；`<!--readme-smoke-->` 块内命令逐条
   在 dist/cli.js + 临时 cwd 执行（未构建跳过，timeout 180s——8 条命令超默认 5s）。
 - 坑：README 示例命令要保持 shell 无关（无 heredoc/内联 JSON），Windows cmd 可跑。
+
+## M2c.4 CI 与发布流水线（2026-11-07，完成）
+
+- ci.yml 新增 `dist` job：ubuntu/windows/macos 三平台 `npm ci → build → test:dist`。
+- release.yml：`v*` tag 触发；gate（tag↔package.json 版本一致 + 全门禁）→
+  三平台 dist 冒烟 → `npm pack` + SHA256SUMS + `gh release create`（`-rc` 自动 --prerelease，
+  说明取 CHANGELOG 本版本一节）。
+- G8 根因与修复：Playwright 默认多 worker 并行，各 spec `beforeAll` 并发 spawn `npx tsx`
+  + esbuild 现场编译 + 共享 tsx 缓存与 out/ 写入，进程级资源瞬时争用 → 子进程偶发非零退出；
+  rank-race 位于串行循环尾部、并发高峰时中招（单独跑必过）。
+  修复：新增 `test/visual/virt.ts`，mkdir 原子锁把渲染生成跨进程串行化（产物文件名本无冲突），
+  5 个 spec 统一改用 `virt()`；不加重试。
