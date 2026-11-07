@@ -1,6 +1,6 @@
 # AGENTS.md · Virta 实施指南
 
-> 唯一设计与计划来源：`docs/plan/NEXT_PHASE.md`（Phase 2 · Rev 2）；M8 之后的 Phase 2a 见 `docs/plan/PHASE_2A.md`；当前阶段 Phase 2b 见 `docs/plan/PHASE_2B.md`。冲突以该文为准；未覆盖的细节按其 §0.3 处理并追加到 `docs/adr/IMPLEMENTATION_NOTES.md`。
+> 唯一设计与计划来源：`docs/plan/NEXT_PHASE.md`（Phase 2 · Rev 2）；M8 之后的 Phase 2a 见 `docs/plan/PHASE_2A.md`；Phase 2b 见 `docs/plan/PHASE_2B.md`（已完成）；当前阶段 Phase 2c（成品化与团队分发）见 `docs/plan/PHASE_2C.md`。冲突以该文为准；未覆盖的细节按其 §0.3 处理并追加到 `docs/adr/IMPLEMENTATION_NOTES.md`。
 
 ## 硬性规则（R1–R8）
 
@@ -12,6 +12,7 @@
 - R6 UI 文案简体中文，集中在 `packages/viewer/src/i18n/zh-CN.ts` 与 contract 文案；标识符用英文。
 - R7 契约级变更（contracts 类型、CLI 参数、JSON 回执）必须写/更新 `docs/adr/`。
 - R8 不删不覆盖用户未提交改动；`git status` 出现非本人改动先停下记录。
+- R9 信息安全（详见 `docs/plan/PHASE_2C.md` §0.4）：提交身份只能是 `hfut2014211610 <26618462+hfut2014211610@users.noreply.github.com>`（用 `git -c user.name=… -c user.email=… commit` 显式传入，不改 git config）；入库内容和提交信息中不得出现公司名、公司邮箱、内部项目或系统名、内部网址、本机绝对路径。
 
 ## 常用命令
 
@@ -44,4 +45,4 @@ npm run gallery        # 生成画廊
 
 `npm run typecheck && npm test` 全绿 → 在 `docs/adr/IMPLEMENTATION_NOTES.md` 记录本里程碑备忘 → `git status` 干净 → 本地提交 → fast-forward push 到 `origin/main` → `gh run watch` 确认 CI（Phase 2b 起）。
 
-> 进度追踪：里程碑与任务清单见 `docs/plan/NEXT_PHASE.md` §10，本文件不维护状态。当前进行到 M9（待用户确认对等清单）。
+> 进度追踪：里程碑与任务清单见 `docs/plan/NEXT_PHASE.md` §10，本文件不维护状态。M0–M9、2a、2b 已完成；当前进行到 Phase 2c（见 `docs/plan/PHASE_2C.md` §6）。

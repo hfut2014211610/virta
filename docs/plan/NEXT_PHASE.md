@@ -2,7 +2,7 @@
 
 > 状态：已定稿，待实施 · 编写：2026-11-05
 > Rev 2 变更：地图本期搁置（设计保留在 §13，不实施）；字体下载已获授权，列为 M1 必做任务
-> 后续：M8 之后插入 Phase 2a，见 `docs/plan/PHASE_2A.md`；之后是 Phase 2b（一致性、安全与正确性加固），见 `docs/plan/PHASE_2B.md`
+> 后续：M8 之后插入 Phase 2a，见 `docs/plan/PHASE_2A.md`；之后是 Phase 2b（一致性、安全与正确性加固），见 `docs/plan/PHASE_2B.md`；再之后是 Phase 2c（成品化与团队分发，修订本文 D6），见 `docs/plan/PHASE_2C.md`
 > 读者：实施 Agent（新会话）与维护者
 > 本文是下阶段唯一的设计与计划来源。实施中如与本文冲突，以本文为准；本文未覆盖的细节按 §0.3 处理。
 
