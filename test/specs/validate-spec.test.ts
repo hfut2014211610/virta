@@ -4,6 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { getContract, resolveView, validateSpec, VIEW_SPEC_KEYS, VIEW_SPEC_SCHEMA } from '@virta/contracts';
+import { adaptInput } from '@virta/data-engine';
+import { readInput } from '@virta/data-engine/node';
+import { rawToTable } from '@virta/data-engine';
 import type { ViewSpec, ViewId } from '@virta/contracts';
 
 const EXAMPLES = 'examples';
@@ -75,6 +78,33 @@ describe('validateSpec 错误路径', () => {
   });
   it('未知视图 → INVALID_OPTION', () => {
     expect(bad({ version: 1, view: 'pizza' }, undefined).code).toBe('INVALID_OPTION');
+  });
+});
+
+describe('洞察 importance ∈ [0,1]（契约测试，B17）', () => {
+  it('代表性输入各视图 insights 取值在区间内', async () => {
+    const CASES: [string, string, ViewSpec?][] = [
+      ['examples/basic/sample.csv', 'bar'],
+      ['examples/basic/sample-multi.csv', 'line'],
+      ['examples/basic/sample-gantt.csv', 'gantt', { version: 1, view: 'gantt', time: { asOf: '2025-10-20T09:00:00+08:00', tz: 'Asia/Shanghai' } } as ViewSpec],
+      ['examples/basic/sample-grid.csv', 'grid'],
+      ['examples/packs/delivery/deadline.brief.md', 'report'],
+      ['examples/basic/sample-funnel.csv', 'funnel'],
+      ['examples/basic/sample-radar.csv', 'radar'],
+    ];
+    let n = 0;
+    for (const [f, view, s] of CASES) {
+      if (!existsSync(f)) continue;
+      const loaded = await readInput(f);
+      const t = loaded.docText !== undefined ? undefined : rawToTable(loaded.result!.raw as never, loaded.source);
+      const out = adaptInput({ table: t, doc: loaded.docText, name: f }, view as ViewId, s ?? ({ version: 1, view } as ViewSpec));
+      for (const i of out.insights) {
+        expect(i.importance, `${f}(${view}): ${i.text.slice(0, 20)}`).toBeGreaterThanOrEqual(0);
+        expect(i.importance, `${f}(${view}): ${i.text.slice(0, 20)}`).toBeLessThanOrEqual(1);
+        n++;
+      }
+    }
+    expect(n).toBeGreaterThan(5);
   });
 });
 

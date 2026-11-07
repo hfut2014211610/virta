@@ -1232,7 +1232,7 @@
     "销量"
    ],
    "missing": 2,
-   "invalid": 584,
+   "invalid": 0,
    "percent": 0,
    "negative": 0,
    "anchors": 0,
@@ -1241,10 +1241,9 @@
    "type_column": "—",
    "duplicate_pairs": 0,
    "warnings": [
-    "数值列含 584 个无法解析值，已置空（显示 —）",
     "全表含 2 个空值，显示为 —"
    ],
-   "confidence": "low"
+   "confidence": "medium"
   }
  }
 }

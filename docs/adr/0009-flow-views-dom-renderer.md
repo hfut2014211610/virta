@@ -18,3 +18,10 @@
 
 - DOM/Scene 两路渲染允许存在细节偏差，但同一 model/token 下不得丢信息；视觉回归同时覆盖 HTML 阅读态与 SVG。
 - ViewState 增量：`query?: string`、`filter?: Record<string, string[]>`（见 ADR-0004 增补）。
+
+## 2b 修订（C12 打印口径 + 排序键）
+
+- **打印口径（C12）**：所见即所打——打印**当前筛选结果**；表头上方注明
+  「已筛选：…（N / M 行）」。原"打印时忽略筛选"口径作废，以本条为准。
+- `flow-table` 单元格增加 `key`（明细=原始值、透视=聚合值）；排序按 `key`
+  比较，null 恒排最后（不再用格式化文本比大小）；`beforeprint` 改 `AbortController`。

@@ -625,3 +625,18 @@
 - 新增 test/specs/validate-spec.test.ts（pack/compose 遍历 + 错误路径 + 键锁定）；
   B4/B5/B6/B7/B8 锚点转绿，B9–B12 仍 it.fails（归 M2b.3）。
 - ADR-0014 + SKILL.md 已更新。DoD：typecheck+npm test 全绿（332+4 预期失败）、e2e 64 过。
+
+## M2b.3 数据正确性（B9–B12、C9/C10/C12，2026-11-07）
+
+- `instantOf`：parseGanttDate 复用（- / . 中文 紧凑 Excel），纯数字规则
+  （8位YMD / [20000,80000] Excel / ≥1e11 epoch / 其余 null）。`zoned.ts` 引 legacy-core
+  无环。
+- `applyDerives` 按列 UNPARSABLE_DATES（缺失 token 不计）；`workdaysBetween` 带符号。
+- grid invalid 只算数值列 → grid-basic golden 有意偏离 legacy（invalid 584→0、
+  confidence low→medium、去掉对应 warning），属修复目标行为。
+- flow-table：Cell.key（明细原始值/透视聚合值）、导出的 compareKeys（null 恒排最后）、
+  state.sortBy 列名写入+恢复、beforeprint→AbortController、打印注明「已筛选：（N/M 行）」。
+- report insights importance 50/40→0.5/0.4；specs 测试加 importance∈[0,1] 契约断言。
+- 测试更新：time.test.ts 带符号+格式+UNPARSABLE 覆盖；recommend EXPECT 'raw'→'observations'。
+- ADR 增量：0004（sortBy/importance/白名单/UNPARSABLE）、0009（C12+排序键）、0010（C9+符号）。
+- B9–B12 锚点全绿；至此 15/15 锚点均为普通断言。

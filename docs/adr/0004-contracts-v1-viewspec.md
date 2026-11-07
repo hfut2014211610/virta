@@ -27,3 +27,13 @@
 - `RoleSpec` 新增 `instant?: 'start'|'end'`（ADR-0010 时刻语义）。
 - `ChartContract` 新增 `flow?: boolean`；grid 新增角色 `link`/`tone` 与选项 `agg`（枚举）；gantt 新增角色 `baseline`/`actual` 与选项 `baselineMark`/`varianceLabel`；六个时序视图 + bar 新增 `missingValue`/`connectGaps`。
 - 质量码：`TZ_ASSUMED`、`ASOF_ASSUMED`、`GAP_VALUES`、`LINK_UNSAFE`。
+
+## 2b 增量（ADR-0012/0014、C7/C10）
+
+- `ViewState` 新增 `sortBy?: string`——flow-table 排序列按**列名**写入与恢复（B17 修复）；
+  与既有 `sort` 方向字段配合使用。
+- `Insight.importance` 明确取值范围 [0,1]（契约注释 + 测试强制）；report 洞察
+  由 50/40 修正为 0.5/0.4。
+- `ViewSpec` 顶层键白名单由 `validate-spec.ts` 强制（含 `time`/`derive`/`page`/
+  `state.sortBy`/`state.query`/`size.height:'auto'`），与 `VIEW_SPEC_SCHEMA` 测试锁定。
+- 质量码新增 `UNPARSABLE_DATES`（derive 日期列解析失败按列计数）。

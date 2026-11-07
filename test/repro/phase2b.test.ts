@@ -133,7 +133,7 @@ describe('B9 派生列日期多格式（M2b.3）', () => {
     time: { asOf: '2026-11-05T17:00:00+08:00', tz: 'Asia/Shanghai' },
     derive: [{ type: 'dueStatus', due: '当前截止' }] as never,
   });
-  it.fails('5 种日期写法全部判为 due-today（45966=去年同日 → overdue）', () => {
+  it('5 种日期写法全部判为 due-today（45966=去年同日 → overdue）', () => {
     const m = adaptInput({ table: t }, 'grid', s).model as { rows: Record<string, unknown>[] };
     const got = m.rows.map((r) => r['截止状态']);
     expect(got).toEqual(['due-today', 'due-today', 'due-today', 'due-today', 'due-today', 'overdue']);
@@ -141,7 +141,7 @@ describe('B9 派生列日期多格式（M2b.3）', () => {
 });
 
 describe('B10 workdaysBetween 反向区间（M2b.3）', () => {
-  it.fails('to < from 返回负值', async () => {
+  it('to < from 返回负值', async () => {
     const { workdaysBetween } = await import('../../packages/data-engine/src/time/workday.js');
     // 2026-11-10 → 2026-11-06 应为 −(11-06→11-10 的工作日数)
     const fwd = workdaysBetween(739400, 739404);
@@ -152,7 +152,7 @@ describe('B10 workdaysBetween 反向区间（M2b.3）', () => {
 });
 
 describe('B11 grid invalid 只统计数值列（M2b.3）', () => {
-  it.fails('干净台账的 invalid = 0', async () => {
+  it('干净台账的 invalid = 0', async () => {
     const { toGrid } = await import('../../packages/data-engine/src/families/grid.js');
     const rows = [
       { 日期: '2026-11-01', 科目: '差旅', 金额: 1200, 备注: '高铁' },
@@ -165,7 +165,7 @@ describe('B11 grid invalid 只统计数值列（M2b.3）', () => {
 });
 
 describe('B12 flow-table 按原始值排序（M2b.3）', () => {
-  it.fails('导出按原始排序键的比较函数；万/千分位文本不进入比较', async () => {
+  it('导出按原始排序键的比较函数；万/千分位文本不进入比较', async () => {
     const ft = await import('../../packages/viewer/src/flow-table.js') as never as { compareKeys?: Function };
     expect(typeof ft.compareKeys).toBe('function');
     // null 恒排最后；number 按数值；string 按 zh locale

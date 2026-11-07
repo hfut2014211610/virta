@@ -2,6 +2,10 @@
 import type { QualityIssue, Table, ViewSpec } from '@virta/contracts';
 import { instantOf, ordinalOf, parseInstant, tzValid } from './time/zoned.js';
 import { workdaysBetween, type WorkCal } from './time/workday.js';
+import { MISSING_TOKENS } from './legacy-core.js';
+
+const isMissing = (v: unknown): boolean =>
+  v === null || v === undefined || MISSING_TOKENS.has(String(v).trim().toLowerCase().replace(/ /g, ''));
 
 export type DueStatus = 'done' | 'done-late' | 'overdue' | 'due-today' | 'due-soon' | 'upcoming' | 'unknown';
 
@@ -25,6 +29,19 @@ export function applyDerives(table: Table, spec: ViewSpec, resolved?: { asOfMs: 
   const aOrd = ordinalOf(asOfMs, tz);
   const cal: WorkCal = { workdays: spec.time?.workdays, holidays: spec.time?.holidays, extraWorkdays: spec.time?.extraWorkdays };
   const rows = table.rows.map((r) => ({ ...(r as Record<string, unknown>) }));
+  // C9：按列累计无法解析的日期值（缺失值不算），warn 带 count 与最多 5 个例子
+  const counted = new Set<string>();
+  const countUnparsable = (col: string): void => {
+    if (counted.has(col) || !table.columns.includes(col)) return;
+    counted.add(col);
+    let n = 0; const ex: string[] = [];
+    for (const r of table.rows) {
+      const v = (r as Record<string, unknown>)[col];
+      if (!isMissing(v) && instantOf(v, 'start', tz) === null) { n++; if (ex.length < 5) ex.push(String(v)); }
+    }
+    if (n) issues.push({ code: 'UNPARSABLE_DATES' as never, level: 'warn',
+      message: `列「${col}」有 ${n} 个无法解析为日期的值，按空值处理：${ex.join('、')}`, column: col } as never);
+  };
   const newCols: string[] = [];
   for (const d of derives) {
     if (d.type === 'dueStatus') {
@@ -32,6 +49,8 @@ export function applyDerives(table: Table, spec: ViewSpec, resolved?: { asOfMs: 
       const soon = d.soonWorkdays ?? 3;
       const missing = !table.columns.includes(d.due) ? [d.due] : d.done && !table.columns.includes(d.done) ? [d.done] : [];
       for (const c of missing) issues.push({ code: 'MISSING_COLUMN' as never, level: 'warn', message: `派生列 ${name}：列「${c}」不存在，全部输出 unknown`, column: c });
+      countUnparsable(d.due);
+      if (d.done) countUnparsable(d.done);
       for (const r of rows) {
         const dueMs = instantOf(r[d.due], 'end', tz);
         const doneMs = d.done ? instantOf(r[d.done], 'end', tz) : null;
@@ -47,6 +66,8 @@ export function applyDerives(table: Table, spec: ViewSpec, resolved?: { asOfMs: 
       if (!newCols.includes(name)) newCols.push(name);
     } else {
       const name = d.as ?? '差值天数';
+      countUnparsable(d.from);
+      countUnparsable(d.to);
       for (const r of rows) {
         const fOrd = instantOf(r[d.from], 'start', tz) !== null ? ordinalOf(instantOf(r[d.from], 'start', tz)!, tz) : null;
         const tOrd = instantOf(r[d.to], 'end', tz) !== null ? ordinalOf(instantOf(r[d.to], 'end', tz)!, tz) : null;

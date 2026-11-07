@@ -39,7 +39,8 @@ export function toGrid(raw: Raw): GridModel {
   q.mapping = { label: '—', series: '—', value: measures.join(', ') || '—' };
   q.numeric_columns = measures;
   const miss = keys.reduce((a, k) => a + stats[k].missing, 0);
-  const inv = keys.reduce((a, k) => a + stats[k].invalid, 0);
+  // B11：invalid 只统计数值列（解析率≥NUM_RATIO 的列）；文本列的"解析失败"不算错误
+  const inv = keys.reduce((a, k) => a + (numeric[k] ? stats[k].invalid : 0), 0);
   q.missing = miss;
   q.invalid = inv;
   if (inv) q.warnings.push(`数值列含 ${inv} 个无法解析值，已置空（显示 —）`);

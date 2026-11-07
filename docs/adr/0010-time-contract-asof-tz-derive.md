@@ -11,3 +11,13 @@
 - gantt 今日线用 asOf+tz（修 F3 UTC bug）；旧 HTML 用 payload 固化的 asOf，打开时不取当前时间。有 `time.asOf` 时标题区/静态卡脚注显示「数据截至 …（tz）」。
 - CLI：`--as-of`/`--tz`（等价 `--set time.*`）；不可解析报 `INVALID_TIME`（USAGE，退出码 2）。`inspect` 命中截止类别名时附 derive 建议。gantt `end` 别名去掉 `完成日期`（归 `actual`），对 `完成日期` 列给 `AMBIGUOUS_MAPPING` 歧义提示而非静默猜测。
 - 确定性：同数据+同 spec（含 asOf/tz）在 `TZ=UTC` 与 `TZ=Asia/Shanghai` 下 SVG 逐字节一致。
+
+## 2b 修订（C9 日期解析 + 带符号差值）
+
+- `instantOf` 格式扩展：带偏移 ISO 不变；日期/日期+时间交 `parseGanttDate` 识别
+  （`-` `/` `.` 中文年月日、紧凑 8 位、Excel 序列号），再 `fromZoned` 按 start/end 落点。
+- 纯数字规则：8 位合法 YMD → 紧凑日期；[20000,80000] → Excel 1900 序列号；
+  ≥1e11 → epoch ms；其余一律 null（日期判错比报错危险）。
+- 解析失败由 `applyDerives` 按列累计 → `UNPARSABLE_DATES`（warn，count + ≤5 例子）；
+  缺失 token 不计入。
+- `workdaysBetween` 带符号：`to < from` 返回负值；`dateDiff` workday 单位同生效。

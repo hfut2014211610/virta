@@ -13,8 +13,9 @@ export function isWorkday(ord: number, cal: WorkCal = {}): boolean {
   return (cal.workdays ?? [1, 2, 3, 4, 5]).includes(isoDow(ord));
 }
 
-/** (fromOrd, toOrd] 内的工作日数（toOrd ≤ fromOrd → 0）。 */
+/** (fromOrd, toOrd] 内的工作日数；toOrd < fromOrd 时返回负值（ADR-0010 带符号）。 */
 export function workdaysBetween(fromOrd: number, toOrd: number, cal: WorkCal = {}): number {
+  if (toOrd < fromOrd) return -workdaysBetween(toOrd, fromOrd, cal);
   let n = 0;
   for (let o = fromOrd + 1; o <= toOrd; o++) if (isWorkday(o, cal)) n++;
   return n;

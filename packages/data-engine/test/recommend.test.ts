@@ -21,7 +21,7 @@ const EXPECT: Record<string, { view: string; variant?: string; mode?: string }> 
   'sample-waterfall.csv': { view: 'bar', variant: 'waterfall' },
   'sample-line.csv': { view: 'line' },
   'sample-line3d.csv': { view: 'line' },
-  'sample-boxplot.csv': { view: 'boxplot', mode: 'raw' },
+  'sample-boxplot.csv': { view: 'boxplot', mode: 'observations' },
   'sample-boxplot-summary.csv': { view: 'boxplot', mode: 'summary' },
   'sample-bullet.csv': { view: 'bullet' },
   'sample-fishbone.csv': { view: 'fishbone' },

@@ -50,7 +50,7 @@ describe('工作日', () => {
   });
   it('workdaysBetween', () => {
     expect(workdaysBetween(ord('2026-11-05'), ord('2026-11-09'))).toBe(2); // 五→一：五不算，六日不算，一算? 五、六、日、一 → (5,9]=6,7,8,9 → 6五 9一 = 2
-    expect(workdaysBetween(ord('2026-11-09'), ord('2026-11-05'))).toBe(0);
+    expect(workdaysBetween(ord('2026-11-09'), ord('2026-11-05'))).toBe(-2); // B10 带符号：反向区间取负
   });
 });
 
@@ -80,6 +80,51 @@ describe('dueStatus / dateDiff', () => {
     const out = applyDerives(t, s2).table.rows.map((r) => r['差值天数']);
     expect(out[0]).toBe(5);
     expect(out[1]).toBeNull();
+  });
+  it('C9 instantOf 多格式：- / / . 中文年月日 紧凑8位 Excel 序列 epoch ms', () => {
+    const day = (v: unknown) => ordinalOf(instantOf(v, 'start', SH)!, SH);
+    const target = day('2026-11-05');
+    expect(day('2026/11/05')).toBe(target);
+    expect(day('2026.11.05')).toBe(target);
+    expect(day('2026年11月5日')).toBe(target);
+    expect(day('20261105')).toBe(target);
+    expect(day(20261105)).toBe(target);
+    expect(day(46331)).toBe(target);          // Excel 序列号
+    expect(day('46331')).toBe(target);        // 字符串形式
+    expect(day('2026-11-05 17:30')).toBe(target);
+    expect(day('2026-11-05T09:00:00Z')).toBe(target); // 带偏移走 parseInstant
+  });
+  it('C9 纯数字规则：范围外一律 null（日期判错比报错危险）', () => {
+    expect(instantOf(19999, 'start', SH)).toBeNull();
+    expect(instantOf(80001, 'start', SH)).toBeNull();
+    expect(instantOf(42, 'start', SH)).toBeNull();
+    expect(instantOf('42', 'start', SH)).toBeNull();
+    expect(instantOf(20261340, 'start', SH)).toBeNull(); // 非法 YMD
+    expect(instantOf(1730000000000, 'start', SH)).not.toBeNull(); // ≥1e11 epoch ms
+    expect(instantOf('不是日期', 'start', SH)).toBeNull();
+    expect(instantOf('', 'start', SH)).toBeNull();
+  });
+  it('UNPARSABLE_DATES：按列计数、缺失误报、≤5 个例子', () => {
+    const t: Table = { columns: ['due'], rows: [
+      { due: '2026-11-05' }, { due: '垃圾' }, { due: '2026-13-45' }, { due: null }, { due: '' }, { due: '缺失' },
+    ], source: { name: 't', format: 'csv' as const, rows: 6 } };
+    const s: ViewSpec = { version: 1, view: 'grid', time: { asOf: '2026-11-05T00:00:00+08:00', tz: SH }, derive: [{ type: 'dueStatus', due: 'due' }] };
+    const { issues } = applyDerives(t, s);
+    const u = issues.filter((i) => (i as { code?: string }).code === 'UNPARSABLE_DATES');
+    expect(u).toHaveLength(1);
+    expect(u[0]!.message).toContain('2 个无法解析');
+    expect(u[0]!.message).toContain('垃圾');
+  });
+  it('workdaysBetween 带符号覆盖：同日/跨周末/节假日/调休', () => {
+    const o = (iso: string) => ordinalOf(instantOf(iso, 'start', SH)!, SH);
+    expect(workdaysBetween(o('2026-11-05'), o('2026-11-05'))).toBe(0);            // 同一天
+    expect(workdaysBetween(o('2026-11-05'), o('2026-11-06'), { holidays: ['2026-11-06'] })).toBe(0); // 节假日
+    expect(workdaysBetween(o('2026-11-05'), o('2026-11-07'), { extraWorkdays: ['2026-11-07'] })).toBe(2); // 周五+调休周六
+    expect(workdaysBetween(o('2026-11-09'), o('2026-11-05'))).toBe(-2);          // 反向 = 负值
+    // dateDiff workday 单位同样带符号
+    const t2: Table = { columns: ['a', 'b'], rows: [{ a: '2026-11-10', b: '2026-11-05' }], source: { name: 't', format: 'csv', rows: 1 } };
+    const out = applyDerives(t2, { version: 1, view: 'grid', time: { asOf: '2026-11-05T00:00:00+08:00', tz: SH }, derive: [{ type: 'dateDiff', from: 'a', to: 'b', unit: 'workday' }] }).table.rows[0]!['差值天数'];
+    expect(out).toBe(-3); // 10(二)→5(四)：反向 3 个工作日
   });
   it('resolveTime 缺省解析并标记假设', () => {
     const r = resolveTime({ version: 1, view: 'bar' });

@@ -9,8 +9,19 @@ const safeUrl = (u: string) => /^(https?:|mailto:)/i.test(u);
 const TONE_MAP: Record<string, string> = { danger: 'danger', warn: 'warn', ok: 'ok', info: 'info', muted: 'muted', 高: 'danger', 严重: 'danger', 中: 'warn', 低: 'ok', 提示: 'info' };
 const BATCH = 500;
 
-interface Cell { text: string; num?: boolean; link?: string }
+interface Cell { text: string; num?: boolean; link?: string; key?: number | string | null }
 interface FRow { cells: Cell[]; tone?: string; head?: boolean; depth?: number }
+
+/** C10 排序比较：原始 key 比较（数字按数值，文本按 zh locale）；null/undefined 恒排最后。 */
+export function compareKeys(a: number | string | null | undefined, b: number | string | null | undefined): number {
+  if (a === null || a === undefined) return b === null || b === undefined ? 0 : 1;
+  if (b === null || b === undefined) return -1;
+  if (typeof a === 'number' && typeof b === 'number') return a - b;
+  return String(a).localeCompare(String(b), 'zh');
+}
+
+/** beforeprint 监听改 AbortController：每次渲染 abort 上一个，避免重复追加（B17）。 */
+const PRINT_AC = new WeakMap<HTMLElement, AbortController>();
 
 export function renderFlowTable(box: HTMLElement, m: GridModel, spec: ViewSpec): void {
   const opts = spec.options ?? {};
@@ -40,9 +51,9 @@ export function renderFlowTable(box: HTMLElement, m: GridModel, spec: ViewSpec):
       }
       rows = pv.body.map((r) => ({
         head: r.head, depth: r.depth,
-        cells: [{ text: r.label }, ...r.vals.map((v) => ({ text: v === null ? '—' : fmt(v), num: true }))],
+        cells: [{ text: r.label, key: r.label }, ...r.vals.map((v) => ({ text: v === null ? '—' : fmt(v), num: true, key: v }))],
       }));
-      if (showTotals && pv.grand.length) rows.push({ head: true, cells: [{ text: '合计' }, ...pv.grand.map((v) => ({ text: v === null ? '—' : fmt(v), num: true }))] });
+      if (showTotals && pv.grand.length) rows.push({ head: true, cells: [{ text: '合计' }, ...pv.grand.map((v) => ({ text: v === null ? '—' : fmt(v), num: true, key: v }))] });
     } else rows = [];
     if (!rows.length) {
       head = [m.columns.map((c) => ({ text: c.key, num: c.numeric }))];
@@ -62,15 +73,20 @@ export function renderFlowTable(box: HTMLElement, m: GridModel, spec: ViewSpec):
         const link = linkCol && typeof r[linkCol] === 'string' && safeUrl(String(r[linkCol]))
           ? (c.key === (linkTextCol || m.columns.find((x) => !x.numeric && x.key !== linkCol)?.key) ? String(r[linkCol]) : undefined)
           : undefined;
-        return { text, num: c.numeric, link };
+        return { text, num: c.numeric, link, key: raw === undefined ? null : raw as number | string | null };
       });
       return { cells, tone };
     });
   }
 
-  // —— 状态：搜索串 + 列筛选 + 排序 ——
+  // —— 状态：搜索串 + 列筛选 + 排序（sortBy 按列名写入/恢复，C10）——
   const st = { query: String(spec.state?.query ?? ''), filter: { ...(spec.state?.filter ?? {}) }, sort: (spec.state?.sort as 'none' | 'asc' | 'desc' | undefined) ?? 'none', sortCol: -1 };
   const filterCols = m.columns.filter((c) => !c.numeric && c.distinct > 1 && c.distinct <= 30);
+  const colKeys = head.length ? head[head.length - 1]!.map((c) => c.text) : [];
+  if (spec.state?.sortBy) {
+    const ci = colKeys.indexOf(spec.state.sortBy);
+    if (ci >= 0) st.sortCol = ci;
+  }
 
   const match = (r: FRow) => {
     if (st.query) {
@@ -94,10 +110,11 @@ export function renderFlowTable(box: HTMLElement, m: GridModel, spec: ViewSpec):
     if (st.sort !== 'none' && st.sortCol >= 0) {
       const ci = st.sortCol;
       vs.sort((a, b) => {
-        const av = a.cells[ci]?.text ?? '', bv = b.cells[ci]?.text ?? '';
-        const an = Number(av.replace(/,/g, '')), bn = Number(bv.replace(/,/g, ''));
-        const cmp = Number.isFinite(an) && Number.isFinite(bn) ? an - bn : av.localeCompare(bv, 'zh');
-        return st.sort === 'asc' ? cmp : -cmp;
+        const av = a.cells[ci]?.key ?? null, bv = b.cells[ci]?.key ?? null;
+        if (av === null && bv === null) return 0;
+        if (av === null) return 1;
+        if (bv === null) return -1;
+        return (st.sort === 'asc' ? 1 : -1) * compareKeys(av, bv);
       });
     }
     return vs;
@@ -113,7 +130,7 @@ export function renderFlowTable(box: HTMLElement, m: GridModel, spec: ViewSpec):
       </select>`))}
       <span class="ft-badge" role="status"></span>
     </div>
-    <div class="ft-wrap"><table><thead></thead><tbody></tbody></table></div>
+    <div class="ft-wrap"><div class="ft-print-note" hidden></div><table><thead></thead><tbody></tbody></table></div>
   </div>`;
   const thead = box.querySelector('thead')!, tbody = box.querySelector('tbody')!, badge = box.querySelector('.ft-badge')!;
   thead.innerHTML = html`${head.map((hr, hi) => raw(html`<tr>${hr.map((c, ci) => raw(html`<th class="${c.num ? 'num' : ''}" data-ci="${hi === head.length - 1 ? ci : -1}"${ci === st.sortCol && hi === head.length - 1 ? raw(html` data-sort="${st.sort}"`) : ''}>${c.text}<i class="ft-si"></i></th>`))}</tr>`))}`;
@@ -148,12 +165,26 @@ export function renderFlowTable(box: HTMLElement, m: GridModel, spec: ViewSpec):
     const ci = Number(th.dataset['ci']);
     st.sort = st.sortCol === ci ? (st.sort === 'asc' ? 'desc' : st.sort === 'desc' ? 'none' : 'asc') : 'asc';
     st.sortCol = st.sort === 'none' ? -1 : ci;
-    spec.state = { ...spec.state, sort: st.sort };
+    spec.state = { ...spec.state, sort: st.sort, sortBy: st.sortCol >= 0 ? colKeys[st.sortCol] : undefined };
     thead.querySelectorAll('th').forEach((x) => x.removeAttribute('data-sort'));
     if (st.sortCol >= 0) th.setAttribute('data-sort', st.sort);
     refresh();
   });
-  // 打印一次性展开全部筛选后行
-  window.addEventListener('beforeprint', () => { if (rendered < filtered.length) renderBatch(true); });
+  // C12 打印口径：所见即所打——打印当前筛选结果，表头上方注明筛选条件与行数
+  PRINT_AC.get(box)?.abort();
+  const ac = new AbortController();
+  PRINT_AC.set(box, ac);
+  const printNote = box.querySelector('.ft-print-note') as HTMLElement;
+  window.addEventListener('beforeprint', () => {
+    const conds: string[] = [];
+    if (st.query) conds.push(`搜索"${st.query}"`);
+    for (const [col, keep] of Object.entries(st.filter)) if (keep?.length) conds.push(`${col}=${keep.join('/')}`);
+    if (conds.length || filtered.length !== rows.length) {
+      printNote.textContent = `已筛选：${conds.join('，') || '（无）'}（${filtered.length} / ${rows.length} 行）`;
+      printNote.hidden = false;
+    }
+    if (rendered < filtered.length) renderBatch(true);
+  }, { signal: ac.signal });
+  window.addEventListener('afterprint', () => { printNote.hidden = true; }, { signal: ac.signal });
   void GRID_AGGS;
 }

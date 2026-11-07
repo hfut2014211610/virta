@@ -3,6 +3,8 @@
 export interface ZonedParts { y: number; mo: number; d: number; h: number; mi: number; s: number; ms: number }
 
 const ORD_EPOCH = 719163; // Python toordinal 纪元：1970-01-01
+import { parseGanttDate } from '../legacy-core.js';
+
 const fmtCache = new Map<string, Intl.DateTimeFormat>();
 const dtf = (tz: string): Intl.DateTimeFormat => {
   let f = fmtCache.get(tz);
@@ -45,24 +47,53 @@ export function parseInstant(s: string): number | null {
   return Number.isFinite(t) ? t : null;
 }
 
-/** 墙上日期（'YYYY-MM-DD' 或含时间）→ tz 下的时刻；dateOnly 时按 start=00:00 / end=23:59:59.999 落点。 */
+// C9 纯数字规则：8 位合法 YMD → 紧凑日期；[20000,80000] → Excel 1900 序列号；
+// ≥1e11 → epoch 毫秒；其余一律 null（日期判错比报错危险）。
+const EXCEL_ORD_EPOCH = ORD_EPOCH + Math.floor(Date.UTC(1899, 11, 30) / 86400000);
+const numToOrd = (n: number): number | null => {
+  if (Number.isInteger(n) && n >= 19000101 && n <= 20991231) {
+    const y = Math.floor(n / 10000), mo = Math.floor(n / 100) % 100, d = n % 100;
+    const dt = new Date(Date.UTC(y, mo - 1, d));
+    if (dt.getUTCFullYear() === y && dt.getUTCMonth() === mo - 1 && dt.getUTCDate() === d)
+      return ORD_EPOCH + Math.floor(Date.UTC(y, mo - 1, d) / 86400000);
+    return null;
+  }
+  if (n >= 20000 && n <= 80000) return EXCEL_ORD_EPOCH + Math.floor(n);
+  return null;
+};
+
+/** toordinal → 墙上日期 → tz 时刻（dateOnly 时 start=00:00 / end=23:59:59.999）。 */
+const ordToInstant = (ord: number, kind: 'start' | 'end', tz: string, t?: { h: number; mi: number; s: number }): number => {
+  const d = new Date((ord - ORD_EPOCH) * 86400000);
+  return fromZoned({
+    y: d.getUTCFullYear(), mo: d.getUTCMonth() + 1, d: d.getUTCDate(),
+    h: t ? t.h : kind === 'end' ? 23 : 0,
+    mi: t ? t.mi : kind === 'end' ? 59 : 0,
+    s: t ? t.s : kind === 'end' ? 59 : 0,
+    ms: t ? 0 : kind === 'end' ? 999 : 0,
+  }, tz);
+};
+
+/** 日期值 → tz 下的时刻。识别：带偏移 ISO、`-`/`/`/`.`/中文年月日、紧凑 8 位、
+ *  Excel 序列号（含字符串形式）、epoch 毫秒；dateOnly 按 start/end 落点（ADR-0010/C9）。 */
 export function instantOf(v: unknown, kind: 'start' | 'end', tz: string): number | null {
   if (v === null || v === undefined || v === '') return null;
-  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  const num = typeof v === 'number' ? v
+    : typeof v === 'string' && /^\d+(\.\d+)?$/.test(v.trim()) ? Number(v.trim()) : null;
+  if (num !== null && Number.isFinite(num)) {
+    const ord = numToOrd(num);
+    if (ord === null) return num >= 1e11 ? num : null;
+    return ordToInstant(ord, kind, tz);
+  }
   const s = String(v).trim();
-  if (/^\d+(\.\d+)?$/.test(s)) return Number(s); // epoch ms
   const withZone = parseInstant(s);
   if (withZone !== null) return withZone;
-  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T ](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/.exec(s);
-  if (!m) return null;
-  const hasTime = m[4] !== undefined;
-  return fromZoned({
-    y: +m[1], mo: +m[2], d: +m[3],
-    h: hasTime ? +m[4] : kind === 'end' ? 23 : 0,
-    mi: hasTime ? +m[5] : kind === 'end' ? 59 : 0,
-    s: hasTime ? +(m[6] ?? 0) : kind === 'end' ? 59 : 0,
-    ms: hasTime ? 0 : kind === 'end' ? 999 : 0,
-  }, tz);
+  // 日期(+时间)：剥离时间成分后交 parseGanttDate 识别日期部分
+  const tm = /[T ](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/.exec(s);
+  const datePart = tm ? s.slice(0, s.indexOf(tm[0])).trim() : s;
+  const [ord] = parseGanttDate(datePart);
+  if (ord === null) return null;
+  return ordToInstant(ord, kind, tz, tm ? { h: +tm[1], mi: +tm[2], s: +(tm[3] ?? 0) } : undefined);
 }
 
 /** instant → tz 墙上日期的 toordinal。 */

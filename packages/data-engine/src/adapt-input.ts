@@ -20,8 +20,8 @@ export function adaptInput(input: AdaptInput, view: ViewId, spec: ViewSpec): Ada
       model: dm,
       quality: projectQuality(dm.quality),
       insights: [
-        { kind: 'distribution', text: `共 ${dm.stats.sections} 个章节、${dm.stats.paragraphs} 段`, importance: 50 },
-        { kind: 'target', text: `识别 ${dm.metrics.length} 个指标`, importance: 40 },
+        { kind: 'distribution', text: `共 ${dm.stats.sections} 个章节、${dm.stats.paragraphs} 段`, importance: 0.5 },
+        { kind: 'target', text: `识别 ${dm.metrics.length} 个指标`, importance: 0.4 },
       ],
       counts: { 章节: dm.stats.sections, 段落: dm.stats.paragraphs, 表格: dm.stats.tables, 指标: dm.metrics.length },
     };
