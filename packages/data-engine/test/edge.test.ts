@@ -73,7 +73,7 @@ describe('edge-cases 读取', () => {
   it('xss-label.csv → 标签保留原文（转义在渲染层）', async () => {
     const r = await load('xss-label.csv');
     const m = ADAPTERS.bar!.adaptRaw(r.result!.raw as Raw) as { labels: string[] };
-    expect(m.labels[0]).toContain('<script>');
+    expect(m.labels[0]).toContain('<img src=x onerror');
   });
   it('excel-serials.csv → 数字序列正常入表', async () => {
     const r = await load('excel-serials.csv');

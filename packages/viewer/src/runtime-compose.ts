@@ -7,6 +7,7 @@ import { renderFlowDoc } from './flow-doc.js';
 import { renderFlowTable } from './flow-table.js';
 import type { DocModel, GridModel } from '@virta/data-engine';
 import type { Theme, ViewSpec, Table } from '@virta/contracts';
+import { html, raw } from './safe-html.js';
 
 export interface ComposePanel {
   id: string;
@@ -38,7 +39,6 @@ export interface ComposeViewEntry {
 }
 
 const $ = <T extends HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector(sel) as T;
-const escH = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 export function bootCompose(payload: ComposePayload, views: Record<string, ComposeViewEntry>): void {
   const root = $('#virta-app');
@@ -78,12 +78,12 @@ export function bootCompose(payload: ComposePayload, views: Record<string, Compo
     try { model = view.adapt({ table: ft, doc: p.doc }, p.spec); }
     catch (e) {
       // §4.4：adapt 抛错显示真实错误文案（不是误报「筛选后无数据」）
-      box.innerHTML = `<div class="perr">${escH((e as Error).message)}</div>`;
+      box.innerHTML = html`<div class="perr">${(e as Error).message}</div>`;
       return;
     }
     // §4.4：仅「筛选后为空」显示无数据，并给清除筛选
     if (!isDoc && hasFilter() && ft.rows.length === 0) {
-      box.innerHTML = `<div class="perr">筛选后无数据 <button type="button" class="pclr">清除筛选</button></div>`;
+      box.innerHTML = html`<div class="perr">筛选后无数据 <button type="button" class="pclr">清除筛选</button></div>`;
       box.querySelector('.pclr')?.addEventListener('click', clearFilter);
       return;
     }
@@ -105,7 +105,7 @@ export function bootCompose(payload: ComposePayload, views: Record<string, Compo
       format: p.spec.format, annotations: p.spec.annotations, text: p.spec.text,
     } as never);
     applySkin(sc, tokens.skin);
-    box.innerHTML = toSVG(sc);
+    box.innerHTML = raw(toSVG(sc)).html;
     (box as HTMLElement & { __scene?: Scene }).__scene = sc;
     const svg = box.firstElementChild as SVGElement | null;
     svg?.setAttribute('width', '100%'); if (svg) svg.style.height = 'auto';
@@ -129,12 +129,12 @@ export function bootCompose(payload: ComposePayload, views: Record<string, Compo
 
   function renderChips() {
     const el = $('#flinks');
-    el.innerHTML = '';
+    el.replaceChildren();
     const active = Object.entries(filter).filter(([, vs]) => vs.length);
     for (const [c, vs] of active) for (const v of vs) {
       const chip = document.createElement('button');
       chip.className = 'fchip';
-      chip.innerHTML = `${c} = ${v} ✕`;
+      chip.textContent = `${c} = ${v} ✕`;
       chip.onclick = () => { filter[c] = filter[c].filter((x) => x !== v); renderChips(); payload.panels.forEach((_, j) => renderPanel(j)); };
       el.appendChild(chip);
     }

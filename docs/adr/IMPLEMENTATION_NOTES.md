@@ -573,3 +573,20 @@
   （两处均已写入 generate.ts，packs:gen 可再生。）
 - **验证**：packs:check ✓、typecheck ✓、294 tests ✓、画廊重渲后 5 组表格
   demo/长文报告/夜班洞察均出现在 index.html。
+
+## M2b.0 安全热修（B1，2026-11-07）
+
+- `viewer/src/safe-html.ts`：`html\`\`` 模板标签（插值默认转义）、`raw()`、`escHtml`、
+  `safeColor`（#hex/rgb()/oklch() 白名单）。放在独立模块而非计划所写的 html.ts——
+  html.ts 是页面模板（Node 侧，本次引入 node:crypto 算 CSP 哈希），运行期 bundle 不能带进它。
+- 四处 sink 改写：legend chip 改 DOM+textContent（颜色过 safeColor）、tooltip 走
+  `html\`\``、buildTable 走 `html\`\``、compose 筛选 chip 改 textContent；flow-doc/flow-table
+  全量走 `html\`\``；`innerHTML=''` 一律改 `replaceChildren()`（白名单文件因此零豁免）。
+- CSP：`cspMeta()` 在 html.ts/compose-html.ts 拼接处对最终两段内联脚本算 sha256；
+  `connect-src 'none'` 顺带强制离线。
+- 静态检查 `test/security/no-raw-innerhtml.test.ts`（裸 sink / eval / 内联 on*=）。
+- 复现锚点 `test/repro/phase2b.test.ts`：B2–B13 共 15 条 it.fails 已确认复现；
+  B1 锚点 = xss.spec.ts 41 例全绿（修复后转普通断言）。
+- 语料：edge-cases 新增 xss-column/series/value/link.csv、xss-doc.md、xss-compose.json；
+  画廊卡片改名「转义演示」。
+- ADR-0013 已写。

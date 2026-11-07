@@ -1,13 +1,13 @@
 # AGENTS.md · Virta 实施指南
 
-> 唯一设计与计划来源：`docs/plan/NEXT_PHASE.md`（Phase 2 · Rev 2）；M8 之后的 Phase 2a 见 `docs/plan/PHASE_2A.md`。冲突以该文为准；未覆盖的细节按其 §0.3 处理并追加到 `docs/adr/IMPLEMENTATION_NOTES.md`。
+> 唯一设计与计划来源：`docs/plan/NEXT_PHASE.md`（Phase 2 · Rev 2）；M8 之后的 Phase 2a 见 `docs/plan/PHASE_2A.md`；当前阶段 Phase 2b 见 `docs/plan/PHASE_2B.md`。冲突以该文为准；未覆盖的细节按其 §0.3 处理并追加到 `docs/adr/IMPLEMENTATION_NOTES.md`。
 
 ## 硬性规则（R1–R8）
 
 - R1 `archive/legacy-vizscape/` 冻结：不加功能不修 bug，只作参考与 golden 数据来源。
 - R2 依赖只用 `docs/adr/0007` 白名单内精确版本；新增须发布满 7 天并写 ADR。
 - R3 产物 HTML 离线可开：不引 CDN，字体/脚本/数据全内联。
-- R4 每个里程碑结束 `npm run typecheck && npm test` 全绿后本地提交，**不 push**。
+- R4 每个里程碑结束 `npm run typecheck && npm test` 全绿后本地提交。Phase 2b 起允许以 fast-forward 推送到 `origin/main`（用户 2026-11-07 授权），禁止 force push 和改写已推送历史；push 后用 `gh run watch` 确认 CI 结果。
 - R5 本期不做地图（§13 预留）；字体已授权联网下载。
 - R6 UI 文案简体中文，集中在 `packages/viewer/src/i18n/zh-CN.ts` 与 contract 文案；标识符用英文。
 - R7 契约级变更（contracts 类型、CLI 参数、JSON 回执）必须写/更新 `docs/adr/`。
@@ -42,6 +42,6 @@ npm run gallery        # 生成画廊
 
 ## 验证（每里程碑 DoD 基线）
 
-`npm run typecheck && npm test` 全绿 → 在 `docs/adr/IMPLEMENTATION_NOTES.md` 记录本里程碑备忘 → `git status` 干净 → 本地提交（不 push）。
+`npm run typecheck && npm test` 全绿 → 在 `docs/adr/IMPLEMENTATION_NOTES.md` 记录本里程碑备忘 → `git status` 干净 → 本地提交 → fast-forward push 到 `origin/main` → `gh run watch` 确认 CI（Phase 2b 起）。
 
 > 进度追踪：里程碑与任务清单见 `docs/plan/NEXT_PHASE.md` §10，本文件不维护状态。当前进行到 M9（待用户确认对等清单）。

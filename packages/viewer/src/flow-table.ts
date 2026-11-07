@@ -4,8 +4,7 @@ import { GRID_AGGS, pivotView, type PivotView } from '@virta/charts';
 import { formatNumber } from '@virta/chart-skin';
 import type { GridModel } from '@virta/data-engine';
 import type { ViewSpec } from '@virta/contracts';
-
-const esc = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+import { html, raw } from './safe-html.js';
 const safeUrl = (u: string) => /^(https?:|mailto:)/i.test(u);
 const TONE_MAP: Record<string, string> = { danger: 'danger', warn: 'warn', ok: 'ok', info: 'info', muted: 'muted', 高: 'danger', 严重: 'danger', 中: 'warn', 低: 'ok', 提示: 'info' };
 const BATCH = 500;
@@ -105,27 +104,27 @@ export function renderFlowTable(box: HTMLElement, m: GridModel, spec: ViewSpec):
   };
 
   // —— DOM ——
-  box.innerHTML = `<div class="flow-table">
+  box.innerHTML = html`<div class="flow-table">
     <div class="ft-bar">
-      <input class="ft-q" type="search" placeholder="搜索全部列…" value="${esc(st.query)}" aria-label="搜索表格">
-      ${filterCols.map((c) => `<select class="ft-f" data-col="${esc(c.key)}" aria-label="筛选 ${esc(c.key)}">
-        <option value="">${esc(c.key)}：全部</option>
-        ${[...new Set(m.rows.map((r) => String(r[c.key] ?? '—')))].map((v) => `<option${(st.filter[c.key] ?? []).includes(v) ? ' selected' : ''} value="${esc(v)}">${esc(v)}</option>`).join('')}
-      </select>`).join('')}
+      <input class="ft-q" type="search" placeholder="搜索全部列…" value="${st.query}" aria-label="搜索表格">
+      ${filterCols.map((c) => raw(html`<select class="ft-f" data-col="${c.key}" aria-label="筛选 ${c.key}">
+        <option value="">${c.key}：全部</option>
+        ${[...new Set(m.rows.map((r) => String(r[c.key] ?? '—')))].map((v) => raw(html`<option${(st.filter[c.key] ?? []).includes(v) ? ' selected' : ''} value="${v}">${v}</option>`))}
+      </select>`))}
       <span class="ft-badge" role="status"></span>
     </div>
     <div class="ft-wrap"><table><thead></thead><tbody></tbody></table></div>
   </div>`;
   const thead = box.querySelector('thead')!, tbody = box.querySelector('tbody')!, badge = box.querySelector('.ft-badge')!;
-  thead.innerHTML = head.map((hr, hi) => `<tr>${hr.map((c, ci) => `<th class="${c.num ? 'num' : ''}" data-ci="${hi === head.length - 1 ? ci : -1}"${ci === st.sortCol && hi === head.length - 1 ? ` data-sort="${st.sort}"` : ''}>${esc(c.text)}<i class="ft-si"></i></th>`).join('')}</tr>`).join('');
+  thead.innerHTML = html`${head.map((hr, hi) => raw(html`<tr>${hr.map((c, ci) => raw(html`<th class="${c.num ? 'num' : ''}" data-ci="${hi === head.length - 1 ? ci : -1}"${ci === st.sortCol && hi === head.length - 1 ? raw(html` data-sort="${st.sort}"`) : ''}>${c.text}<i class="ft-si"></i></th>`))}</tr>`))}`;
 
   let filtered = viewRows(), rendered = 0, batching = false;
-  const rowHtml = (r: FRow) => `<tr${r.tone ? ` class="ft-tone-${r.tone}"` : ''}${r.head ? ' class="ft-head"' : ''}>
-    ${r.cells.map((c, ci) => `<td class="${c.num ? 'num' : ''}"${r.depth && ci === 0 ? ` style="padding-left:${8 + r.depth * 14}px"` : ''}>${c.link ? `<a href="${esc(c.link)}" target="_blank" rel="noopener noreferrer">${esc(c.text)}</a>` : esc(c.text)}</td>`).join('')}
+  const rowHtml = (r: FRow) => html`<tr${r.tone ? ` class="ft-tone-${r.tone}"` : ''}${r.head ? ' class="ft-head"' : ''}>
+    ${r.cells.map((c, ci) => raw(html`<td class="${c.num ? 'num' : ''}"${r.depth && ci === 0 ? ` style="padding-left:${8 + r.depth * 14}px"` : ''}>${c.link ? raw(html`<a href="${c.link}" target="_blank" rel="noopener noreferrer">${c.text}</a>`) : c.text}</td>`))}
   </tr>`;
   const renderBatch = (all = false) => {
     const upto = all ? filtered.length : Math.min(filtered.length, rendered + BATCH);
-    tbody.insertAdjacentHTML('beforeend', filtered.slice(rendered, upto).map(rowHtml).join(''));
+    tbody.insertAdjacentHTML('beforeend', html`${raw(filtered.slice(rendered, upto).map(rowHtml).join(''))}`);
     rendered = upto;
     badge.textContent = `显示 ${filtered.length} / ${rows.length} 行`;
     if (rendered < filtered.length && !batching) {
@@ -133,7 +132,7 @@ export function renderFlowTable(box: HTMLElement, m: GridModel, spec: ViewSpec):
       (window.requestIdleCallback ?? ((fn: () => void) => setTimeout(fn, 16)))(() => { batching = false; renderBatch(); });
     }
   };
-  const refresh = () => { tbody.innerHTML = ''; rendered = 0; filtered = viewRows(); renderBatch(); };
+  const refresh = () => { tbody.replaceChildren(); rendered = 0; filtered = viewRows(); renderBatch(); };
   refresh();
 
   box.querySelector('.ft-q')!.addEventListener('input', (e) => { st.query = (e.target as HTMLInputElement).value; spec.state = { ...spec.state, query: st.query }; refresh(); });

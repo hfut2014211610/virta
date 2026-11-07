@@ -1,9 +1,17 @@
 // 单文件 HTML 组装：设计 token CSS + 内联字体 + 首屏静态 SVG + payload JSON + 运行期 bundle。
 // 壳层布局对齐 legacy vizscape 演示页：header（eyebrow+标题+主题 seg）→ 标签化工具栏（trow）→ 卡片。
+import { createHash } from 'node:crypto';
 import { buildCss } from '@virta/design-system';
 import { THEME_IDS, type Theme } from '@virta/contracts';
 import { ZH } from './i18n/zh-CN.js';
 import type { Payload } from './runtime.js';
+
+/** ADR-0013 CSP 纵深防御：内联脚本按 sha256 白名单，inline 事件处理器无 'unsafe-inline' 直接拦截。 */
+const sha256B64 = (s: string) => createHash('sha256').update(s, 'utf8').digest('base64');
+export function cspMeta(...scripts: string[]): string {
+  const hashes = scripts.map((s) => `'sha256-${sha256B64(s)}'`).join(' ');
+  return `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src ${hashes}; style-src 'unsafe-inline'; img-src data:; font-src data:; connect-src 'none'">`;
+}
 
 export interface SingleFileOpts {
   payload: Payload;
@@ -22,8 +30,10 @@ export function singleFileHtml(o: SingleFileOpts): string {
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const viewName = payload.viewTitle ?? payload.spec.view;
   const h1 = t.title && viewName && t.title !== viewName ? `${esc(t.title)} <em>· ${esc(viewName)}</em>` : esc(t.title ?? viewName);
+  const payloadScript = `window.__VIRTA__=${JSON.stringify(payload).replace(/</g, '\\u003c')};`;
   return `<!doctype html>
 <html lang="zh-CN" data-theme="${theme}" data-palette="${payload.spec.palette ?? 'signal'}"><head><meta charset="utf-8">
+${cspMeta(payloadScript, runtimeJs)}
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(t.title ?? 'Virta')} · Virta</title>
 <style>${css}
@@ -139,7 +149,7 @@ details.fold summary{cursor:pointer;font:12.5px var(--body);color:var(--muted)}
     ${payload.quality.issues.map((i) => `<p style="color:var(--${i.level === 'error' ? 'neg' : i.level === 'warn' ? 'warn' : 'faint'})">· ${esc(i.message)}</p>`).join('') || `<p>${ZH.noIssues}</p>`}
   </div></details>
 </div>
-<script>window.__VIRTA__=${JSON.stringify(payload).replace(/</g, '\\u003c')};</script>
+<script>${payloadScript}</script>
 <script>${runtimeJs}</script>
 </body></html>`;
 }

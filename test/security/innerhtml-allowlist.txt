@@ -1,0 +1,4 @@
+# innerHTML / insertAdjacentHTML 白名单（test/security/no-raw-innerhtml.test.ts）
+# 格式：<相对 src/ 的路径>:<行号> —— 理由
+# 每一条都必须写明为什么这里可以安全地写入非 html``/raw(toSVG|inlineHtml) 的内容。
+# 当前无豁免项。

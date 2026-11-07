@@ -1,4 +1,4 @@
 分类,数值
-<script>alert(1)</script>,10
-</script><img src=x onerror=alert(2)>,20
+"<img src=x onerror=""window.__xss=1"">",10
+"""><svg onload=""window.__xss=2"">",20
 正常项,30

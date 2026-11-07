@@ -1,0 +1,5 @@
+月份,系列,数值
+1月,"<img src=x onerror=""window.__xss=1"">",10
+2月,"<img src=x onerror=""window.__xss=1"">",15
+1月,正常系列,20
+2月,正常系列,25

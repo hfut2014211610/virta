@@ -1,0 +1,9 @@
+{
+  "title": "XSS 转义演示 · 组合页",
+  "layout": "grid",
+  "links": [{ "column": "分类" }],
+  "panels": [
+    { "file": "xss-label.csv", "spec": { "version": 1, "view": "bar" }, "w": 6, "h": 4 },
+    { "file": "xss-label.csv", "spec": { "version": 1, "view": "grid", "variant": "detail" }, "w": 12, "h": 4 }
+  ]
+}

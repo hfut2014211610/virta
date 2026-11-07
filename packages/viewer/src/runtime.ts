@@ -9,6 +9,7 @@ import { renderFlowDoc } from './flow-doc.js';
 import { renderFlowTable } from './flow-table.js';
 import type { DocModel, GridModel } from '@virta/data-engine';
 import { ZH } from './i18n/zh-CN.js';
+import { html, raw, safeColor } from './safe-html.js';
 
 export interface Payload {
   spec: ViewSpec;
@@ -25,7 +26,6 @@ export interface Payload {
 
 const $ = <T extends HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector(sel) as T;
 const $$ = <T extends HTMLElement>(sel: string, root: ParentNode = document) => Array.from(root.querySelectorAll(sel)) as T[];
-const escHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 function getState(spec: ViewSpec): { sort: 'none' | 'asc' | 'desc'; hiddenSeries: string[] } {
   return { sort: spec.state?.sort ?? 'none', hiddenSeries: spec.state?.hiddenSeries ?? [] };
@@ -134,7 +134,7 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
         if (payload.doc !== undefined) renderFlowDoc(box, model as DocModel);
         else renderFlowTable(box, model as GridModel, spec);
       } catch (e) {
-        box.innerHTML = `<div class="render-err">当前数据不支持该组合<br><small>${escHtml((e as Error).message)}</small></div>`;
+        box.innerHTML = html`<div class="render-err">当前数据不支持该组合<br><small>${(e as Error).message}</small></div>`;
       }
       (box as HTMLElement & { __scene?: unknown }).__scene = undefined;
       renderLegend(undefined);
@@ -147,12 +147,12 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
     try {
       sc = layoutScene();
     } catch (e) {
-      $('#chart-box').innerHTML = `<div class="render-err">当前数据不支持该组合<br><small>${escHtml((e as Error).message)}</small></div>`;
+      $('#chart-box').innerHTML = html`<div class="render-err">当前数据不支持该组合<br><small>${(e as Error).message}</small></div>`;
       syncHash();
       syncChrome();
       return;
     }
-    box.innerHTML = toSVG(sc);
+    box.innerHTML = raw(toSVG(sc)).html;
     (box.firstElementChild as SVGElement | null)?.setAttribute('width', '100%');
     // SVG 的 height 属性只接受长度不接受 auto → 走 CSS（属性写法会报 Expected length）
     if (box.firstElementChild instanceof SVGElement) box.firstElementChild.style.height = 'auto';
@@ -224,11 +224,13 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
   // —— 图例 ——
   function renderLegend(legend?: { name: string; color: string; hidden?: boolean }[]) {
     const el = $('#legend');
-    el.innerHTML = '';
+    el.replaceChildren();
     for (const it of legend ?? []) {
       const chip = document.createElement('button');
       chip.className = 'lg-chip' + (it.hidden ? ' off' : '');
-      chip.innerHTML = `<i style="background:${it.color}"></i>${it.name}`;
+      const sw = document.createElement('i');
+      sw.style.background = safeColor(it.color);
+      chip.append(sw, it.name);
       chip.onclick = () => {
         const st = getState(spec);
         st.hiddenSeries = it.hidden ? st.hiddenSeries.filter((n) => n !== it.name) : [...st.hiddenSeries, it.name];
@@ -255,7 +257,7 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
     const d = hitTest(sc, x, y);
     if (d?.tooltip) {
       const t = d.tooltip;
-      tip.innerHTML = `<b>${t.title ?? ''}</b>` + (t.rows ?? []).map((r) => `<div><i style="background:${r.swatch}"></i>${r.name} <b>${r.value}</b></div>`).join('');
+      tip.innerHTML = html`<b>${t.title ?? ''}</b>${(t.rows ?? []).map((r) => raw(html`<div><i style="background:${safeColor(r.swatch)}"></i>${r.name} <b>${r.value}</b></div>`))}`;
       tip.style.display = 'block';
       tip.style.left = `${e.clientX - rect.left + 14}px`;
       tip.style.top = `${e.clientY - rect.top + 10}px`;
@@ -553,10 +555,10 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
       const vs = t.rows.slice(0, 50).map((r) => (r as Record<string, unknown>)[c]).filter((v) => v !== null && v !== undefined && v !== '');
       return vs.length > 0 && vs.filter((v) => typeof v === 'number').length / vs.length >= 0.8;
     });
-    const th = t.columns.map((c, i) => `<th${num[i] ? ' class="num"' : ''}>${c}</th>`).join('');
-    el.innerHTML = `<table><thead><tr>${th}</tr></thead><tbody>` +
-      t.rows.slice(0, 200).map((r) => '<tr>' + t.columns.map((col, i) => `<td${num[i] ? ' class="num"' : ''}>${String((r as Record<string, unknown>)[col] ?? '')}</td>`).join('') + '</tr>').join('') + '</tbody></table>' +
-      (t.rows.length > 200 ? `<small>仅显示前 200 / ${t.rows.length} 行</small>` : '');
+    const th = t.columns.map((c, i) => raw(html`<th class="${num[i] ? 'num' : ''}">${c}</th>`));
+    el.innerHTML = html`<table><thead><tr>${th}</tr></thead><tbody>${raw(
+      t.rows.slice(0, 200).map((r) => html`<tr>${t.columns.map((col, i) => raw(html`<td class="${num[i] ? 'num' : ''}">${String((r as Record<string, unknown>)[col] ?? '')}</td>`))}</tr>`).join(''),
+    )}</tbody></table>${t.rows.length > 200 ? raw(html`<small>仅显示前 200 / ${t.rows.length} 行</small>`) : ''}`;
   }
   // —— 键盘 ——
   let focusIdx = -1;

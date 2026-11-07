@@ -90,7 +90,7 @@ const GRID_DEMOS: Demo[] = [
   { file: 'grid-pivot.csv', label: '透视', title: '数据表 · 稠密透视（4维×6月全组合）', spec: { version: 1, view: 'grid', variant: 'pivot' } },
   { file: 'grid-detail.csv', label: '长明细', title: '数据表 · 长明细（链接/空值/风险等级）', spec: { version: 1, view: 'grid', variant: 'detail', state: { sort: 'desc' } } },
   { file: 'long-labels.csv', label: '长标签', title: '数据表 · 长中文标签压力测试', dir: EDGE_DIR, spec: { version: 1, view: 'grid', variant: 'detail' } },
-  { file: 'xss-label.csv', label: '转义', title: '数据表 · 特殊字符转义', dir: EDGE_DIR, spec: { version: 1, view: 'grid', variant: 'detail' } },
+  { file: 'xss-label.csv', label: '转义演示', title: '数据表 · 特殊字符转义', dir: EDGE_DIR, spec: { version: 1, view: 'grid', variant: 'detail' } },
   { file: 'missing-columns.csv', label: '空值', title: '数据表 · 缺列/空值', dir: EDGE_DIR, spec: { version: 1, view: 'grid', variant: 'detail' } },
 ];
 const REPORT_DEMOS: Demo[] = [

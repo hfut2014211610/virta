@@ -1,6 +1,7 @@
 // compose 单文件 HTML：多面板网格 + 联动筛选条 + 内联首屏 SVG + payload + 运行期。
 import { buildCss } from '@virta/design-system';
 import type { Theme } from '@virta/contracts';
+import { cspMeta } from './html.js';
 import type { ComposePayload } from './runtime-compose.js';
 
 export interface ComposeHtmlOpts {
@@ -27,8 +28,10 @@ export function composeHtml(o: ComposeHtmlOpts): string {
       <div class="pbox" id="pbox-${i}">${svgs[i]}</div>
     </section>`;
   }).join('\n');
+  const payloadScript = `window.__VIRTA__=${JSON.stringify(payload).replace(/</g, '\\u003c')};`;
   return `<!doctype html>
 <html lang="zh-CN" data-theme="${theme}"><head><meta charset="utf-8">
+${cspMeta(payloadScript, runtimeJs)}
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(payload.title ?? 'Virta 组合页')} · Virta</title>
 <style>${css}
@@ -68,7 +71,7 @@ export function composeHtml(o: ComposeHtmlOpts): string {
 ${panels}
   </div>
 </div>
-<script>window.__VIRTA__=${JSON.stringify(payload).replace(/</g, '\\u003c')};</script>
+<script>${payloadScript}</script>
 <script>${runtimeJs}</script>
 </body></html>`;
 }
