@@ -113,6 +113,7 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
     const inner = prefH != null && pref > avail;
     box.style.maxHeight = inner ? `${avail}px` : '';
     box.style.overflowY = inner ? 'auto' : '';
+    box.style.minHeight = avail < 360 ? '0' : ''; // CSS min-height:360 会盖住 <360 的封顶
     const height = Math.min(2800, inner ? pref : Math.max(avail, pref));
     const facetSubs = payload.doc === undefined && facetCol && FACETABLE.has(view) && payload.table.columns.includes(facetCol)
       ? facetGroups(payload.table.rows as Record<string, unknown>[], facetCol)
@@ -148,6 +149,7 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
       const raw = Math.round(window.innerHeight - boxTop - 24);
       const avail = Math.min(640, raw >= 360 ? Math.max(360, raw) : Math.max(raw, 120));
       box.style.maxHeight = `${avail}px`;
+      box.style.minHeight = avail < 360 ? '0' : '';
       box.style.overflowY = 'auto';
       try {
         const model = payload.doc !== undefined
