@@ -2,6 +2,13 @@ name: ci
 on:
   push:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      update_snapshots:
+        description: '重新生成视觉基线（test:visual:update 并把 snapshots/ 作为 artifact 上传）'
+        type: boolean
+        default: false
+        required: false
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -20,5 +27,14 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
           npx playwright install --with-deps chromium
-      # 视觉基线以 Linux 为准；M0 阶段允许暂无用例
-      - run: npx playwright test --pass-with-no-tests
+      # 视觉基线以 Linux 为准（M2b.5）
+      - if: ${{ inputs.update_snapshots }}
+        run: npm run test:visual:update
+      - if: ${{ !inputs.update_snapshots }}
+        run: npm run test:visual
+      - if: ${{ inputs.update_snapshots }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-snapshots
+          path: test/visual/snapshots/
+          retention-days: 30

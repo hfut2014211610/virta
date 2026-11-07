@@ -114,6 +114,7 @@ details.fold summary{cursor:pointer;font:12.5px var(--body);color:var(--muted)}
 .flow-table a{color:var(--acc)}
 @media(max-width:720px){body{padding:14px}}
 @media print{header .seg,#toolbar,#opt-row,#detail,details.fold,.ft-bar{display:none!important}#chart-box svg{width:100%}
+#chart-box{max-height:none!important;overflow:visible!important}
 .ft-wrap{max-height:none;overflow:visible;border:none}
 .flow-table thead{display:table-header-group}.flow-table tbody tr{break-inside:avoid}
 .flow-doc h2,.flow-doc h3,.flow-doc h4{break-after:avoid}

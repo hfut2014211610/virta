@@ -2,11 +2,11 @@
 // 负责：adapt+layout+SVG 渲染、图例开关、tooltip、编辑抽屉、hash 同步、导出。
 import { hitTest, toSVG, modelHash, type Scene } from '@virta/chart-core';
 import { applySkin } from '@virta/chart-skin';
-import { getContract, resolveTheme, PALETTE_IDS } from './deps.js';
-import type { ViewSpec, Table } from '@virta/contracts';
+// 深路径导入：避免 deps/design-system 桶文件把 contracts 全量与 css 拉进运行期 bundle（B15）
+import { resolveTheme } from '../../design-system/src/skins.js';
+import { PALETTE_IDS } from '../../design-system/src/palettes.js';
+import type { ChartContract, ViewSpec, Table } from '@virta/contracts';
 import { facetGroups, facetLayout, FACETABLE } from './facet.js';
-import { renderFlowDoc } from './flow-doc.js';
-import { renderFlowTable } from './flow-table.js';
 import type { DocModel, GridModel } from '@virta/data-engine';
 import { ZH } from './i18n/zh-CN.js';
 import { html, raw, safeColor } from './safe-html.js';
@@ -24,6 +24,8 @@ export interface Payload {
   quality: { confidence: string; issues: { level: string; message: string }[]; mapping: Record<string, string | string[]> };
   /** ADR-0012 C4：运行期在 window.__virta 上暴露的 model 内容指纹（写回，不进回执） */
   modelHash?: string;
+  /** B15：本视图契约 JSON（服务端注入），运行期不再 import 全量 CONTRACTS */
+  contract?: ChartContract;
 }
 
 const $ = <T extends HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector(sel) as T;
@@ -45,13 +47,16 @@ export interface RuntimeDeps {
     interactions?: string[];
     resolve?: (model: never, req: { variant?: string; options?: Record<string, string | number | boolean>; state?: ViewSpec['state'] }) => { variant: string; options: Record<string, string | number | boolean> };
   } | undefined;
+  /** B15：flow 视图 DOM 渲染器仅注入 grid/report bundle，其余视图不打包 DOM 表格/文档代码 */
+  renderFlowDoc?: (box: HTMLElement, model: DocModel) => void;
+  renderFlowTable?: (box: HTMLElement, model: GridModel, spec: ViewSpec) => void;
 }
 
 export function boot(payload: Payload, deps: RuntimeDeps): void {
   const root = $('#virta-app');
   if (!root) return;
   let spec = structuredClone(payload.spec);
-  const contract = getContract(spec.view as never);
+  const contract = payload.contract;
   const renderer = deps.renderer;
   const view = spec.view;
 
@@ -98,7 +103,15 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
     const canScroll = renderer?.interactions?.includes('scroll') ?? false;
     const prefH = canScroll ? null : (renderer as { preferredHeight?: (m: unknown, r: { width: number; variant?: string; options?: Record<string, string | number | boolean>; state?: ViewSpec['state'] }) => number | null } | null)
       ?.preferredHeight?.(model, { width, variant: spec.variant, options: spec.options ?? {}, state: spec.state });
-    const height = Math.min(2800, Math.max(Math.min(640, Math.max(360, Math.round(window.innerHeight * 0.58))), prefH ?? 0));
+    // B14：图表区顶边实测（含页头/洞察/图例/工具栏及全部间距，替代 0.58×innerHeight 估算）；
+    // 高度 = clamp(视口高 − box.top − 24, 360, 640)；prefH 超出 → 图表区内部滚动，页面不撑高
+    const boxTop = box.getBoundingClientRect().top;
+    const avail = Math.min(640, Math.max(360, Math.round(window.innerHeight - boxTop - 24)));
+    const pref = prefH ?? 0;
+    const inner = prefH != null && pref > avail;
+    box.style.maxHeight = inner ? `${avail}px` : '';
+    box.style.overflowY = inner ? 'auto' : '';
+    const height = Math.min(2800, inner ? pref : Math.max(avail, pref));
     const facetSubs = payload.doc === undefined && facetCol && FACETABLE.has(view) && payload.table.columns.includes(facetCol)
       ? facetGroups(payload.table.rows as Record<string, unknown>[], facetCol)
           .map((gr: { name: string; rows: Record<string, unknown>[] }) => ({ name: gr.name, model: deps.adapt!({ ...payload.table, rows: gr.rows } as Table, spec) }))
@@ -128,6 +141,11 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
     const box = $('#chart-box');
     // ADR-0009 流式视图：HTML 端用语义化 DOM（<table>/<a>/<h*>），不再走 SVG
     if (contract?.flow) {
+      // B14：flow 视图行数/文档高度驱动 → 图表区内部滚动（阅读态不撑高页面；print CSS 解除）
+      const boxTop = box.getBoundingClientRect().top;
+      const avail = Math.min(640, Math.max(360, Math.round(window.innerHeight - boxTop - 24)));
+      box.style.maxHeight = `${avail}px`;
+      box.style.overflowY = 'auto';
       try {
         const model = payload.doc !== undefined
           ? deps.buildDoc!(payload.doc, payload.spec.text?.title ?? 'doc')
@@ -135,8 +153,8 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
         lastModel = model;
         payload.modelHash = modelHash(model);
         syncThemeDataset();
-        if (payload.doc !== undefined) renderFlowDoc(box, model as DocModel);
-        else renderFlowTable(box, model as GridModel, spec);
+        if (payload.doc !== undefined) deps.renderFlowDoc?.(box, model as DocModel);
+        else deps.renderFlowTable?.(box, model as GridModel, spec);
       } catch (e) {
         box.innerHTML = html`<div class="render-err">当前数据不支持该组合<br><small>${(e as Error).message}</small></div>`;
       }

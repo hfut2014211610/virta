@@ -1,7 +1,8 @@
 // ADR-0009 flow-doc：DocModel → 语义化 DOM（<h*>/<a>/<table>/<pre>）。
 // 正文复用 docmd 的 inlineHtml（已转义 + http(s)/mailto 白名单），不重复实现。
 import type { DocModel } from '@virta/data-engine';
-import { inlineHtml } from '@virta/data-engine';
+// 深路径导入：只进 report bundle，避免 data-engine index 把 score/insights/read(papaparse) 拉入（B15）
+import { inlineHtml } from '../../data-engine/src/families/docmd.js';
 import { html, raw } from './safe-html.js';
 
 export function renderFlowDoc(box: HTMLElement, m: DocModel): void {

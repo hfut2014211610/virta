@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 // virta 构建：packages/viewer/dist/<view>.js 分图族运行期 bundle（CLI HTML 内联同款）+ cli bundle。
-import { build } from "esbuild";
+// --analyze：输出 esbuild metafile 到 out/bundle-meta/<view>.json 并打印各视图前 10 大模块（B15）。
+import { build, analyzeMetafile } from "esbuild";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
+const ANALYZE = process.argv.includes("--analyze");
+if (ANALYZE) mkdirSync("out/bundle-meta", { recursive: true });
 mkdirSync("packages/viewer/dist", { recursive: true });
 mkdirSync("packages/cli/dist", { recursive: true });
 
@@ -19,8 +22,12 @@ import { ${m.renderer} } from './packages/charts/src/${m.charts}.js';
 import { ${[m.toModel, m.toModelCurve].filter(Boolean).join(', ')} } from './packages/data-engine/src/${m.adapter}.js';
 ${isDoc ? '' : `import { runPipeline } from './packages/data-engine/src/pipeline.js';
 ${m.post ? `import { ${m.post} } from './packages/data-engine/src/families/post.js';` : ''}`}
+${view === "grid" ? `import { renderFlowTable } from './packages/viewer/src/flow-table.js';` : ''}
+${isDoc ? `import { renderFlowDoc } from './packages/viewer/src/flow-doc.js';` : ''}
 const deps = {
   renderer: ${m.renderer},
+  ${view === "grid" ? 'renderFlowTable,' : ''}
+  ${isDoc ? 'renderFlowDoc,' : ''}
   ${isDoc
     ? `buildDoc: (text, name) => ${m.toModel}(text, name),`
     : `adapt: (t, s) => runPipeline(t, s, ${JSON.stringify(view)}, (raw) => ${m.toModelCurve ? `(s?.variant === 'curve' ? ${m.toModelCurve} : ${m.toModel})` : m.toModel}(raw)${m.post ? `, ${m.post}` : ''}).model,`}
@@ -33,12 +40,19 @@ for (const view of Object.keys(VIEW_MAP)) {
   const res = await build({
     stdin: { contents: viewEntrySource(view), resolveDir: process.cwd(), loader: "ts" },
     bundle: true, format: "iife", platform: "browser", target: "es2020",
-    write: false, minify: true, globalName: "__VIRTA_RT",
+    write: false, minify: true, globalName: "__VIRTA_RT", metafile: ANALYZE,
     define: { "import.meta.url": '"http://localhost/__bundle__/"' },
   });
   const js = res.outputFiles[0].text;
   writeFileSync(`packages/viewer/dist/${view}.js`, js);
   console.log(`build: viewer/${view}.js ${(js.length / 1024).toFixed(0)}KB`);
+  if (ANALYZE) {
+    writeFileSync(`out/bundle-meta/${view}.json`, JSON.stringify(res.metafile));
+    const top = Object.entries(res.metafile.inputs)
+      .sort((a, b) => b[1].bytes - a[1].bytes).slice(0, 10)
+      .map(([p, i]) => `    ${(i.bytes / 1024).toFixed(1)}KB  ${p}`).join("\n");
+    console.log(`  top10 ${view}:\n${top}`);
+  }
 }
 
 await build({

@@ -65,12 +65,15 @@ for (const [view, file, tag, variant] of CASES) {
     await page.setViewportSize({ width: 1280, height: 800 });
     const stem = file.replace(/\.[^.]+$/, '');
     await page.goto('file:///' + process.cwd().replace(/\\/g, '/') + `/${OUT}/${stem}-${view}${variant ? `-${variant}` : ''}-light.html`);
-    const box = page.locator('#chart-box svg');
+    // M2b.5：flow 视图（grid/report）渲染为 .flow-table/.flow-doc 语义 DOM，非 svg
+    const isFlow = view === 'grid' || view === 'report';
+    const box = page.locator(isFlow ? `#chart-box ${view === 'grid' ? '.flow-table' : '.flow-doc'}` : '#chart-box svg');
     await expect(box).toBeVisible({ timeout: 8000 });
-    // 浏览器端重渲染后应有真实图元（非空 svg）
-    const shapes = await box.locator('rect,path,circle,line').count();
+    // 浏览器端重渲染后应有真实内容（svg 图元或 DOM 表格/文档行）
+    const shapes = await box.locator(isFlow ? 'tr,p,h1,h2,h3,td,th' : 'rect,path,circle,line').count();
     expect(shapes).toBeGreaterThan(3);
-    const bb = await box.boundingBox();
+    // B14：图表区=容器底边（内部滚动时 svg 全高在容器内延伸，可视区才是"图表区"）
+    const bb = await page.locator('#chart-box').boundingBox();
     expect(bb).not.toBeNull();
     expect(bb!.y + bb!.height).toBeLessThanOrEqual(820);
     await expect(page).toHaveScreenshot(`${name}.png`, { fullPage: false });

@@ -1,6 +1,7 @@
 // ADR-0009 flow-table：GridModel → 语义化 <table>（搜索/筛选/排序/粘性表头/行数徽章/link/tone）。
 // 与 gridRenderer 共用 pivotView（同一 model 语义）；行数 >500 分批渲染，打印一次性展开。
-import { GRID_AGGS, pivotView, type PivotView } from '@virta/charts';
+// 深路径导入：只进 grid bundle，避免 charts index 把全部图族拉进 flow 依赖（B15）
+import { GRID_AGGS, pivotView, type PivotView } from '../../charts/src/b3.js';
 import { formatNumber } from '@virta/chart-skin';
 import type { GridModel } from '@virta/data-engine';
 import type { ViewSpec } from '@virta/contracts';

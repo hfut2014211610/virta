@@ -2,7 +2,8 @@
 // links: [{column}] —— 任一面板点击类目 → 同列筛选写入共享 state.filter → 其余面板重新 adapt。
 import { hitTest, toSVG, modelHash, type Scene } from '@virta/chart-core';
 import { applySkin } from '@virta/chart-skin';
-import { THEME_IDS, resolveTheme } from './deps.js';
+import { THEME_IDS } from '../../design-system/src/tokens.js';
+import { resolveTheme } from '../../design-system/src/skins.js';
 import { renderFlowDoc } from './flow-doc.js';
 import { renderFlowTable } from './flow-table.js';
 import type { DocModel, GridModel } from '@virta/data-engine';

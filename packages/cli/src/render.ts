@@ -68,8 +68,12 @@ import { ${m.renderer} } from './packages/charts/src/${m.charts}.js';
 import { ${[m.toModel, m.toModelCurve].filter(Boolean).join(', ')} } from './packages/data-engine/src/${m.adapter}.js';
 ${isDoc ? '' : `import { runPipeline } from './packages/data-engine/src/pipeline.js';
 ${m.post ? `import { ${m.post} } from './packages/data-engine/src/families/post.js';` : ''}`}
+${view === 'grid' ? `import { renderFlowTable } from './packages/viewer/src/flow-table.js';` : ''}
+${isDoc ? `import { renderFlowDoc } from './packages/viewer/src/flow-doc.js';` : ''}
 const deps = {
   renderer: ${m.renderer},
+  ${view === 'grid' ? 'renderFlowTable,' : ''}
+  ${isDoc ? 'renderFlowDoc,' : ''}
   ${isDoc
     ? `buildDoc: (text, name) => ${m.toModel}(text, name),`
     : `adapt: (t, s) => runPipeline(t, s, ${JSON.stringify(view)}, (raw) => ${m.toModelCurve ? `(s?.variant === 'curve' ? ${m.toModelCurve} : ${m.toModel})` : m.toModel}(raw)${m.post ? `, ${m.post}` : ''}).model,`}
@@ -235,7 +239,7 @@ export async function renderChart(job: RenderJob): Promise<RenderResult & { svgS
 
   const payload: Payload = {
     spec, table, insights, reason: 'explicit', doc: job.doc, viewTitle: contract?.title,
-    counts,
+    counts, contract: contract ?? undefined,
     quality: { confidence: quality?.confidence ?? 'high', issues: quality?.issues ?? [], mapping: quality?.mapping ?? {} },
   };
 
