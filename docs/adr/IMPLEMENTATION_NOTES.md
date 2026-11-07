@@ -653,7 +653,7 @@
   以及 5 个无 scorer 的 T3 视图（burndown/er/flowchart/formula/sequence，兜底 acceptable）。
 - D14 断言：3D 图族从不作首选。准确率 100%（109 文件），baseline 锁定。
 
-## M2b.5 首屏/体积/视觉基线（B14/B15，2026-11-07，进行中）
+## M2b.5 首屏/体积/视觉基线（B14/B15，2026-11-07，完成）
 
 - B14：`layoutScene` 高度 = `clamp(vh − #chart-box.top实测 − 24, 360, 640)`（替代 0.58×innerHeight）；
   `prefH > avail` → `#chart-box` maxHeight+overflowY 内部滚动；flow 视图（grid/report）同样封顶；
@@ -667,3 +667,12 @@
 - CI：workflow_dispatch + update_snapshots + snapshots artifact；视觉步骤 npm run test:visual。
 - 测试修正：grid/report 断言 .flow-table/.flow-doc；底边断言测 #chart-box 容器（内部滚动 svg 超高）。
 - 本地（Windows）：断言全过，截图仅存像素级差异——按计划在 Linux CI 分类 25 项截图。
+
+### M2b.5 收尾（2026-11-07）
+
+- 修复 compose.spec.ts `file:///` 缺 process.cwd()（Linux ERR_FILE_NOT_FOUND，测试设计问题之一）。
+- `avail < 360` 时 `#chart-box` CSS min-height:360 会盖住封顶 → 运行时 `minHeight='0'`（CI matrix3d/combo 821>820 根因）。
+- render.ts 的 viewEntrySource 与 build.mjs 双副本同步 flow 注入（CLI 内联运行期不读 dist）。
+- CI 截图分类：48 项全为预期内变化（B14 布局、选项行完整展开、grid 透视正确渲染、flow 工具条、平台字体），
+  无真实回归；基线经 workflow_dispatch update_snapshots 在 ubuntu-latest 重拍并取回（run 42335516577）。
+- DoD：test:perf 全过（bundle 51–69KB ≤150KB）、15 视图首屏断言过、CI 全绿（084fa82）。
