@@ -652,3 +652,18 @@
   histogram-group（boxplot 同分并列）、pie-layers、bar-single、grid-detail、sample-pie3d、
   以及 5 个无 scorer 的 T3 视图（burndown/er/flowchart/formula/sequence，兜底 acceptable）。
 - D14 断言：3D 图族从不作首选。准确率 100%（109 文件），baseline 锁定。
+
+## M2b.5 首屏/体积/视觉基线（B14/B15，2026-11-07，进行中）
+
+- B14：`layoutScene` 高度 = `clamp(vh − #chart-box.top实测 − 24, 360, 640)`（替代 0.58×innerHeight）；
+  `prefH > avail` → `#chart-box` maxHeight+overflowY 内部滚动；flow 视图（grid/report）同样封顶；
+  print CSS 解除 `#chart-box` 滚动限制（C12 所见即所打不变）。
+- B15 瘦身结果：全部 per-view bundle 389KB → 51–69KB（预算 ≤150KB，test:perf 通过）。
+  三处根因：① viewer/deps.ts 桶文件把 contracts+design-system index 全量拉入（已删文件，深路径导入）；
+  ② runtime 静态 import flow-table/flow-doc + getContract → 契约 JSON 改 payload.contract 注入、
+  flow 渲染器按视图注入 deps（grid→renderFlowTable、report→renderFlowDoc，render.ts/build.mjs 双副本同步）；
+  ③ flow-table/flow-doc 经包 index 拉全部 charts/data-engine（改深路径）。
+- `build.mjs --analyze`：esbuild metafile → out/bundle-meta/<view>.json + top10 模块。
+- CI：workflow_dispatch + update_snapshots + snapshots artifact；视觉步骤 npm run test:visual。
+- 测试修正：grid/report 断言 .flow-table/.flow-doc；底边断言测 #chart-box 容器（内部滚动 svg 超高）。
+- 本地（Windows）：断言全过，截图仅存像素级差异——按计划在 Linux CI 分类 25 项截图。

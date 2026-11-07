@@ -13,7 +13,7 @@ test.beforeAll(() => {
 
 test('compose 仪表盘：全部面板首屏渲染', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 960 });
-  await page.goto(`file:///${F.replace(/\\/g, '/')}`);
+  await page.goto('file:///' + process.cwd().split('\\').join('/') + `/${F}`);
   await page.waitForSelector('#virta-app');
   await page.waitForFunction(() => document.querySelectorAll('.pbox svg').length >= 7);
   const boxes = await page.locator('.pbox svg').count();
@@ -22,7 +22,7 @@ test('compose 仪表盘：全部面板首屏渲染', async ({ page }) => {
 
 test('compose 联动：点击图元 → 筛选 chip 出现且其他面板重渲', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 960 });
-  await page.goto(`file:///${F.replace(/\\/g, '/')}`);
+  await page.goto('file:///' + process.cwd().split('\\').join('/') + `/${F}`);
   await page.waitForSelector('#virta-app');
   await page.waitForFunction(() => document.querySelectorAll('.pbox svg').length >= 7);
   // orderval 箱线面板（#pbox-3，含"渠道"列）：多点尝试点击箱体，直到联动 chip 出现

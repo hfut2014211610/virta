@@ -106,7 +106,9 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
     // B14：图表区顶边实测（含页头/洞察/图例/工具栏及全部间距，替代 0.58×innerHeight 估算）；
     // 高度 = clamp(视口高 − box.top − 24, 360, 640)；prefH 超出 → 图表区内部滚动，页面不撑高
     const boxTop = box.getBoundingClientRect().top;
-    const avail = Math.min(640, Math.max(360, Math.round(window.innerHeight - boxTop - 24)));
+    const raw = Math.round(window.innerHeight - boxTop - 24);
+    // raw<360（页头占高）时按 raw 收缩——底边 ≤vh−24 优先于 360 下限（Linux 字体更高会触发）
+    const avail = Math.min(640, raw >= 360 ? Math.max(360, raw) : Math.max(raw, 120));
     const pref = prefH ?? 0;
     const inner = prefH != null && pref > avail;
     box.style.maxHeight = inner ? `${avail}px` : '';
@@ -143,7 +145,8 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
     if (contract?.flow) {
       // B14：flow 视图行数/文档高度驱动 → 图表区内部滚动（阅读态不撑高页面；print CSS 解除）
       const boxTop = box.getBoundingClientRect().top;
-      const avail = Math.min(640, Math.max(360, Math.round(window.innerHeight - boxTop - 24)));
+      const raw = Math.round(window.innerHeight - boxTop - 24);
+      const avail = Math.min(640, raw >= 360 ? Math.max(360, raw) : Math.max(raw, 120));
       box.style.maxHeight = `${avail}px`;
       box.style.overflowY = 'auto';
       try {
