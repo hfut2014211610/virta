@@ -732,3 +732,16 @@
 - 实测：tarball 1.2MB/解压 3.3MB（预算 3/8MB）；compose.js 244KB（预算 300KB）。
 - DoD：typecheck+test(348)+e2e(64)+build+perf+test:dist(23 pass+2 xfail) 全绿；
   仓库外 `node dist/cli.js render @samples/…` 与临时目录 `npm i <tgz>` + .bin 链路已验证。
+
+## M2c.2 成品命令与技能（2026-11-07，完成）
+
+- `doctor.ts`（§3）：node≥22 / resvg 加载+1×1 渲染 / runtime（dist=VIEW_IDS+compose 文件齐全；
+  source=esbuild 可加载）/ fonts / cjk（复用 render.ts 的 fontFallbackOk，warn）/ tmpWrite；
+  任一 error → 退出码 1。注意：dist 模式不得调 viewMap()（无 view-map.json），期望清单用 VIEW_IDS。
+- `skill.ts`：`skill path` 输出 assets.skillFile 绝对路径；`skill install --dir <dir> [--force]`
+  写 `<dir>/virta/SKILL.md` + YAML front matter（name/description 常量在 skill.ts）；
+  已存在未加 --force → INVALID_OPTION(2)。
+- main.ts：COMMANDS 挂 doctor/skill；parseArgs 加 --dir。
+- SKILL.md 顶部新增「安装与调用」：全局命令/doctor/@samples/demo/Windows 引号（--spec 文件）/skill install。
+- T1 锚点清零：smoke.test.ts 无 it.fails（25/25 通过）。
+- DoD：仓库外 dist/cli.js doctor 6 项全 ok；skill install 产出带 front matter 的 SKILL.md。

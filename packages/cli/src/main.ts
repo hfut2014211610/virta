@@ -153,6 +153,39 @@ const specMeta = new WeakMap<ViewSpec, { reason?: string }>();
 
 // —— 命令 ——
 const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
+  async doctor(args) {
+    const json = Boolean(args.values['json']);
+    const { runDoctor, doctorExitCode, doctorLines } = await import('./doctor.js');
+    const r = await runDoctor();
+    if (!json) for (const l of doctorLines(r)) console.log(l);
+    out('doctor', r, json);
+    return doctorExitCode(r);
+  },
+  async skill(args) {
+    const json = Boolean(args.values['json']);
+    const sub = args.positionals[0];
+    try {
+      const { skillPath, skillInstall } = await import('./skill.js');
+      if (sub === 'path') {
+        const p = skillPath();
+        if (!json) console.log(p);
+        out('skill', { path: p }, json);
+        return 0;
+      }
+      if (sub === 'install') {
+        const dir = v(args, 'dir');
+        if (!dir) fail('INVALID_OPTION', 'skill install 需要 --dir <dir>', 'virta skill install --dir ~/.agents/skills');
+        const r = skillInstall(dir!, Boolean(args.values['force']));
+        if (!json) console.log(`✓ 技能写入 ${r.path}`);
+        out('skill', r, json);
+        return 0;
+      }
+      return outErr('skill', { code: 'INVALID_OPTION', message: `未知子命令 ${sub ?? '(空)'}`, hint: 'virta skill path | virta skill install --dir <dir>', recoverable: true }, json);
+    } catch (e) {
+      if (e instanceof CliError) return outErr('skill', e.viz, json);
+      throw e;
+    }
+  },
   async list(args) {
     const json = Boolean(args.values['json']);
     const data = [...VIEW_IDS].map((id) => {
@@ -435,7 +468,7 @@ ${galleryLine}  skill <path|install --dir d>       Agent 技能文件
         frame: { type: 'string' }, 'font-file': { type: 'string', multiple: true },
         'as-of': { type: 'string' }, tz: { type: 'string' },
         'spec-schema': { type: 'boolean' }, agent: { type: 'boolean' }, all: { type: 'boolean' },
-        only: { type: 'string' }, force: { type: 'boolean' },
+        only: { type: 'string' }, force: { type: 'boolean' }, dir: { type: 'string' },
       },
     });
   } catch (e) {

@@ -171,7 +171,7 @@ describe('T1·安装后命令（cwd=仓库外临时目录）', () => {
     expect(e.data.mode).toBe('dist');
   });
 
-  it.fails('G6·doctor --json 各项检查 envelope', async () => {
+  it('G6·doctor --json 各项检查 envelope', async () => {
     const env = await installed();
     const e = envelope(cli(env, ['doctor', '--json']), 'doctor --json');
     expect(e.data.mode).toBe('dist');
@@ -240,7 +240,7 @@ describe('T1·安装后命令（cwd=仓库外临时目录）', () => {
     filesOk(env, e.data.files);
   });
 
-  it.fails('G5·skill path 输出绝对路径；skill install 写入 front matter；重复安装报 INVALID_OPTION', async () => {
+  it('G5·skill path 输出绝对路径；skill install 写入 front matter；重复安装报 INVALID_OPTION', async () => {
     const env = await installed();
     const p = cli(env, ['skill', 'path']);
     expect(p.code, p.stderr).toBe(0);

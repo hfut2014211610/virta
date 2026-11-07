@@ -2,6 +2,20 @@
 
 > `virta guide --agent` 输出与本文件相同的内容；`virta guide` 是 ≤40 行速览，`--json` 是机器可读版本。
 
+## 安装与调用
+
+- 全局命令：`virta`（别名 `vt`）。成品经 `npm i -g <tarball>` 安装后开箱即用，无需仓库与构建。
+- 环境自检：`virta doctor`（或 `doctor --json`）逐项检查 Node≥22、resvg 原生模块、
+  运行期脚本、内置字体、CJK 字形（warn）、临时目录可写；任一 error 退出码 1。
+- 内置样例：输入路径以 `@samples/` 开头即读内置样例目录，任意 cwd 可用，例如
+  `virta render @samples/sample-multi.csv --export html,png`；
+  场景包用 `virta demo retail|delivery|finance|quality|saas`（`--all` 全量，默认输出 `./virta-demo`）。
+- Windows 注意：复杂 spec（多列 mapping、derive、facet、annotations）一律写文件用
+  `--spec <file.json>`，不要在命令行内联 JSON——Windows shell 会吃掉引号。
+- 技能安装：`virta skill install --dir <skills 根目录>` 写入 `<dir>/virta/SKILL.md`
+  （含 YAML front matter；已存在需 `--force`）；`virta skill path` 只打印内置文件路径。
+- `gallery` 属于源码仓库开发工具，成品安装不提供（调用报 INPUT_NOT_FOUND）。
+
 ## 标准流程
 
 ```bash

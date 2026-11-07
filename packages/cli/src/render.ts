@@ -37,7 +37,7 @@ export interface RenderResult {
 
 /** CJK 缺字形探测（§5.8）：用已配置字体渲染固定中文，像素为空则回执警告。 */
 const fontProbeCache = new Map<string, boolean>();
-function fontFallbackOk(fontFiles: string[]): boolean {
+export function fontFallbackOk(fontFiles: string[]): boolean {
   const key = fontFiles.join('|');
   const hit = fontProbeCache.get(key);
   if (hit !== undefined) return hit;
