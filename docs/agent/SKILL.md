@@ -104,3 +104,12 @@ virta render examples/basic/sample.csv --view auto --export html --out out/ --js
 virta compose examples/packs/retail/compose.json --export html,png --out out/ --json
 virta preview out/sample-bar-light.html
 ```
+
+## Phase 2b 增量（2026-11）
+
+- `--spec` 文件优先：`--set` 传数组/对象在 Windows shell 会吃掉 JSON 引号；多列 mapping、derive、facet、page 一律写 `--spec` 文件。
+- 严格校验：未知顶层键/非法枚举 → `INVALID_SPEC`（退出码 2）；`--palette`/`--theme`/`--variant`/`--format` 非法 → `INVALID_OPTION`（hint 含合法值）。
+- 别名统一：`heat`→`heatmap`、`pivot`→`grid`（variant=pivot）、`spc`→`control`、其余短名→全名同效；`--view` 与 `spec.view` 共用 `resolveView`。
+- 日期：`instantOf` 识别 `-`/`/`/`.`/中文年月日/紧凑8位/Excel 序列号/epoch ms；纯数字非法段一律按空值并累计 `UNPARSABLE_DATES`；`workdaysBetween`/`dateDiff unit=workday` 带符号。
+- HTML：内嵌 CSP（script-src sha256）；grid/report 用语义 DOM；打印=所见即所打（筛选行注明 N/M）。
+- 产物体积：per-view bundle 51–69KB；`npm run build -- --analyze` 可看各视图 top10 模块。

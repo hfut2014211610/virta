@@ -68,6 +68,8 @@ npm run virta -- render --data '[{"月":"1月","额":120},{"月":"2月","额":24
 
 Phase 2a（Agent 实用性）：`--as-of/--tz` 时间契约 + `derive`（dueStatus/dateDiff）、缺失值默认 gap（`options.missingValue`/`connectGaps`，step-middle 阶梯线）、grid/report 流式排版（HTML 语义 DOM + `--height auto`/静态分页 + 回执 `page/pages`）、compose 文档面板与面板级 `rendered/error`（失败 `ok:false`）、甘特 `baseline`/`actual` 三时间点（幽灵基线 + 滑期洞察）。示例：`examples/packs/delivery/deadline.*`（`npm run virta -- demo delivery`）。
 
+Phase 2b（质量攻坚）：HTML XSS 全面清除 + CSP（`script-src` sha256 白名单）；Node/浏览器单一适配管线 `runPipeline` + `modelHash` 双端对拍；`validateSpec` 严格校验（未知键/枚举/INVALID_SPEC 退出码 2）+ `resolveView` 别名统一（`pivot→grid:variant=pivot` 等）；`instantOf` 多格式日期（`-`/`/`/`.`/中文/紧凑8位/Excel/epoch）+ `UNPARSABLE_DATES` 质量码 + 带符号 `workdaysBetween`；grid invalid 只算数值列；flow-table 原始排序键 + `sortBy` 列名恢复 + 打印"所见即所打"；推荐语料锁定（`test/recommend/`，准确率 ≥0.9）；per-view bundle 51–69KB（预算 ≤150KB）；首屏实测高度 + 内部滚动；Linux 视觉基线经 `workflow_dispatch` 重拍。
+
 ## 场景包与画廊
 
 `examples/packs/` 五个场景包（retail / saas / quality / delivery / finance），由 `npm run packs:gen` 确定性生成、`npm run packs:check` 字节级比对；`pack.json` 的 `expectTop`/`expectInsight` 驱动推荐与洞察断言。画廊缩略图为真实 PNG 渲染（`npm run gallery` 可重复生成），`npm run qa` 生成 30 图族 × 2 主题 × 3 配色的视觉 QA 矩阵到 `out/qa/`。

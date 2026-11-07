@@ -676,3 +676,14 @@
 - CI 截图分类：48 项全为预期内变化（B14 布局、选项行完整展开、grid 透视正确渲染、flow 工具条、平台字体），
   无真实回归；基线经 workflow_dispatch update_snapshots 在 ubuntu-latest 重拍并取回（run 42335516577）。
 - DoD：test:perf 全过（bundle 51–69KB ≤150KB）、15 视图首屏断言过、CI 全绿（084fa82）。
+
+## M2b.6 收尾（2026-11-07）
+
+- 复现锚点 15/15 全部转为普通断言（test/repro/phase2b.test.ts 无 it.fails）。
+- README 增 Phase 2b 条目；SKILL.md 增 Phase 2b 增量（--spec 优先、别名表、UNPARSABLE_DATES、CSP/打印口径、bundle 体积）。
+- `virta demo --all`（5 场景包全部 index/dashboard/png）与 `virta gallery`（29 图族/5 场景）生成成功。
+- 全量审查回归（维护者本机审查目录，不入库）：
+  - render_matrix：77 renders × light/dark + 变体，0 failed（审计脚本内联 --spec JSON 在 Windows 被吃引号 → 改临时 spec 文件）；
+  - runtime_check：77 页 0 flagged（无 console/pageerror/请求失败/空 DOM）；
+  - check_svg：0 findings（路径语法/NaN 文本全干净）。
+- packs:check 登记 7 个 M2b.0 XSS 语料进生成器后确定性通过（80 files）。

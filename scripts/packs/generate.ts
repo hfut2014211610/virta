@@ -554,9 +554,14 @@ function edges() {
   emitEdge('excel-serials.csv', csv(['日期序列', '数值'], [
     [45678, 100], [45708, 110], [45739, 105], [45769, 130],
   ]));
-  emitEdge('xss-label.csv', csv(['分类', '数值'], [
-    ['<script>alert(1)</script>', 10], ['</script><img src=x onerror=alert(2)>', 20], ['正常项', 30],
-  ]));
+  // M2b.0 XSS 语料（B1 安全回归用例）
+  emitEdge("xss-label.csv", "分类,数值\n\"<img src=x onerror=\"\"window.__xss=1\"\">\",10\n\"\"\"><svg onload=\"\"window.__xss=2\"\">\",20\n正常项,30\n");
+  emitEdge("xss-column.csv", "\"<img src=x onerror=\"\"window.__xss=1\"\">\",数值,备注\nA,1,正常\nB,2,\"\"\"><svg onload=\"\"window.__xss=2\"\">\"\n");
+  emitEdge("xss-link.csv", "名称,链接,数值\n\"javascript:window.__xss=1\",\"javascript:window.__xss=1\",10\n\"<img src=x onerror=\"\"window.__xss=1\"\">\",\"<img src=x onerror=\"\"window.__xss=1\"\">\",20\n正常,https://example.com,30\n");
+  emitEdge("xss-series.csv", "月份,系列,数值\n1月,\"<img src=x onerror=\"\"window.__xss=1\"\">\",10\n2月,\"<img src=x onerror=\"\"window.__xss=1\"\">\",15\n1月,正常系列,20\n2月,正常系列,25\n");
+  emitEdge("xss-value.csv", "分类,备注,数值\nA,\"<img src=x onerror=\"\"window.__xss=1\"\">\",10\nB,\"\"\"><svg onload=\"\"window.__xss=2\"\">\",20\n");
+  emitEdge("xss-doc.md", "# <img src=x onerror=\"window.__xss=1\">\n\n正文段落含 \"><svg onload=\"window.__xss=2\"> 注入，以及 `代码段 <img src=x onerror=\"window.__xss=3\">`。\n\n| 列A | 列B |\n|---|---|\n| <img src=x onerror=\"window.__xss=4\"> | 正常 |\n| \"><svg onload=\"window.__xss=5\"> | 正常 |\n\n[恶意链接](javascript:window.__xss=6) 与 [正常链接](https://example.com)\n\n- 列表项 <img src=x onerror=\"window.__xss=7\">\n");
+  emitEdge("xss-compose.json", "{\n  \"title\": \"XSS 转义演示 · 组合页\",\n  \"layout\": \"grid\",\n  \"links\": [{ \"column\": \"分类\" }],\n  \"panels\": [\n    { \"file\": \"xss-label.csv\", \"spec\": { \"version\": 1, \"view\": \"bar\" }, \"w\": 6, \"h\": 4 },\n    { \"file\": \"xss-label.csv\", \"spec\": { \"version\": 1, \"view\": \"grid\", \"variant\": \"detail\" }, \"w\": 12, \"h\": 4 }\n  ]\n}\n");
   emitEdge('sankey-cyclic.csv', csv(['source', 'target', 'value'], [
     ['A', 'B', 40], ['B', 'C', 30], ['C', 'A', 10], ['C', 'D', 20], ['B', 'D', 12],
   ]));
