@@ -1,5 +1,4 @@
-#!/usr/bin/env node
-// virta CLI（§5.8）：list/schema/inspect/validate/render/compose/demo/gallery/preview/guide。
+// virta CLI（§5.8）：list/schema/inspect/validate/render/compose/demo/gallery/preview/guide/version。
 // 规则：--json 时 stdout 只输出一个 Envelope；日志写 stderr；退出码按 §4.5。
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { basename, extname, join } from 'node:path';
@@ -10,9 +9,9 @@ import { CONTRACTS, EXIT_CODES, getContract, THEME_IDS, VIEW_IDS, VIEW_SPEC_SCHE
 import { ADAPTERS, profileTable, rawToTable, recommend, validate, resolveTime, parseInstant, tzValid } from '@virta/data-engine';
 import { readInput, readInline } from '@virta/data-engine/node';
 import { RENDERED_VIEWS } from '@virta/charts';
+import { setFontsDir } from '@virta/design-system';
 import { CliError, fail, renderChart } from './render.js';
-
-const VERSION = '0.0.0';
+import { assets, expandSamples, mode, VERSION } from './assets.js';
 const err = (s: string) => process.stderr.write(s + '\n');
 const EXIT_MAP: Record<VizError['code'], number> = {
   UNKNOWN_VIEW: 2, INVALID_SPEC: 2, INVALID_OPTION: 2,
@@ -72,7 +71,7 @@ async function loadTable(args: PV): Promise<{ table: Table; docText?: string; in
     }
   } else {
     try {
-      loaded = await readInput(pos, { format: fmt, sheet: v(args, 'sheet') });
+      loaded = await readInput(expandSamples(pos), { format: fmt, sheet: v(args, 'sheet') });
     } catch (e) {
       const m = (e as Error).message;
       if (/不存在|ENOENT|not found/i.test(m)) fail('INPUT_NOT_FOUND', `输入文件不存在：${pos}`, '检查路径；stdin 用 -');
@@ -274,7 +273,9 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
   async guide(args) {
     if (args.values['json']) {
       out('guide', {
-        commands: Object.keys(COMMANDS),
+        version: VERSION,
+        mode,
+        commands: Object.keys(COMMANDS).filter((c) => mode !== 'dist' || c !== 'gallery'),
         views: [...VIEW_IDS],
         aliases: { heat: 'heatmap', box: 'boxplot', fish: 'fishbone', pivot: 'grid:pivot', spc: 'control' },
         exportFormats: ['html', 'svg', 'png'],
@@ -284,13 +285,13 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
       return 0;
     }
     if (args.values['agent']) {
-      const p = 'docs/agent/SKILL.md';
-      console.log(existsSync(p) ? readFileSync(p, 'utf8') : '（docs/agent/SKILL.md 尚未生成）');
+      const p = assets.skillFile;
+      console.log(existsSync(p) ? readFileSync(p, 'utf8') : '（SKILL.md 缺失：dist 模式请运行 virta doctor 检查安装）');
       return 0;
     }
     // 无参：≤40 行常用速览（完整 agent 指南见 --agent）
     console.log(`virta ${VERSION} 常用速览
-命令：list | schema [view|--spec-schema] | inspect | validate | render | compose | demo | gallery | preview | guide
+命令：list | schema [view|--spec-schema] | inspect | validate | render | compose | demo${mode === 'dist' ? '' : ' | gallery'} | preview | guide
 渲染：virta render <csv|json|xlsx|md|-> [--view v|auto] [--variant id] [--export html,svg,png] [--out dir]
 视图：${VIEW_IDS.join(' ')}；别名 heat→heatmap box→boxplot fish→fishbone pivot→grid:pivot spc→control
 参数：--spec f|json --set k=v（如 --set options.键=值、--set state.sort=desc）--width/--height px|auto
@@ -340,18 +341,18 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
     const all = Boolean(args.values['all']);
     const pack = String(args.positionals[0] ?? '');
     if (!all && !pack) return outErr('demo', { code: 'INVALID_SPEC', message: '缺少场景包名或 --all', hint: 'virta demo retail | virta demo --all', recoverable: true }, json);
-    const outDir = v(args, 'out') ?? 'out/demo';
+    const outDir = v(args, 'out') ?? './virta-demo';
     const job = { out: outDir, scale: Number(v(args, 'scale') ?? 1), fontFiles: multi(args, 'font-file'), theme: v(args, 'theme') as Theme | undefined, palette: v(args, 'palette') as 'signal' | 'patina' | 'mono' | undefined };
     try {
       const { runDemo, writeDemoIndex, listPacks } = await import('./demo.js');
       const ids = all ? listPacks() : [pack];
-      if (!ids.length) return outErr('demo', { code: 'INPUT_NOT_FOUND', message: 'examples/packs 下没有场景包', recoverable: true }, json);
+      if (!ids.length) return outErr('demo', { code: 'INPUT_NOT_FOUND', message: '内置场景包目录为空', recoverable: true }, json);
       const packs: { id: string; title: string; story?: string; charts: number }[] = [];
       const files: string[] = [];
       for (const id of ids) {
         const r = await runDemo({ ...job, pack: id });
         files.push(...r.files);
-        const meta = JSON.parse(readFileSync(join('examples/packs', id, 'pack.json'), 'utf8')) as { title?: string; story?: string };
+        const meta = JSON.parse(readFileSync(join(assets.packsDir, id, 'pack.json'), 'utf8')) as { title?: string; story?: string };
         packs.push({ id, title: meta.title ?? id, story: meta.story, charts: r.charts });
       }
       if (all) writeDemoIndex(outDir, packs);
@@ -365,6 +366,10 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
   },
   async gallery(args) {
     const json = Boolean(args.values['json']);
+    // E12：gallery 是仓库开发工具，dist 模式不提供
+    if (mode === 'dist') {
+      return outErr('gallery', { code: 'INPUT_NOT_FOUND', message: 'gallery 仅在源码仓库内可用', hint: 'npm run gallery（需 clone 仓库）', recoverable: true }, json);
+    }
     try {
       const { runGallery } = await import('./gallery.js');
       const r = await runGallery({ out: v(args, 'out') ?? 'out/gallery', scale: Number(v(args, 'scale') ?? 1), fontFiles: multi(args, 'font-file'), theme: v(args, 'theme') as Theme | undefined, palette: v(args, 'palette') as 'signal' | 'patina' | 'mono' | undefined, only: v(args, 'only'), force: Boolean(args.values['force']) });
@@ -379,11 +384,17 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
 };
 
 async function main(): Promise<number> {
+  setFontsDir(assets.fontsDir);
   const argv = process.argv.slice(2);
   const cmd = argv[0];
   if (!cmd || cmd === 'help' || cmd === '--help' || cmd === '-h') {
+    const galleryLine = mode === 'dist'
+      ? ''
+      : '  gallery [--out dir] [--only 图族|场景|关键词] [--force]   增量生成画廊（仅源码仓库）\n';
     console.log(`virta ${VERSION} — Virta 数据可视化 CLI
 用法：virta <command> [options]
+  --version | -v | version             打印版本（--json 输出 envelope）
+  doctor [--json]                      环境自检
   list [--json]                        列出全部视图
   schema [view] [--json] [--spec-schema]
   inspect <input|-> [--format csv|json] [--sheet N] [--json]
@@ -393,11 +404,18 @@ async function main(): Promise<number> {
            [--title ..] [--subtitle ..] [--note ..] [--source ..] [--unit ..]
            [--export html,svg,png] [--out dir] [--width 1200] [--height 675] [--scale 2]
            [--frame card|chart] [--font-file ttf]... [--json]
-  compose <compose.json>               （M5）  demo/gallery（M8）
-  gallery [--out dir] [--only 图族|场景|关键词] [--force]   增量生成画廊（默认复用未变更产物）
+  compose <compose.json>               组合仪表盘（面板 spec 规则同 render）
+  demo <pack>|--all [--out dir]        内置场景包演示
+${galleryLine}  skill <path|install --dir d>       Agent 技能文件
   preview <file.html>                  用系统浏览器打开
   guide [--agent]                      Agent 使用指南`);
     return cmd ? 0 : 2;
+  }
+  if (cmd === '--version' || cmd === '-v' || cmd === 'version') {
+    const json = argv.includes('--json');
+    const data = { version: VERSION, node: process.versions.node, platform: process.platform, mode };
+    if (json) out('version', data, true); else console.log(`virta ${VERSION}`);
+    return 0;
   }
   const fn = COMMANDS[cmd];
   if (!fn) { err(`✗ 未知命令 ${cmd}`); err('提示：virta --help'); return 2; }

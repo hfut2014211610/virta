@@ -8,8 +8,9 @@ import { readInput } from '@virta/data-engine/node';
 import { runComposeFile, type ComposeFileShape } from './compose.js';
 import { renderChart } from './render.js';
 import { fail } from './render.js';
+import { assets } from './assets.js';
 
-const PACKS_DIR = join('examples', 'packs');
+const PACKS_DIR = assets.packsDir;
 
 interface PackChart { id: string; file: string; question?: string; spec?: ViewSpec }
 interface PackJson { id: string; title?: string; story?: string; charts: PackChart[] }

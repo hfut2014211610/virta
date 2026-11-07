@@ -24,6 +24,13 @@ export const FONT_FILES = {
 
 const fontsDirUrl = () => new URL('../fonts/', import.meta.url);
 
+/** CLI 内置字体目录覆盖（E5）：dist 模式下指向 <pkg>/dist/fonts，启动时调用一次。 */
+let fontsDirOverride: string | undefined;
+export function setFontsDir(dir: string): void {
+  fontsDirOverride = dir;
+  cachedMetrics = undefined;
+}
+
 function nodeFs(): typeof import('node:fs') {
   const p = (globalThis as { process?: { getBuiltinModule?: (m: string) => unknown } }).process;
   const fs = p?.getBuiltinModule?.('node:fs');
@@ -32,7 +39,8 @@ function nodeFs(): typeof import('node:fs') {
 }
 
 export function fontsDir(): string {
-  return decodeURIComponent(fontsDirUrl().pathname).replace(/^\/([A-Za-z]:)/, '$1');
+  const dir = fontsDirOverride ?? decodeURIComponent(fontsDirUrl().pathname).replace(/^\/([A-Za-z]:)/, '$1');
+  return dir.endsWith('/') || dir.endsWith('\\') ? dir : `${dir}/`;
 }
 
 export function fontPath(kind: keyof typeof FONT_FILES): string {

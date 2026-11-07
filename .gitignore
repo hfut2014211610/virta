@@ -20,3 +20,8 @@ test/perf/.out/
 
 # dist 冒烟测试不属构建产物
 !/test/dist/
+
+# 构建期从仓库根复制到包根的文档（单一来源在根目录）
+/packages/cli/README.md
+/packages/cli/LICENSE
+/packages/cli/CHANGELOG.md

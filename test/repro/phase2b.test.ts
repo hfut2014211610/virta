@@ -7,7 +7,11 @@ import { describe, expect, it } from 'vitest';
 import * as contracts from '@virta/contracts';
 import { ADAPTERS, adaptInput } from '@virta/data-engine';
 import type { Table, ViewSpec } from '@virta/contracts';
-import { viewEntrySource } from '../../scripts/build.mjs';
+import { viewEntrySource, type ViewMap } from '../../packages/cli/src/runtime-entries.js';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const VIEW_MAP = JSON.parse(readFileSync(join(__dirname, '../../packages/viewer/view-map.json'), 'utf8')) as ViewMap;
 
 function cli(args: string[], input?: string): { code: number; stdout: string; parsed?: any } {
   try {
@@ -29,8 +33,8 @@ const spec = (view: string, extra: Partial<ViewSpec> = {}): ViewSpec =>
 
 describe('B2 浏览器端 adapt 跳过派生列/missingValue/gantt asOf（M2b.1）', () => {
   it('per-view 入口必须调用统一管线 runPipeline', () => {
-    expect(viewEntrySource('grid')).toContain('runPipeline');
-    expect(viewEntrySource('gantt')).toContain('runPipeline');
+    expect(viewEntrySource('grid', VIEW_MAP)).toContain('runPipeline');
+    expect(viewEntrySource('gantt', VIEW_MAP)).toContain('runPipeline');
   });
   it('浏览器管线输出应与 adaptInput 一致：grid 的派生列不消失', async () => {
     // 管线函数落地前 runPipeline 不存在 → it；落地后比较两条路径

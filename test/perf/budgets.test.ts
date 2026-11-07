@@ -62,11 +62,18 @@ describe('性能预算', () => {
   it('per-view bundle ≤ 150KB（需先 npm run build）', () => {
     const dist = path.join(REPO, 'packages/viewer/dist');
     if (!fs.existsSync(dist)) return; // dist 未构建时跳过（build 命令单独把关）
-    const files = fs.readdirSync(dist).filter((f) => f.endsWith('.js') && f !== 'cli.js');
+    const files = fs.readdirSync(dist).filter((f) => f.endsWith('.js') && f !== 'cli.js' && VIEW_IDS.includes(f.replace(/\.js$/, '') as never));
     expect(files.length).toBeGreaterThanOrEqual(VIEW_IDS.length - 2);
     for (const f of files) {
       const kb = fs.statSync(path.join(dist, f)).size / 1024;
       expect(kb, `${f} = ${kb.toFixed(0)}KB`).toBeLessThanOrEqual(150);
     }
+  });
+
+  it('runtime/compose.js ≤ 300KB（E9，需先 npm run build）', () => {
+    const p = path.join(REPO, 'packages/cli/dist/runtime/compose.js');
+    if (!fs.existsSync(p)) return; // 未构建跳过
+    const kb = fs.statSync(p).size / 1024;
+    expect(kb, `compose.js = ${kb.toFixed(0)}KB`).toBeLessThanOrEqual(300);
   });
 });

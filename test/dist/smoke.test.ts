@@ -1,6 +1,6 @@
 // T1 dist 冒烟（PHASE_2C §5）：npm pack → 仓库外临时目录 npm install →
 // 通过 npm 生成的 .bin 启动脚本跑全部命令（Windows 走 virta.cmd）。
-// 前置：npm run build。M2c.0 骨架：R1–R6 复现锚点用 it.fails，实现落地后转普通断言。
+// 前置：npm run build。R1–R6 锚点已在 M2c.1 转普通断言；doctor/skill/gallery 三个待 M2c.2。
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSync, cpSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -43,11 +43,14 @@ function pack(): Promise<string> {
   })());
 }
 
-/** npm pack --dry-run --json 的文件清单（不产出 tarball）。 */
+/** npm pack --dry-run --json 的文件清单（不产出 tarball）。
+ *  prepack 的构建日志混在 stdout 里，取最后一组 JSON 数组。 */
 function packManifest(): { path: string; size: number }[] {
   const r = sh('npm', ['pack', '--dry-run', '--json'], CLI_PKG);
   if (r.code !== 0) throw new Error(`npm pack --dry-run 失败：${r.stderr || r.stdout}`.slice(0, 600));
-  return (JSON.parse(r.stdout) as { files: { path: string; size: number }[] }[])[0]!.files;
+  const i = r.stdout.indexOf('\n[');
+  const start = i >= 0 ? i + 1 : r.stdout.indexOf('[');
+  return (JSON.parse(r.stdout.slice(start)) as { files: { path: string; size: number }[] }[])[0]!.files;
 }
 
 // —— 安装到仓库外临时目录：memoized ——
@@ -111,21 +114,22 @@ describe('T1·打包自包含', () => {
     expect(existsSync(DIST_CLI), '先运行 npm run build').toBe(true);
   });
 
-  it.fails('R5/E6·tarball 清单：只含 E6 布局，无 .ts/.d.ts/.map', () => {
+  it('R5/E6·tarball 清单：只含 E6 布局，无 .ts/.d.ts/.map', () => {
     const files = packManifest().map((f) => f.path);
     const leaked = files.filter((f) => /\.(ts|tsx|cts|mts|d\.ts|map)$/.test(f) || /(^|\/)src\//.test(f));
     expect(leaked, `tarball 混入源码/映射：\n${leaked.join('\n')}`).toEqual([]);
+    // 注意：dry-run JSON 的路径相对包根，无 tar 条目的 package/ 前缀
     for (const req of [
-      'package/dist/cli.js', 'package/dist/runtime/compose.js',
-      'package/dist/fonts/', 'package/dist/skill/SKILL.md',
-      'package/dist/packs/', 'package/dist/samples/',
-      'package/README.md', 'package/LICENSE', 'package/CHANGELOG.md', 'package/package.json',
+      'dist/cli.js', 'dist/runtime/compose.js',
+      'dist/fonts/', 'dist/skill/SKILL.md',
+      'dist/packs/', 'dist/samples/',
+      'README.md', 'LICENSE', 'CHANGELOG.md', 'package.json',
     ]) {
       expect(files.some((f) => f === req || f.startsWith(req)), `tarball 缺少 ${req}`).toBe(true);
     }
   });
 
-  it.fails('R5/E1·dependencies 只有 3 个运行依赖（@virta/* 全进 bundle）', async () => {
+  it('R5/E1·dependencies 只有 3 个运行依赖（@virta/* 全进 bundle）', async () => {
     await pack();
     const deps = Object.keys(pkgJson().dependencies ?? {}).sort();
     expect(deps).toEqual(['@resvg/resvg-js', 'papaparse', 'read-excel-file']);
@@ -139,7 +143,7 @@ describe('T1·打包自包含', () => {
     expect(unpacked, '解压体积').toBeLessThanOrEqual(8 * 1024 * 1024);
   });
 
-  it.fails('R1·dist/cli.js 单 shebang 可直接执行', () => {
+  it('R1·dist/cli.js 单 shebang 可直接执行', () => {
     if (!existsSync(DIST_CLI)) throw new Error('先运行 npm run build');
     const head = readFileSync(DIST_CLI, 'utf8').slice(0, 200);
     expect(head.match(/^#!/gm)?.length ?? 0, 'dist/cli.js shebang 行数 ≠ 1').toBe(1);
@@ -147,20 +151,20 @@ describe('T1·打包自包含', () => {
     expect(r.code, `node dist/cli.js --version：${r.stderr.slice(0, 300)}`).toBe(0);
   });
 
-  it.fails('R5·仓库外临时目录 npm install <tgz> 成功', async () => {
+  it('R5·仓库外临时目录 npm install <tgz> 成功', async () => {
     await installed();
   });
 });
 
 describe('T1·安装后命令（cwd=仓库外临时目录）', () => {
-  it.fails('R6·--version 输出 virta <package.json version>', async () => {
+  it('R6·--version 输出 virta <package.json version>', async () => {
     const env = await installed();
     const r = cli(env, ['--version']);
     expect(r.code, r.stderr).toBe(0);
     expect(r.stdout.trim()).toBe(`virta ${pkgJson().version}`);
   });
 
-  it.fails('--version --json 输出 envelope{version,node,platform,mode}', async () => {
+  it('--version --json 输出 envelope{version,node,platform,mode}', async () => {
     const env = await installed();
     const e = envelope(cli(env, ['--version', '--json']), '--version --json');
     expect(e.data.version).toBe(pkgJson().version);
@@ -178,7 +182,7 @@ describe('T1·安装后命令（cwd=仓库外临时目录）', () => {
     for (const c of checks) expect(c.status, `doctor ${c.id}`).not.toBe('error');
   });
 
-  it.fails('guide / guide --agent 在仓库外可用（R2）', async () => {
+  it('guide / guide --agent 在仓库外可用（R2）', async () => {
     const env = await installed();
     const g = cli(env, ['guide']);
     expect(g.code, g.stderr).toBe(0);
@@ -191,14 +195,14 @@ describe('T1·安装后命令（cwd=仓库外临时目录）', () => {
     expect(e.data.version).toBe(pkgJson().version);
   });
 
-  it.fails('list --json 全量视图 + version', async () => {
+  it('list --json 全量视图 + version', async () => {
     const env = await installed();
     const e = envelope(cli(env, ['list', '--json']), 'list --json');
     expect((e.data as { id: string }[]).map((d) => d.id).sort()).toEqual([...VIEW_IDS].sort());
     expect(e.command).toBe('list');
   });
 
-  it.fails('R2/R3·inspect + render @samples 仓库外可用', async () => {
+  it('R2/R3·inspect + render @samples 仓库外可用', async () => {
     const env = await installed();
     const ins = envelope(cli(env, ['inspect', '@samples/sample-multi.csv', '--json']), 'inspect');
     expect(ins.data.input).toBe('@samples/sample-multi.csv');
@@ -213,13 +217,13 @@ describe('T1·安装后命令（cwd=仓库外临时目录）', () => {
     expect(text).not.toContain(REPO.replace(/\\/g, '/'));
   });
 
-  it.fails('stdin 输入 render', async () => {
+  it('stdin 输入 render', async () => {
     const env = await installed();
     const e = envelope(cli(env, ['render', '-', '--format', 'csv', '--export', 'svg', '--json'], '月份,数值\n1月,3\n2月,5\n3月,4'), 'render -');
     filesOk(env, e.data.files);
   });
 
-  it.fails('G7·demo retail 读内置场景包（cwd 无关）', async () => {
+  it('G7·demo retail 读内置场景包（cwd 无关）', async () => {
     const env = await installed();
     const e = envelope(cli(env, ['demo', 'retail', '--json']), 'demo retail');
     for (const f of e.data.files as string[]) {
@@ -229,7 +233,7 @@ describe('T1·安装后命令（cwd=仓库外临时目录）', () => {
     expect(e.data.packs).toContain('retail');
   });
 
-  it.fails('compose 用临时目录中的 compose.json+数据渲染', async () => {
+  it('compose 用临时目录中的 compose.json+数据渲染', async () => {
     const env = await installed();
     cpSync(join(REPO, 'examples', 'packs', 'retail'), join(env.dir, 'retail'), { recursive: true });
     const e = envelope(cli(env, ['compose', 'retail/compose.json', '--export', 'html', '--json']), 'compose');
@@ -252,7 +256,7 @@ describe('T1·安装后命令（cwd=仓库外临时目录）', () => {
     expect(JSON.parse(dup.stdout).error.code).toBe('INVALID_OPTION');
   });
 
-  it.fails('E12·gallery 在 dist 模式报 INPUT_NOT_FOUND（退出码 3）', async () => {
+  it('E12·gallery 在 dist 模式报 INPUT_NOT_FOUND（退出码 3）', async () => {
     const env = await installed();
     const r = cli(env, ['gallery', '--json']);
     expect(r.code).toBe(3);

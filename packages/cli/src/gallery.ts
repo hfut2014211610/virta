@@ -10,9 +10,11 @@ import type { Table } from '@virta/contracts';
 import { readInput } from '@virta/data-engine/node';
 import { renderChart, fail } from './render.js';
 import { listPacks } from './demo.js';
+import { assets } from './assets.js';
 
-const PACKS_DIR = join('examples', 'packs');
-const BASIC_DIR = join('examples', 'basic');
+// gallery 仅 source 模式可用（E12：main.ts 在 dist 模式先行报错，不会走到这里）
+const PACKS_DIR = assets.packsDir;
+const BASIC_DIR = assets.samplesDir;
 // 缩略图 2x：卡片 ~570px 显示位宽下保证字体/3D 质感清晰
 const PNG_SCALE = 2;
 
@@ -45,7 +47,7 @@ const FAMILY_ORDER: ViewId[] = [
 const MERGE_3D: Partial<Record<ViewId, ViewId>> = { matrix3d: 'bar', line3d: 'line', scatter3d: 'scatter', pie3d: 'pie', sunburst: 'pie' };
 
 // —— 柱状图合并演示卡：4 组数据形态覆盖全部 5 种变体（负值集上 pct/pareto 自动置灰）——
-const GALLERY_DIR = join('examples', 'gallery');
+const GALLERY_DIR = assets.galleryDir!;
 const BAR_DEMOS: { file: string; label: string; title: string; spec: ViewSpec }[] = [
   { file: 'bar-single.csv', label: '单一系列', title: '传统单一柱状图', spec: { version: 1, view: 'bar', options: { valueLabels: true } } },
   { file: 'bar-grouped.csv', label: '二级分组', title: '二级分组柱状图', spec: { version: 1, view: 'bar', variant: 'grouped', mapping: { series: '产品线' } } },
@@ -85,7 +87,7 @@ const GANTT_DEMOS: { file: string; label: string; title: string; spec: ViewSpec 
 
 // 表格/文档专属样例（为表格而造：稠密透视、真实长明细、压力测试、长文报告）
 type Demo = { file: string; label: string; title: string; spec: ViewSpec; dir?: string };
-const EDGE_DIR = join('examples', 'edge-cases');
+const EDGE_DIR = assets.edgeCasesDir!;
 const GRID_DEMOS: Demo[] = [
   { file: 'grid-pivot.csv', label: '透视', title: '数据表 · 稠密透视（4维×6月全组合）', spec: { version: 1, view: 'grid', variant: 'pivot' } },
   { file: 'grid-detail.csv', label: '长明细', title: '数据表 · 长明细（链接/空值/风险等级）', spec: { version: 1, view: 'grid', variant: 'detail', state: { sort: 'desc' } } },
@@ -113,7 +115,7 @@ export async function familyExamples(packs: PackJson[]): Promise<Map<string, Gal
   };
   for (const [v, e] of Object.entries(EXEMPLARS)) {
     if (e && existsSync(join(BASIC_DIR, e.file))) {
-      take(v, { key: `v-${v}`, title: e.file, sub: 'examples/basic', view: v, file: e.file, dir: BASIC_DIR, spec: { version: 1, view: v as ViewId } });
+      take(v, { key: `v-${v}`, title: e.file, sub: ['examples', 'basic'].join('/'), view: v, file: e.file, dir: BASIC_DIR, spec: { version: 1, view: v as ViewId } });
     }
   }
   // T3 简版图族画廊示例（examples/gallery 专属，不进 basic 以免影响 recommend 期望表）
@@ -123,12 +125,12 @@ export async function familyExamples(packs: PackJson[]): Promise<Map<string, Gal
   ];
   for (const [v, f] of T3_DEMO) {
     if (!out.has(v) && existsSync(join(GALLERY_DIR, f))) {
-      take(v, { key: `v-${v}`, title: f, sub: 'examples/gallery', view: v, file: f, dir: GALLERY_DIR, spec: { version: 1, view: v } });
+      take(v, { key: `v-${v}`, title: f, sub: ['examples', 'gallery'].join('/'), view: v, file: f, dir: GALLERY_DIR, spec: { version: 1, view: v } });
     }
   }
   // report：优先长文示例 report-long.md（多章节/60+ 行表/链接/内嵌 SVG）
   if (existsSync(join(GALLERY_DIR, 'report-long.md'))) {
-    take('report', { key: 'v-report', title: 'report-long.md', sub: 'examples/gallery', view: 'report', file: 'report-long.md', dir: GALLERY_DIR, doc: true });
+    take('report', { key: 'v-report', title: 'report-long.md', sub: ['examples', 'gallery'].join('/'), view: 'report', file: 'report-long.md', dir: GALLERY_DIR, doc: true });
   }
   for (const p of packs) {
     for (const c of p.charts) {
@@ -155,7 +157,7 @@ export async function familyExamples(packs: PackJson[]): Promise<Map<string, Gal
       const top = recommend(profileTable(table), table)[0];
       if (!top || out.has(top.view)) continue;
       take(top.view, {
-        key: `v-${top.view}`, title: f, sub: 'examples/basic', view: top.view, file: f, dir: BASIC_DIR,
+        key: `v-${top.view}`, title: f, sub: ['examples', 'basic'].join('/'), view: top.view, file: f, dir: BASIC_DIR,
         spec: { version: 1, view: top.view as ViewId, mapping: top.mapping, variant: top.variant },
       });
     }
@@ -167,7 +169,7 @@ export async function familyExamples(packs: PackJson[]): Promise<Map<string, Gal
       for (const { f, table } of tables) {
         try {
           adapter.adapt(table, { version: 1, view: v } as ViewSpec);
-          take(v as string, { key: `v-${v}`, title: f, sub: 'examples/basic', view: v as string, file: f, dir: BASIC_DIR, spec: { version: 1, view: v } });
+          take(v as string, { key: `v-${v}`, title: f, sub: ['examples', 'basic'].join('/'), view: v as string, file: f, dir: BASIC_DIR, spec: { version: 1, view: v } });
           break;
         } catch { /* 不适配，下一个 */ }
       }
@@ -417,7 +419,7 @@ export async function runGallery(job: GalleryJob): Promise<{ items: number; view
       for (const d of demos) {
         // key 必须含 variant+options：同文件同视图不同选项（如甘特周历/月历）否则同 stem 互相覆盖
         const vh = createHash('sha1').update(JSON.stringify([d.spec.variant ?? '', d.spec.options ?? {}])).digest('hex').slice(0, 6);
-        const it: GalleryItem = { key: `demo-${d.file}-${d.spec.view}-${vh}`, title: d.title, sub: d.dir ?? 'examples/gallery', view: String(d.spec.view), file: d.file, dir: d.dir ?? GALLERY_DIR, spec: d.spec };
+        const it: GalleryItem = { key: `demo-${d.file}-${d.spec.view}-${vh}`, title: d.title, sub: d.dir ?? ['examples', 'gallery'].join('/'), view: String(d.spec.view), file: d.file, dir: d.dir ?? GALLERY_DIR, spec: d.spec };
         const r = await render(it);
         if (!r.png && !r.light) continue;
         first ??= { ...it, ...r };

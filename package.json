@@ -9,7 +9,7 @@
     "apps/*"
   ],
   "scripts": {
-    "build": "node scripts/build.mjs",
+    "build": "tsx scripts/build.ts",
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",

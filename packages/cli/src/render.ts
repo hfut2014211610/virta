@@ -1,7 +1,6 @@
 // render 管线：table → adapt → frameStatic → layout → scene → html/svg/png。
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { build } from 'esbuild';
 import type { PaletteId, Table, Theme, ViewId, ViewSpec, VizError } from '@virta/contracts';
 import { getContract, THEME_IDS } from '@virta/contracts';
 import { ADAPTERS, adaptInput, projectQuality, resolveTime, parseInstant, zonedParts } from '@virta/data-engine';
@@ -12,13 +11,10 @@ import { applySkin, frameStatic, type LegendItem } from '@virta/chart-skin';
 import { singleFileHtml, type Payload } from '@virta/viewer';
 import { fontPath, paletteColors, resolveTheme } from '@virta/design-system';
 import { Resvg } from '@resvg/resvg-js';
+import { CliError, fail } from './errors.js';
+import { runtimeScript } from './assets.js';
 
-export class CliError extends Error {
-  constructor(public viz: VizError) { super(viz.message); }
-}
-export const fail = (code: VizError['code'], message: string, hint?: string, details?: VizError['details']): never => {
-  throw new CliError({ code, message, hint, recoverable: code !== 'INTERNAL', details });
-};
+export { CliError, fail };
 
 export interface RenderJob {
   table: Table;
@@ -54,48 +50,7 @@ function fontFallbackOk(fontFiles: string[]): boolean {
   return ok;
 }
 
-const runtimeCache = new Map<string, string>();
-const VIEW_MAP = JSON.parse(readFileSync(join('packages/viewer/view-map.json'), 'utf8')) as Record<string, { charts: string; renderer: string; adapter: string; toModel: string; toModelCurve?: string; post?: string }>;
-
-/** per-view 入口源码：与 scripts/build.mjs 同款，只打包本视图 renderer+toModel(+post)。
- *  ADR-0012：adapt 走统一管线 runPipeline（派生列/映射/缺失值/后处理与 CLI 同一条路径）。 */
-function viewEntrySource(view: string): string {
-  const m = VIEW_MAP[view];
-  if (!m) fail('UNKNOWN_VIEW', `view-map 缺少 ${view}`);
-  const isDoc = view === 'report';
-  return `import { boot } from './packages/viewer/src/runtime.js';
-import { ${m.renderer} } from './packages/charts/src/${m.charts}.js';
-import { ${[m.toModel, m.toModelCurve].filter(Boolean).join(', ')} } from './packages/data-engine/src/${m.adapter}.js';
-${isDoc ? '' : `import { runPipeline } from './packages/data-engine/src/pipeline.js';
-${m.post ? `import { ${m.post} } from './packages/data-engine/src/families/post.js';` : ''}`}
-${view === 'grid' ? `import { renderFlowTable } from './packages/viewer/src/flow-table.js';` : ''}
-${isDoc ? `import { renderFlowDoc } from './packages/viewer/src/flow-doc.js';` : ''}
-const deps = {
-  renderer: ${m.renderer},
-  ${view === 'grid' ? 'renderFlowTable,' : ''}
-  ${isDoc ? 'renderFlowDoc,' : ''}
-  ${isDoc
-    ? `buildDoc: (text, name) => ${m.toModel}(text, name),`
-    : `adapt: (t, s) => runPipeline(t, s, ${JSON.stringify(view)}, (raw) => ${m.toModelCurve ? `(s?.variant === 'curve' ? ${m.toModelCurve} : ${m.toModel})` : m.toModel}(raw)${m.post ? `, ${m.post}` : ''}).model,`}
-};
-boot(window.__VIRTA__, deps);
-`;
-}
-
-/** esbuild 打 viewer 运行期（浏览器 iife，按视图 slim）；缓存到内存。 */
-async function viewerRuntime(view: string): Promise<string> {
-  const hit = runtimeCache.get(view);
-  if (hit) return hit;
-  const res = await build({
-    stdin: { contents: viewEntrySource(view), resolveDir: process.cwd(), loader: 'ts' },
-    bundle: true, format: 'iife', platform: 'browser', target: 'es2020',
-    write: false, minify: true, globalName: '__VIRTA_RT',
-    define: { 'import.meta.url': '"http://localhost/__bundle__/"' },
-  });
-  const js = res.outputFiles[0].text;
-  runtimeCache.set(view, js);
-  return js;
-}
+/** 运行期脚本：dist 读 dist/runtime/<view>.js；source 现场编译（assets.runtimeScript，E4/E5）。 */
 
 export async function renderChart(job: RenderJob): Promise<RenderResult & { svgScene: string; payload: Payload }> {
   const { table, spec } = job;
@@ -281,7 +236,7 @@ export async function renderChart(job: RenderJob): Promise<RenderResult & { svgS
     }
     const path = `${join(job.out, stem)}.${fmt}`;
     if (fmt === 'html') {
-      const html = singleFileHtml({ payload, svg, runtimeJs: await viewerRuntime(view), theme });
+      const html = singleFileHtml({ payload, svg, runtimeJs: await runtimeScript(view), theme });
       writeFileSync(path, html, 'utf8');
       files.push({ format: 'html', path, bytes: Buffer.byteLength(html), width: job.width, height: job.height });
     } else {

@@ -1,17 +1,49 @@
 {
   "name": "virta",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "type": "module",
+  "description": "Virta 数据可视化 CLI：CSV/JSON/Excel/Markdown → 离线交互 HTML 与 SVG/PNG 图表（推荐、校验、组合仪表盘）",
+  "keywords": [
+    "chart",
+    "visualization",
+    "cli",
+    "svg",
+    "png",
+    "html",
+    "csv",
+    "excel"
+  ],
+  "license": "MIT",
+  "author": "hfut2014211610",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hfut2014211610/virta.git"
+  },
+  "engines": {
+    "node": ">=22"
+  },
   "bin": {
     "virta": "./dist/cli.js",
     "vt": "./dist/cli.js"
   },
   "exports": {
-    ".": "./src/main.ts"
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "prepack": "npm run build --prefix ../.."
   },
   "dependencies": {
     "@resvg/resvg-js": "2.6.2",
+    "papaparse": "5.7.0",
+    "read-excel-file": "9.3.12"
+  },
+  "devDependencies": {
     "@virta/contracts": "0.0.0",
     "@virta/design-system": "0.0.0",
     "@virta/chart-core": "0.0.0",

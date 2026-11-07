@@ -27,3 +27,10 @@ contracts
 ## 理由
 
 保证几何层与数据层解耦，使同一份 model 既能进交互页也能进静态导出；同构 data-engine 使浏览器内联动筛选不需要服务端。
+
+## 修订（2026-11-07 · Phase 2c · ADR-0015 E1）
+
+`@virta/cli` 是唯一发布单元（npm 包名 `virta`）：全部 `@virta/*` 打进 `dist/cli.js`
+与 `dist/runtime/*.js`，`@virta/*` 从 `dependencies` 移到 `devDependencies`；
+运行依赖只有 `@resvg/resvg-js`、`papaparse`、`read-excel-file`。其余 7 个内部包保持
+`private` 不发布；依赖方向约束不变（devDependencies 中声明的内部包仍按上图单向）。

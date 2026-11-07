@@ -705,3 +705,30 @@
 - DoD：`npm run test:dist` 2 passed + 19 expected-fail；no-leak 3/3；typecheck + npm test 348 全绿。
 - 修正：盘符规则误报正则字面量（`字母:\s` 这类转义），收紧为反斜杠后 ≥2 个路径字符；
   同时 no-leak 测试文件自身的注释不得含字面匹配样例（CI 首跑挂在自引用，已修）。
+
+## M2c.1 自包含产物（2026-11-07，完成）
+
+- `packages/cli/src/runtime-entries.ts`（E3）：`viewEntrySource`/`composeEntrySource`(新增 `viewMap`/`flowOf` 参数）/
+  `RUNTIME_BUILD_OPTIONS` 唯一来源；`errors.ts` 拆出 `CliError`/`fail` 避免 assets↔render 循环依赖。
+- `packages/cli/src/assets.ts`（E4/E5）：`__VIRTA_DIST__` 判 dist/source；`runtimeScript(key[,views])`
+  dist 读 `dist/runtime/`，source 动态 `import('esbuild')` 现场编译（resolveDir=仓库根）；
+  `expandSamples` 展开 `@samples/`；`VERSION` 读注入常量或包根 package.json。
+- `design-system/fonts.ts`：`setFontsDir(dir)` 覆盖（含 metrics 缓存失效）；main() 启动即调。
+- `scripts/build.mjs → build.ts`（tsx 运行）：清 dist（tsc 残留）、35×runtime + 全视图 compose.js、
+  cli bundle（banner 单 shebang、define __VIRTA_DIST__/__VIRTA_VERSION__、external=3 依赖+esbuild）、
+  资源复制（fonts/skill/packs/samples + 包根 README/LICENSE/CHANGELOG）、
+  自检 `node dist/cli.js --version`。per-view 副本仍写 `packages/viewer/dist/`（perf 路径不变，选 §4.1 第一方案）。
+- `packages/cli/package.json`：version 0.1.0、去 private、files 白名单、engines>=22、MIT、
+  `@virta/*` 移 devDependencies、`exports` 仅 `./package.json`、`prepack` 自动构建（§4.1 第一方案）。
+- CLI：`--version|-v|version`（--json envelope 带 mode）、`demo --out` 默认 `./virta-demo`、
+  packs/skill 走 assets、gallery 在 dist 报 INPUT_NOT_FOUND(3) 且 guide/--help 不列。
+- 测试：T2 `test/dist/runtime-parity.test.ts` 逐字节一致（bar/grid/gantt/compose）；
+  T3 四项转普通断言；T1 除 doctor/skill 外全转普通断言；perf 加 compose.js ≤300KB。
+- 坑：① `npm pack --dry-run --json` 文件路径无 tar 的 `package/` 前缀，且 stdout 混 prepack 日志需截 `[`；
+  ② gallery `sub: 'examples/basic'` 展示文案撞 T3 字面量规则 → `['examples','basic'].join('/')`；
+  ③ `npm pack` 每次触发 prepack 全量重建（~20s），test:dist 内 2 次（dry-run+实包），可接受。
+- ADR-0015 新建（分发布局/运行模式/版本/CLI 增量/渠道）；ADR-0002 附录修订（cli 唯一发布单元）。
+- LICENSE（MIT，版权行 hfut2014211610）、CHANGELOG 0.1.0（Keep a Changelog）入库。
+- 实测：tarball 1.2MB/解压 3.3MB（预算 3/8MB）；compose.js 244KB（预算 300KB）。
+- DoD：typecheck+test(348)+e2e(64)+build+perf+test:dist(23 pass+2 xfail) 全绿；
+  仓库外 `node dist/cli.js render @samples/…` 与临时目录 `npm i <tgz>` + .bin 链路已验证。

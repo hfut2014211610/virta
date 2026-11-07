@@ -2,7 +2,6 @@
 // → 逐面板 adapt+layout → 合并 Scene → svg/png/html（浏览器端联动筛选）。
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { build } from 'esbuild';
 import type { PaletteId, Table, Theme, ViewId, ViewSpec } from '@virta/contracts';
 import { getContract, THEME_IDS, resolveView, validateSpec } from '@virta/contracts';
 import { ADAPTERS, adaptInput, rawToTable, resolveTime } from '@virta/data-engine';
@@ -14,6 +13,7 @@ import { applySkin } from '@virta/chart-skin';
 import { fontPath, resolveTheme } from '@virta/design-system';
 import { Resvg } from '@resvg/resvg-js';
 import { fail } from './render.js';
+import { runtimeScript } from './assets.js';
 
 interface ComposePanelDef {
   chart?: string; file?: string; spec?: ViewSpec; question?: string;
@@ -31,32 +31,6 @@ export interface ComposeJob {
   stem?: string;
   /** 文件名用 stem 原样（不加 -layout-theme 后缀），demo 的 index.html/dashboard.html 用 */
   exactName?: boolean;
-}
-
-const VIEW_MAP = JSON.parse(readFileSync(join('packages/viewer/view-map.json'), 'utf8')) as Record<string, { charts: string; renderer: string; adapter: string; toModel: string; toModelCurve?: string; post?: string }>;
-
-/** compose 运行期入口：runtime-compose + 用到的视图集合。
- *  ADR-0012：面板 adapt 走统一管线 runPipeline（映射/派生/缺失值与 CLI 同一条路径）。 */
-function composeEntrySource(views: string[]): string {
-  const uniq = [...new Set(views)];
-  const imps = uniq.map((v, i) => {
-    const m = VIEW_MAP[v];
-    if (!m) fail('UNKNOWN_VIEW', `view-map 缺少 ${v}`);
-    return `import { ${m.renderer} as R${i} } from './packages/charts/src/${m.charts}.js';
-import { ${m.toModel} as A${i}${m.toModelCurve ? `, ${m.toModelCurve} as C${i}` : ''} } from './packages/data-engine/src/${m.adapter}.js';${m.post ? `
-import { ${m.post} as P${i} } from './packages/data-engine/src/families/post.js';` : ''}`;
-  }).join('\n');
-  const map = uniq.map((v, i) => {
-    const m = VIEW_MAP[v]!;
-    const tm = m.toModelCurve ? `(s?.variant === 'curve' ? C${i} : A${i})` : `A${i}`;
-    return `${JSON.stringify(v)}:{renderer:R${i},flow:${getContract(v as never)?.flow === true},adapt:(i,s)=>i.doc!==undefined?A${i}(i.doc,'doc'):runPipeline(i.table,s,${JSON.stringify(v)},(raw)=>${tm}(raw)${m.post ? `,P${i}` : ''}).model}`;
-  }).join(',');
-  return `import { bootCompose } from './packages/viewer/src/runtime-compose.js';
-import { runPipeline } from './packages/data-engine/src/pipeline.js';
-${imps}
-const views = {${map}};
-bootCompose(window.__VIRTA__, views);
-`;
 }
 
 /** 面板尺寸：grid 12 栏 × h*130px；story 全宽 × h*150px。 */
@@ -253,15 +227,10 @@ export async function runComposeFile(cf: ComposeFileShape, dir: string, job: Com
         links: cf!.links ?? [],
         panels: panelData.map((p) => ({ id: p.id, view: p.view, spec: p.spec, table: p.table, doc: p.doc, question: p.question, insights: p.insights, w: p.w, h: p.h, flow: p.flow })),
       };
-      const res = await build({
-        stdin: { contents: composeEntrySource(views), resolveDir: process.cwd(), loader: 'ts' },
-        bundle: true, format: 'iife', platform: 'browser', target: 'es2020',
-        write: false, minify: true, globalName: '__VIRTA_RT',
-        define: { 'import.meta.url': '"http://localhost/__bundle__/"' },
-      });
+      const runtimeJs = await runtimeScript('compose', views);
       // 首屏每面板 SVG：直接用静态合并场景不可拆分——HTML 里先放占位，浏览器 boot 后立即重渲
       const svgs = panelData.map(() => '');
-      const html = composeHtml({ payload, svgs, runtimeJs: res.outputFiles[0].text, theme });
+      const html = composeHtml({ payload, svgs, runtimeJs, theme });
       writeFileSync(path, html, 'utf8');
       files.push({ format: 'html', path, bytes: Buffer.byteLength(html) });
     }

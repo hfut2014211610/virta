@@ -11,10 +11,12 @@ import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { build } from 'esbuild';
 import { singleFileHtml, composeHtml } from '@virta/viewer';
-import { viewEntrySource } from '../../scripts/build.mjs';
+import { RUNTIME_BUILD_OPTIONS, viewEntrySource, type ViewMap } from '../../packages/cli/src/runtime-entries.js';
 
 const SRC = join(__dirname, '../../packages/viewer/src');
 const ALLOWLIST = join(__dirname, 'innerhtml-allowlist.txt');
+const REPO = join(__dirname, '../..');
+const VIEW_MAP = JSON.parse(readFileSync(join(REPO, 'packages/viewer/view-map.json'), 'utf8')) as ViewMap;
 
 function* walk(dir: string): Generator<string> {
   for (const d of readdirSync(dir, { withFileTypes: true })) {
@@ -71,10 +73,8 @@ describe('运行期禁用动态代码执行', () => {
   it('esbuild 产物无 eval / new Function（抽样 bar/grid/report）', async () => {
     for (const view of ['bar', 'grid', 'report']) {
       const res = await build({
-        stdin: { contents: viewEntrySource(view), resolveDir: process.cwd(), loader: 'ts' },
-        bundle: true, format: 'iife', platform: 'browser', target: 'es2020',
-        write: false, minify: true,
-        define: { 'import.meta.url': '"http://localhost/__bundle__/"' },
+        stdin: { contents: viewEntrySource(view, VIEW_MAP), resolveDir: REPO, loader: 'ts' },
+        ...RUNTIME_BUILD_OPTIONS,
       });
       const js = res.outputFiles[0]!.text;
       expect(/\beval\s*\(|new\s+Function\s*\(/.test(js), view).toBe(false);

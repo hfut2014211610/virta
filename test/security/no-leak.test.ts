@@ -4,7 +4,7 @@
 // 3. git log 全部提交的作者/提交者邮箱必须是 noreply。
 // 具体内部敏感词的扫描在维护者本机 pre-push hook（不入库），本文件只做通用检查。
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -37,7 +37,7 @@ describe('§0.4 入库信息安全检查', () => {
     const bad: string[] = [];
     for (const rel of tracked) {
       const p = join(REPO, rel);
-      if (!isText(p)) continue;
+      if (!existsSync(p) || !isText(p)) continue; // 已删未提交的文件跳过
       const src = readFileSync(p, 'utf8');
       for (const [re, label] of PATH_RES) {
         for (const m of src.matchAll(new RegExp(re.source, 'g'))) {
@@ -52,7 +52,7 @@ describe('§0.4 入库信息安全检查', () => {
     const bad: string[] = [];
     for (const rel of tracked) {
       const p = join(REPO, rel);
-      if (!isText(p)) continue;
+      if (!existsSync(p) || !isText(p)) continue;
       const src = readFileSync(p, 'utf8');
       for (const m of src.matchAll(EMAIL_RE)) {
         if (!EMAIL_OK(m[0])) bad.push(`${rel} 邮箱 ${m[0]}`);
