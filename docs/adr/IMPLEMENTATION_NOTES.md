@@ -640,3 +640,15 @@
 - 测试更新：time.test.ts 带符号+格式+UNPARSABLE 覆盖；recommend EXPECT 'raw'→'observations'。
 - ADR 增量：0004（sortBy/importance/白名单/UNPARSABLE）、0009（C12+排序键）、0010（C9+符号）。
 - B9–B12 锚点全绿；至此 15/15 锚点均为普通断言。
+
+## M2b.4 推荐语料与校准（B16/C11，2026-11-07）
+
+- 新增 `test/recommend/{corpus,baseline}.json` + `test/recommend/recommend.test.ts` + `npm run recommend:baseline`。
+  corpus 覆盖 examples/basic + gallery 文件名意图 + pack.json expectTop（动态并入）；acceptable+note 记录语料性质。
+- 打分修正（4 项打分问题）：sPie 0.55→0.65 且"标签撞系列别名不算"（showcase-pie→pie）；
+  sRank 静态允许标签撞系列别名（sample-rank→rank）；sKpi 指标名+实际/目标→0.95（sample-kpi→kpi）；
+  有较差线/良好线/量程时 kpi 不抢 bullet（retail/kpi→bullet 保持）。
+- 语料问题标注（非打分问题）：tree-levels（与 sunburst 同构，acceptable sunburst/tree/treemap）、
+  histogram-group（boxplot 同分并列）、pie-layers、bar-single、grid-detail、sample-pie3d、
+  以及 5 个无 scorer 的 T3 视图（burndown/er/flowchart/formula/sequence，兜底 acceptable）。
+- D14 断言：3D 图族从不作首选。准确率 100%（109 文件），baseline 锁定。

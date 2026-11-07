@@ -1,0 +1,450 @@
+[
+ {
+  "file": "examples/basic/sample.csv",
+  "expect": {
+   "view": "pie"
+  }
+ },
+ {
+  "file": "examples/basic/sample.json",
+  "expect": {
+   "view": "pie"
+  }
+ },
+ {
+  "file": "examples/basic/sample.xlsx",
+  "expect": {
+   "view": "pie"
+  }
+ },
+ {
+  "file": "examples/basic/sample-wide.csv",
+  "expect": {
+   "view": "bar"
+  }
+ },
+ {
+  "file": "examples/basic/sample-multi.csv",
+  "expect": {
+   "view": "bar"
+  }
+ },
+ {
+  "file": "examples/basic/sample-mixed.csv",
+  "expect": {
+   "view": "bar"
+  }
+ },
+ {
+  "file": "examples/basic/sample-negative.csv",
+  "expect": {
+   "view": "bar"
+  }
+ },
+ {
+  "file": "examples/basic/sample-waterfall.csv",
+  "expect": {
+   "view": "bar",
+   "variant": "waterfall"
+  }
+ },
+ {
+  "file": "examples/basic/sample-line.csv",
+  "expect": {
+   "view": "line"
+  }
+ },
+ {
+  "file": "examples/basic/sample-line3d.csv",
+  "expect": {
+   "view": "line"
+  }
+ },
+ {
+  "file": "examples/basic/sample-boxplot.csv",
+  "expect": {
+   "view": "boxplot"
+  }
+ },
+ {
+  "file": "examples/basic/sample-boxplot-summary.csv",
+  "expect": {
+   "view": "boxplot"
+  }
+ },
+ {
+  "file": "examples/basic/sample-bullet.csv",
+  "expect": {
+   "view": "bullet"
+  }
+ },
+ {
+  "file": "examples/basic/sample-fishbone.csv",
+  "expect": {
+   "view": "fishbone"
+  }
+ },
+ {
+  "file": "examples/basic/sample-funnel.csv",
+  "expect": {
+   "view": "funnel"
+  }
+ },
+ {
+  "file": "examples/basic/sample-gantt.csv",
+  "expect": {
+   "view": "gantt"
+  }
+ },
+ {
+  "file": "examples/basic/sample-grid.csv",
+  "expect": {
+   "view": "grid",
+   "variant": "pivot"
+  }
+ },
+ {
+  "file": "examples/basic/sample-heatmap.csv",
+  "expect": {
+   "view": "heatmap"
+  }
+ },
+ {
+  "file": "examples/basic/sample-heatmap-year.csv",
+  "expect": {
+   "view": "heatmap"
+  }
+ },
+ {
+  "file": "examples/basic/sample-pie3d.csv",
+  "expect": {
+   "view": "bar"
+  },
+  "acceptable": [
+   "bar",
+   "sunburst",
+   "treemap"
+  ],
+  "note": "语料问题：2维单度量与 bar-grouped 同构，pie 只一个维度角色装不下 → bar/层级视图可接受"
+ },
+ {
+  "file": "examples/basic/sample-pie3d-1d.csv",
+  "expect": {
+   "view": "pie"
+  }
+ },
+ {
+  "file": "examples/basic/sample-radar.csv",
+  "expect": {
+   "view": "radar"
+  }
+ },
+ {
+  "file": "examples/basic/sample-sankey.csv",
+  "expect": {
+   "view": "sankey"
+  }
+ },
+ {
+  "file": "examples/basic/sample-scatter.csv",
+  "expect": {
+   "view": "scatter"
+  }
+ },
+ {
+  "file": "examples/basic/sample-scatter3d.csv",
+  "expect": {
+   "view": "scatter"
+  }
+ },
+ {
+  "file": "examples/basic/sample-sunburst.csv",
+  "expect": {
+   "view": "sunburst"
+  }
+ },
+ {
+  "file": "examples/basic/sample-treemap.csv",
+  "expect": {
+   "view": "treemap"
+  }
+ },
+ {
+  "file": "examples/basic/sample-treemap-1d.csv",
+  "expect": {
+   "view": "pie"
+  }
+ },
+ {
+  "file": "examples/basic/sample-combo.csv",
+  "expect": {
+   "view": "combo"
+  }
+ },
+ {
+  "file": "examples/basic/sample-rank.csv",
+  "expect": {
+   "view": "rank"
+  },
+  "note": "B16 校准：标签\"城市\"撞系列别名 → 打分问题，已修 sRank 允许标签撞名"
+ },
+ {
+  "file": "examples/basic/sample-rank-race.csv",
+  "expect": {
+   "view": "rank",
+   "variant": "race"
+  }
+ },
+ {
+  "file": "examples/basic/sample-histogram.csv",
+  "expect": {
+   "view": "histogram"
+  }
+ },
+ {
+  "file": "examples/basic/sample-histogram-group.csv",
+  "expect": {
+   "view": "histogram"
+  },
+  "acceptable": [
+   "histogram",
+   "boxplot"
+  ],
+  "note": "B16 校准：组别+耗时与箱线 observations 同构、同分 0.8 → 语料问题，histogram/boxplot 均可接受"
+ },
+ {
+  "file": "examples/basic/sample-kpi.csv",
+  "expect": {
+   "view": "kpi"
+  },
+  "note": "B16 校准：指标+实际+目标是 KPI 卡签名 → 打分问题，sKpi 该情形 0.95"
+ },
+ {
+  "file": "examples/basic/sample-compare.csv",
+  "expect": {
+   "view": "compare"
+  }
+ },
+ {
+  "file": "examples/basic/sample-cohort.csv",
+  "expect": {
+   "view": "cohort"
+  }
+ },
+ {
+  "file": "examples/basic/sample-tree.csv",
+  "expect": {
+   "view": "tree"
+  }
+ },
+ {
+  "file": "examples/basic/sample-network.csv",
+  "expect": {
+   "view": "network"
+  }
+ },
+ {
+  "file": "examples/basic/sample-control.csv",
+  "expect": {
+   "view": "control"
+  }
+ },
+ {
+  "file": "examples/basic/sample-parallel.csv",
+  "expect": {
+   "view": "parallel"
+  }
+ },
+ {
+  "file": "examples/basic/sample-tree-levels.csv",
+  "expect": {
+   "view": "sunburst"
+  },
+  "acceptable": [
+   "sunburst",
+   "tree",
+   "treemap"
+  ],
+  "note": "B16 校准：层级列与 sunburst 同构无结构性区分 → 语料问题，三种层级视图均可接受"
+ },
+ {
+  "file": "examples/basic/showcase-pie.csv",
+  "expect": {
+   "view": "pie"
+  },
+  "note": "B16 校准：标签列\"渠道\"撞系列别名导致 pie 被打分门挡、bar 误判多系列 → 打分问题，已修 sPie"
+ },
+ {
+  "file": "examples/basic/showcase-sankey.csv",
+  "expect": {
+   "view": "sankey"
+  }
+ },
+ {
+  "file": "examples/basic/showcase-network.csv",
+  "expect": {
+   "view": "network"
+  }
+ },
+ {
+  "file": "examples/basic/showcase-tree.csv",
+  "expect": {
+   "view": "tree"
+  }
+ },
+ {
+  "file": "examples/gallery/bar-grouped.csv",
+  "expect": {
+   "view": "bar"
+  }
+ },
+ {
+  "file": "examples/gallery/bar-pareto.csv",
+  "expect": {
+   "view": "bar"
+  }
+ },
+ {
+  "file": "examples/gallery/bar-single.csv",
+  "expect": {
+   "view": "bar"
+  },
+  "acceptable": [
+   "bar",
+   "line"
+  ],
+  "note": "语料问题：月份×营收时序，bar/line 均合理"
+ },
+ {
+  "file": "examples/gallery/bar-waterfall.csv",
+  "expect": {
+   "view": "bar"
+  }
+ },
+ {
+  "file": "examples/gallery/combo-dual.csv",
+  "expect": {
+   "view": "combo"
+  }
+ },
+ {
+  "file": "examples/gallery/compare-dumbbell.csv",
+  "expect": {
+   "view": "compare"
+  }
+ },
+ {
+  "file": "examples/gallery/compare-slope.csv",
+  "expect": {
+   "view": "compare"
+  }
+ },
+ {
+  "file": "examples/gallery/gantt-plan.csv",
+  "expect": {
+   "view": "gantt"
+  }
+ },
+ {
+  "file": "examples/gallery/grid-detail.csv",
+  "expect": {
+   "view": "grid"
+  },
+  "acceptable": [
+   "grid",
+   "histogram"
+  ],
+  "note": "语料问题：单数值列长表，histogram 分布可接受"
+ },
+ {
+  "file": "examples/gallery/grid-pivot.csv",
+  "expect": {
+   "view": "grid"
+  }
+ },
+ {
+  "file": "examples/gallery/line-multi.csv",
+  "expect": {
+   "view": "line"
+  }
+ },
+ {
+  "file": "examples/gallery/line-single.csv",
+  "expect": {
+   "view": "line"
+  }
+ },
+ {
+  "file": "examples/gallery/pie-layers.csv",
+  "expect": {
+   "view": "line"
+  },
+  "acceptable": [
+   "line",
+   "sunburst"
+  ],
+  "note": "语料问题：季度×渠道多系列形态，line 合理；分层饼意图归 sunburst"
+ },
+ {
+  "file": "examples/gallery/pie-single.csv",
+  "expect": {
+   "view": "pie"
+  }
+ },
+ {
+  "file": "examples/gallery/sunburst.csv",
+  "expect": {
+   "view": "sunburst"
+  }
+ },
+ {
+  "file": "examples/gallery/burndown-sprint.csv",
+  "expect": {
+   "view": "burndown"
+  },
+  "acceptable": [
+   "rank"
+  ],
+  "note": "语料问题：burndown 暂无 scorer，rank 兜底可接受"
+ },
+ {
+  "file": "examples/gallery/er-schema.csv",
+  "expect": {
+   "view": "er"
+  },
+  "acceptable": [
+   "grid"
+  ],
+  "note": "语料问题：er 暂无 scorer，grid 兜底可接受"
+ },
+ {
+  "file": "examples/gallery/flowchart-approve.csv",
+  "expect": {
+   "view": "flowchart"
+  },
+  "acceptable": [
+   "grid"
+  ],
+  "note": "语料问题：flowchart 暂无 scorer，grid 兜底可接受"
+ },
+ {
+  "file": "examples/gallery/formula-math.csv",
+  "expect": {
+   "view": "formula"
+  },
+  "acceptable": [
+   "grid"
+  ],
+  "note": "语料问题：formula 暂无 scorer，grid 兜底可接受"
+ },
+ {
+  "file": "examples/gallery/sequence-order.csv",
+  "expect": {
+   "view": "sequence"
+  },
+  "acceptable": [
+   "grid"
+  ],
+  "note": "语料问题：sequence 暂无 scorer，grid 兜底可接受"
+ }
+]

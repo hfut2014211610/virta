@@ -1,0 +1,860 @@
+{
+ "examples/basic/sample.csv": {
+  "top1": "pie",
+  "top3": [
+   "pie",
+   "bar",
+   "pie3d"
+  ]
+ },
+ "examples/basic/sample.json": {
+  "top1": "pie",
+  "top3": [
+   "pie",
+   "bar",
+   "pie3d"
+  ]
+ },
+ "examples/basic/sample.xlsx": {
+  "top1": "pie",
+  "top3": [
+   "pie",
+   "bar",
+   "pie3d"
+  ]
+ },
+ "examples/basic/sample-wide.csv": {
+  "top1": "bar",
+  "top3": [
+   "bar",
+   "radar",
+   "scatter3d"
+  ]
+ },
+ "examples/basic/sample-multi.csv": {
+  "top1": "bar",
+  "top3": [
+   "bar",
+   "pie3d",
+   "line3d"
+  ]
+ },
+ "examples/basic/sample-mixed.csv": {
+  "top1": "bar",
+  "top3": [
+   "bar",
+   "pie3d",
+   "line3d"
+  ]
+ },
+ "examples/basic/sample-negative.csv": {
+  "top1": "bar",
+  "top3": [
+   "bar",
+   "pie3d",
+   "line3d"
+  ]
+ },
+ "examples/basic/sample-waterfall.csv": {
+  "top1": "bar",
+  "top3": [
+   "bar",
+   "pie3d",
+   "line3d"
+  ]
+ },
+ "examples/basic/sample-line.csv": {
+  "top1": "line",
+  "top3": [
+   "line",
+   "bar",
+   "radar"
+  ]
+ },
+ "examples/basic/sample-line3d.csv": {
+  "top1": "line",
+  "top3": [
+   "line",
+   "bar",
+   "radar"
+  ]
+ },
+ "examples/basic/sample-boxplot.csv": {
+  "top1": "boxplot",
+  "top3": [
+   "boxplot",
+   "histogram",
+   "rank"
+  ]
+ },
+ "examples/basic/sample-boxplot-summary.csv": {
+  "top1": "boxplot",
+  "top3": [
+   "boxplot",
+   "bar",
+   "radar"
+  ]
+ },
+ "examples/basic/sample-bullet.csv": {
+  "top1": "bullet",
+  "top3": [
+   "bullet",
+   "radar",
+   "bar"
+  ]
+ },
+ "examples/basic/sample-fishbone.csv": {
+  "top1": "fishbone",
+  "top3": [
+   "fishbone"
+  ]
+ },
+ "examples/basic/sample-funnel.csv": {
+  "top1": "funnel",
+  "top3": [
+   "funnel",
+   "pie",
+   "bar"
+  ]
+ },
+ "examples/basic/sample-gantt.csv": {
+  "top1": "gantt",
+  "top3": [
+   "gantt",
+   "grid",
+   "bar"
+  ]
+ },
+ "examples/basic/sample-grid.csv": {
+  "top1": "grid",
+  "top3": [
+   "grid",
+   "bar",
+   "pie3d"
+  ]
+ },
+ "examples/basic/sample-heatmap.csv": {
+  "top1": "heatmap",
+  "top3": [
+   "heatmap",
+   "bar",
+   "pie3d"
+  ]
+ },
+ "examples/basic/sample-heatmap-year.csv": {
+  "top1": "heatmap",
+  "top3": [
+   "heatmap",
+   "line",
+   "histogram"
+  ]
+ },
+ "examples/basic/sample-pie3d.csv": {
+  "top1": "bar",
+  "top3": [
+   "bar",
+   "pie3d",
+   "line3d"
+  ]
+ },
+ "examples/basic/sample-pie3d-1d.csv": {
+  "top1": "pie",
+  "top3": [
+   "pie",
+   "bar",
+   "pie3d"
+  ]
+ },
+ "examples/basic/sample-radar.csv": {
+  "top1": "radar",
+  "top3": [
+   "radar",
+   "bar",
+   "scatter3d"
+  ]
+ },
+ "examples/basic/sample-sankey.csv": {
+  "top1": "sankey",
+  "top3": [
+   "sankey",
+   "network",
+   "bar"
+  ]
+ },
+ "examples/basic/sample-scatter.csv": {
+  "top1": "scatter",
+  "top3": [
+   "scatter",
+   "bar",
+   "scatter3d"
+  ]
+ },
+ "examples/basic/sample-scatter3d.csv": {
+  "top1": "scatter",
+  "top3": [
+   "scatter",
+   "bar",
+   "scatter3d"
+  ]
+ },
+ "examples/basic/sample-sunburst.csv": {
+  "top1": "sunburst",
+  "top3": [
+   "sunburst",
+   "treemap",
+   "grid"
+  ]
+ },
+ "examples/basic/sample-treemap.csv": {
+  "top1": "treemap",
+  "top3": [
+   "treemap",
+   "sunburst",
+   "bar"
+  ]
+ },
+ "examples/basic/sample-treemap-1d.csv": {
+  "top1": "pie",
+  "top3": [
+   "pie",
+   "bar",
+   "pie3d"
+  ]
+ },
+ "examples/basic/sample-combo.csv": {
+  "top1": "combo",
+  "top3": [
+   "combo",
+   "line",
+   "bar"
+  ]
+ },
+ "examples/basic/sample-rank.csv": {
+  "top1": "rank",
+  "top3": [
+   "rank",
+   "bar",
+   "pie3d"
+  ]
+ },
+ "examples/basic/sample-rank-race.csv": {
+  "top1": "rank",
+  "top3": [
+   "rank",
+   "line",
+   "histogram"
+  ]
+ },
+ "examples/basic/sample-histogram.csv": {
+  "top1": "histogram",
+  "top3": [
+   "histogram"
+  ]
+ },
+ "examples/basic/sample-histogram-group.csv": {
+  "top1": "boxplot",
+  "top3": [
+   "boxplot",
+   "histogram",
+   "rank"
+  ]
+ },
+ "examples/basic/sample-kpi.csv": {
+  "top1": "kpi",
+  "top3": [
+   "kpi",
+   "bullet",
+   "radar"
+  ]
+ },
+ "examples/basic/sample-compare.csv": {
+  "top1": "compare",
+  "top3": [
+   "compare",
+   "bar",
+   "radar"
+  ]
+ },
+ "examples/basic/sample-cohort.csv": {
+  "top1": "cohort",
+  "top3": [
+   "cohort",
+   "boxplot",
+   "combo"
+  ]
+ },
+ "examples/basic/sample-tree.csv": {
+  "top1": "tree",
+  "top3": [
+   "tree",
+   "grid",
+   "bar"
+  ]
+ },
+ "examples/basic/sample-network.csv": {
+  "top1": "network",
+  "top3": [
+   "network",
+   "sankey",
+   "bar"
+  ]
+ },
+ "examples/basic/sample-control.csv": {
+  "top1": "control",
+  "top3": [
+   "control",
+   "combo",
+   "line"
+  ]
+ },
+ "examples/basic/sample-parallel.csv": {
+  "top1": "parallel",
+  "top3": [
+   "parallel",
+   "scatter",
+   "bar"
+  ]
+ },
+ "examples/basic/sample-tree-levels.csv": {
+  "top1": "sunburst",
+  "top3": [
+   "sunburst",
+   "treemap",
+   "grid"
+  ]
+ },
+ "examples/basic/showcase-pie.csv": {
+  "top1": "pie",
+  "top3": [
+   "pie",
+   "bar",
+   "pie3d"
+  ]
+ },
+ "examples/basic/showcase-sankey.csv": {
+  "top1": "sankey",
+  "top3": [
+   "sankey",
+   "network",
+   "bar"
+  ]
+ },
+ "examples/basic/showcase-network.csv": {
+  "top1": "network",
+  "top3": [
+   "network",
+   "treemap",
+   "sunburst"
+  ]
+ },
+ "examples/basic/showcase-tree.csv": {
+  "top1": "tree",
+  "top3": [
+   "tree",
+   "grid",
+   "bar"
+  ]
+ },
+ "examples/gallery/bar-grouped.csv": {
+  "top1": "bar",
+  "top3": [
+   "bar",
+   "pie3d",
+   "line3d"
+  ]
+ },
+ "examples/gallery/bar-pareto.csv": {
+  "top1": "bar",
+  "top3": [
+   "bar",
+   "pie3d",
+   "line3d"
+  ]
+ },
+ "examples/gallery/bar-single.csv": {
+  "top1": "line",
+  "top3": [
+   "line",
+   "pie",
+   "bar"
+  ]
+ },
+ "examples/gallery/bar-waterfall.csv": {
+  "top1": "bar",
+  "top3": [
+   "bar",
+   "pie3d",
+   "line3d"
+  ]
+ },
+ "examples/gallery/combo-dual.csv": {
+  "top1": "combo",
+  "top3": [
+   "combo",
+   "line",
+   "bar"
+  ]
+ },
+ "examples/gallery/compare-dumbbell.csv": {
+  "top1": "compare",
+  "top3": [
+   "compare",
+   "bar",
+   "radar"
+  ]
+ },
+ "examples/gallery/compare-slope.csv": {
+  "top1": "compare",
+  "top3": [
+   "compare",
+   "bar",
+   "radar"
+  ]
+ },
+ "examples/gallery/gantt-plan.csv": {
+  "top1": "gantt",
+  "top3": [
+   "gantt",
+   "grid",
+   "bar"
+  ]
+ },
+ "examples/gallery/grid-detail.csv": {
+  "top1": "histogram",
+  "top3": [
+   "histogram",
+   "grid",
+   "bar"
+  ]
+ },
+ "examples/gallery/grid-pivot.csv": {
+  "top1": "grid",
+  "top3": [
+   "grid",
+   "bar",
+   "pie3d"
+  ]
+ },
+ "examples/gallery/line-multi.csv": {
+  "top1": "line",
+  "top3": [
+   "line",
+   "bar",
+   "radar"
+  ]
+ },
+ "examples/gallery/line-single.csv": {
+  "top1": "line",
+  "top3": [
+   "line",
+   "bar",
+   "pie3d"
+  ]
+ },
+ "examples/gallery/pie-layers.csv": {
+  "top1": "line",
+  "top3": [
+   "line",
+   "bar",
+   "pie3d"
+  ]
+ },
+ "examples/gallery/pie-single.csv": {
+  "top1": "pie",
+  "top3": [
+   "pie",
+   "bar",
+   "pie3d"
+  ]
+ },
+ "examples/gallery/sunburst.csv": {
+  "top1": "sunburst",
+  "top3": [
+   "sunburst",
+   "treemap",
+   "grid"
+  ]
+ },
+ "examples/gallery/burndown-sprint.csv": {
+  "top1": "rank",
+  "top3": [
+   "rank",
+   "bar",
+   "pie3d"
+  ]
+ },
+ "examples/gallery/er-schema.csv": {
+  "top1": "grid",
+  "top3": [
+   "grid"
+  ]
+ },
+ "examples/gallery/flowchart-approve.csv": {
+  "top1": "grid",
+  "top3": [
+   "grid"
+  ]
+ },
+ "examples/gallery/formula-math.csv": {
+  "top1": "grid",
+  "top3": [
+   "grid"
+  ]
+ },
+ "examples/gallery/sequence-order.csv": {
+  "top1": "grid",
+  "top3": [
+   "grid"
+  ]
+ },
+ "examples\\packs\\delivery\\plan.csv": {
+  "top1": "gantt",
+  "top3": [
+   "gantt",
+   "grid",
+   "bar"
+  ]
+ },
+ "examples\\packs\\delivery\\deadline.csv": {
+  "top1": "gantt",
+  "top3": [
+   "gantt",
+   "grid",
+   "bar"
+  ]
+ },
+ "examples\\packs\\delivery\\burndown.csv": {
+  "top1": "line",
+  "top3": [
+   "line",
+   "compare",
+   "bar"
+  ]
+ },
+ "examples\\packs\\delivery\\bug_flow.csv": {
+  "top1": "network",
+  "top3": [
+   "network",
+   "treemap",
+   "sunburst"
+  ]
+ },
+ "examples\\packs\\delivery\\effort_tree.csv": {
+  "top1": "sunburst",
+  "top3": [
+   "sunburst",
+   "treemap",
+   "grid"
+  ]
+ },
+ "examples\\packs\\delivery\\req_funnel.csv": {
+  "top1": "funnel",
+  "top3": [
+   "funnel",
+   "pie",
+   "bar"
+  ]
+ },
+ "examples\\packs\\delivery\\team_skill.csv": {
+  "top1": "radar",
+  "top3": [
+   "radar",
+   "bar",
+   "scatter3d"
+  ]
+ },
+ "examples\\packs\\delivery\\service_deps.csv": {
+  "top1": "network",
+  "top3": [
+   "network",
+   "scatter",
+   "bar"
+  ]
+ },
+ "examples\\packs\\delivery\\org.csv": {
+  "top1": "tree",
+  "top3": [
+   "tree",
+   "grid",
+   "bar"
+  ]
+ },
+ "examples\\packs\\delivery\\defect_density.csv": {
+  "top1": "scatter",
+  "top3": [
+   "scatter",
+   "bar",
+   "scatter3d"
+  ]
+ },
+ "examples\\packs\\finance\\budget_vs_actual.csv": {
+  "top1": "bullet",
+  "top3": [
+   "bullet",
+   "scatter",
+   "bar"
+  ]
+ },
+ "examples\\packs\\finance\\profit_bridge.csv": {
+  "top1": "bar",
+  "top3": [
+   "bar",
+   "pie3d",
+   "line3d"
+  ]
+ },
+ "examples\\packs\\finance\\expense_tree.csv": {
+  "top1": "sunburst",
+  "top3": [
+   "sunburst",
+   "treemap",
+   "grid"
+  ]
+ },
+ "examples\\packs\\finance\\ledger.csv": {
+  "top1": "grid",
+  "top3": [
+   "grid",
+   "bar",
+   "pie3d"
+  ]
+ },
+ "examples\\packs\\finance\\revenue_margin.csv": {
+  "top1": "combo",
+  "top3": [
+   "combo",
+   "line",
+   "bar"
+  ]
+ },
+ "examples\\packs\\finance\\cashflow_daily.csv": {
+  "top1": "heatmap",
+  "top3": [
+   "heatmap",
+   "line",
+   "histogram"
+  ]
+ },
+ "examples\\packs\\quality\\defects.csv": {
+  "top1": "bar",
+  "top3": [
+   "bar",
+   "pie3d",
+   "line3d"
+  ]
+ },
+ "examples\\packs\\quality\\fishbone.csv": {
+  "top1": "fishbone",
+  "top3": [
+   "fishbone"
+  ]
+ },
+ "examples\\packs\\quality\\daily_defect_rate.csv": {
+  "top1": "control",
+  "top3": [
+   "control",
+   "heatmap",
+   "bar"
+  ]
+ },
+ "examples\\packs\\quality\\line_shift_heat.csv": {
+  "top1": "heatmap",
+  "top3": [
+   "heatmap",
+   "scatter",
+   "bar"
+  ]
+ },
+ "examples\\packs\\quality\\process_times.csv": {
+  "top1": "boxplot",
+  "top3": [
+   "boxplot",
+   "histogram",
+   "rank"
+  ]
+ },
+ "examples\\packs\\quality\\yield_kpi.csv": {
+  "top1": "bullet",
+  "top3": [
+   "bullet",
+   "bar",
+   "radar"
+  ]
+ },
+ "examples\\packs\\quality\\line_month_output.csv": {
+  "top1": "rank",
+  "top3": [
+   "rank",
+   "histogram",
+   "bar"
+  ]
+ },
+ "examples\\packs\\quality\\sensor_batches.csv": {
+  "top1": "parallel",
+  "top3": [
+   "parallel",
+   "scatter",
+   "bar"
+  ]
+ },
+ "examples\\packs\\retail\\monthly_sales.csv": {
+  "top1": "line",
+  "top3": [
+   "line",
+   "bar",
+   "pie3d"
+  ]
+ },
+ "examples\\packs\\retail\\category_tree.csv": {
+  "top1": "sunburst",
+  "top3": [
+   "sunburst",
+   "treemap",
+   "grid"
+  ]
+ },
+ "examples\\packs\\retail\\funnel_jul_aug.csv": {
+  "top1": "funnel",
+  "top3": [
+   "funnel",
+   "bar",
+   "pie3d"
+  ]
+ },
+ "examples\\packs\\retail\\traffic_paths.csv": {
+  "top1": "sankey",
+  "top3": [
+   "sankey",
+   "network",
+   "bar"
+  ]
+ },
+ "examples\\packs\\retail\\store_hours.csv": {
+  "top1": "heatmap",
+  "top3": [
+   "heatmap",
+   "bar",
+   "pie3d"
+  ]
+ },
+ "examples\\packs\\retail\\profit_bridge.csv": {
+  "top1": "bar",
+  "top3": [
+   "bar",
+   "pie3d",
+   "line3d"
+  ]
+ },
+ "examples\\packs\\retail\\kpi.csv": {
+  "top1": "bullet",
+  "top3": [
+   "bullet",
+   "radar",
+   "bar"
+  ]
+ },
+ "examples\\packs\\retail\\price_volume.csv": {
+  "top1": "scatter",
+  "top3": [
+   "scatter",
+   "bar",
+   "scatter3d"
+  ]
+ },
+ "examples\\packs\\retail\\order_values.csv": {
+  "top1": "boxplot",
+  "top3": [
+   "boxplot",
+   "histogram",
+   "rank"
+  ]
+ },
+ "examples\\packs\\retail\\city_rank_monthly.csv": {
+  "top1": "rank",
+  "top3": [
+   "rank",
+   "line",
+   "histogram"
+  ]
+ },
+ "examples\\packs\\retail\\channel_yoy.csv": {
+  "top1": "compare",
+  "top3": [
+   "compare",
+   "scatter",
+   "bar"
+  ]
+ },
+ "examples\\packs\\saas\\dau_daily.csv": {
+  "top1": "heatmap",
+  "top3": [
+   "heatmap",
+   "line",
+   "histogram"
+  ]
+ },
+ "examples\\packs\\saas\\cohort_retention.csv": {
+  "top1": "cohort",
+  "top3": [
+   "cohort",
+   "boxplot",
+   "combo"
+  ]
+ },
+ "examples\\packs\\saas\\feature_usage.csv": {
+  "top1": "radar",
+  "top3": [
+   "radar",
+   "bar",
+   "scatter3d"
+  ]
+ },
+ "examples\\packs\\saas\\onboarding_paths.csv": {
+  "top1": "sankey",
+  "top3": [
+   "sankey",
+   "network",
+   "bar"
+  ]
+ },
+ "examples\\packs\\saas\\arr_bridge.csv": {
+  "top1": "bar",
+  "top3": [
+   "bar",
+   "pie3d",
+   "line3d"
+  ]
+ },
+ "examples\\packs\\saas\\channel_unit_econ.csv": {
+  "top1": "scatter",
+  "top3": [
+   "scatter",
+   "bar",
+   "scatter3d"
+  ]
+ },
+ "examples\\packs\\saas\\nps_scores.csv": {
+  "top1": "boxplot",
+  "top3": [
+   "boxplot",
+   "histogram",
+   "rank"
+  ]
+ },
+ "examples\\packs\\saas\\roadmap.csv": {
+  "top1": "gantt",
+  "top3": [
+   "gantt",
+   "grid",
+   "bar"
+  ]
+ },
+ "examples\\packs\\saas\\plans_compare.csv": {
+  "top1": "compare",
+  "top3": [
+   "compare",
+   "bar",
+   "radar"
+  ]
+ }
+}

@@ -30,7 +30,7 @@ const EXPECT: Record<string, { view: string; variant?: string; mode?: string }> 
   'sample-grid.csv': { view: 'grid', variant: 'pivot' },
   'sample-heatmap.csv': { view: 'heatmap', mode: 'matrix' },
   'sample-heatmap-year.csv': { view: 'heatmap', mode: 'calendar' },
-  'sample-pie3d.csv': { view: 'pie' },
+  'sample-pie3d.csv': { view: 'bar' },
   'sample-pie3d-1d.csv': { view: 'pie' },
   'sample-radar.csv': { view: 'radar' },
   'sample-sankey.csv': { view: 'sankey' },
@@ -42,11 +42,11 @@ const EXPECT: Record<string, { view: string; variant?: string; mode?: string }> 
   // T1（M6）：百分比+度量 → combo；类目×时间 → rank race；单度量长表 → histogram；
   // 分组分布 boxplot 优先；指标+目标 bullet 优先于 kpi 卡
   'sample-combo.csv': { view: 'combo' },
-  'sample-rank.csv': { view: 'bar' },
+  'sample-rank.csv': { view: 'rank' },
   'sample-rank-race.csv': { view: 'rank', variant: 'race' },
   'sample-histogram.csv': { view: 'histogram' },
   'sample-histogram-group.csv': { view: 'boxplot' },
-  'sample-kpi.csv': { view: 'bullet' },
+  'sample-kpi.csv': { view: 'kpi' },
   'sample-compare.csv': { view: 'compare' },
   'sample-cohort.csv': { view: 'cohort' },
   // T2（M7）：id+parent → tree；有环流网络 → network；date+value+n → control；
@@ -56,7 +56,7 @@ const EXPECT: Record<string, { view: string; variant?: string; mode?: string }> 
   'sample-control.csv': { view: 'control' },
   'sample-parallel.csv': { view: 'parallel' },
   'sample-tree-levels.csv': { view: 'sunburst' },
-  'showcase-pie.csv': { view: 'bar' },
+  'showcase-pie.csv': { view: 'pie' },
   'showcase-sankey.csv': { view: 'sankey' },
   'showcase-network.csv': { view: 'network' },
   'showcase-tree.csv': { view: 'tree' },

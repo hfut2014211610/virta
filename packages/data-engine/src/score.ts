@@ -6,7 +6,7 @@ import { parseNumber } from './legacy-core.js';
 import {
   normKey,
   LABEL_ALIASES, VALUE_ALIAS, SERIES_ALIAS, TYPE_ALIAS, ABS_TOKENS, DELTA_TOKENS,
-  ACTUAL_ALIAS, TARGET_ALIAS, SIZE_ALIAS,
+  ACTUAL_ALIAS, TARGET_ALIAS, SIZE_ALIAS, POOR_ALIAS, GOOD_ALIAS, MAX_ALIAS,
   SANKEY_SOURCE_ALIAS, SANKEY_TARGET_ALIAS,
   BOX_Q1_ALIAS, BOX_MED_ALIAS, BOX_Q3_ALIAS, BOX_MIN_ALIAS, BOX_MAX_ALIAS,
   GANTT_TASK_ALIAS, GANTT_START_ALIAS, GANTT_END_ALIAS, GANTT_DUR_ALIAS,
@@ -49,8 +49,9 @@ const sReport: Scorer = (_p, t) =>
 const sTree: Scorer = (p) => {
   const id = p.columns.find((c) => ['id', '编号', 'code'].includes(normKey(c.name)));
   const parent = p.columns.find((c) => ['parent', 'pid', '父', '父级', '上级', 'parentid'].includes(normKey(c.name)));
-  return id && parent
-    ? { score: 0.95, reason: '检测到 id + parent 列', mapping: { id: id.name, parent: parent.name }, missingRoles: [] } : no();
+  if (id && parent)
+    return { score: 0.95, reason: '检测到 id + parent 列', mapping: { id: id.name, parent: parent.name }, missingRoles: [] };
+  return no();
 };
 
 const sGantt: Scorer = (p) => {
@@ -269,8 +270,9 @@ const sRank: Scorer = (p) => {
     }
     return no();
   }
-  // 静态：标签命中系列别名会让位多系列图，不抢
-  return ds.length === 1 && !hit(p, SERIES_ALIAS)
+  // 静态：另有独立系列列才让位多系列图；标签本身撞系列别名（城市/渠道）不算（B16）
+  const sHit = hit(p, SERIES_ALIAS);
+  return ds.length === 1 && (!sHit || sHit.name === l.name)
     ? { score: 0.65, reason: '标签 + 单度量 ≥12 行', mapping: { label: l.name, value: ms[0].name }, missingRoles: [] } : no();
 };
 
@@ -361,9 +363,13 @@ const sRadar: Scorer = (p) => {
 const KPI_LABEL_NAMES = ['指标', 'kpi', 'metric', '指标名', '指标名称', '度量', '度量名', '度量值'];
 const sKpi: Scorer = (p) => {
   const l = labelCol(p), v = measureCols(p)[0];
-  // 仅当标签列名像"指标"（否则小表会抢 pie/bar 的类目数据）
-  return l && v && p.rows <= 8 && KPI_LABEL_NAMES.includes(normKey(l.name))
-    ? { score: 0.6, reason: '≤8 行指标名 + 值', mapping: { metric: l.name, value: v.name }, missingRoles: [] } : no();
+  // 仅当标签列名像"指标"（否则小表会抢 pie/bar 的类目数据）；
+  // 指标名 + 实际/目标 = KPI 卡签名场景，压过 bullet（B16）
+  const hasAT = hit(p, ACTUAL_ALIAS) !== null && hit(p, SCORE_TARGET_ALIAS) !== null;
+  // 有较差线/良好线/量程列时是 bullet 场景（阈值区间是它的签名），KPI 不抢（B16）
+  const hasRanges = hit(p, POOR_ALIAS) !== null || hit(p, GOOD_ALIAS) !== null || hit(p, MAX_ALIAS) !== null;
+  return l && v && p.rows <= 8 && KPI_LABEL_NAMES.includes(normKey(l.name)) && !hasRanges
+    ? { score: hasAT ? 0.95 : 0.6, reason: hasAT ? '指标名 + 实际/目标 → KPI 卡' : '≤8 行指标名 + 值', mapping: { metric: l.name, value: v.name }, missingRoles: [] } : no();
 };
 
 const sParallel: Scorer = (p) =>
@@ -372,9 +378,10 @@ const sParallel: Scorer = (p) =>
 
 const sPie: Scorer = (p, t) => {
   const l = labelCol(p), v = measureCols(p)[0];
-  if (!l || !v || l.distinct > 8 || measureCols(p).length > 1 || hit(p, SERIES_ALIAS)) return no();
+  // 多维退出（pie 只有一个维度角色）；标签本身撞系列别名不算（B16 showcase-pie）
+  if (!l || !v || l.distinct > 8 || measureCols(p).length > 1 || dimCols(p).length > 1) return no();
   const neg = t.rows.some((r) => parseNumber(r[v.name])[0] < 0);
-  return neg ? no() : { score: 0.55, reason: `1 个维度（${l.distinct} 值 ≤8）+ 非负度量`, mapping: { label: l.name, value: v.name }, missingRoles: [] };
+  return neg ? no() : { score: 0.65, reason: `1 个维度（${l.distinct} 值 ≤8）+ 非负度量`, mapping: { label: l.name, value: v.name }, missingRoles: [] };
 };
 
 const s3d = (view: 'scatter3d' | 'pie3d' | 'line3d' | 'matrix3d'): Scorer => (p) => {

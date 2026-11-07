@@ -21,7 +21,8 @@
     "golden:dump": "python scripts/golden/dump_legacy.py",
     "gallery": "npm run virta -- gallery",
     "virta": "tsx packages/cli/src/main.ts",
-    "qa": "tsx scripts/qa/matrix.ts"
+    "qa": "tsx scripts/qa/matrix.ts",
+    "recommend:baseline": "tsx scripts/recommend-baseline.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",
