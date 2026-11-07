@@ -745,3 +745,11 @@
 - SKILL.md 顶部新增「安装与调用」：全局命令/doctor/@samples/demo/Windows 引号（--spec 文件）/skill install。
 - T1 锚点清零：smoke.test.ts 无 it.fails（25/25 通过）。
 - DoD：仓库外 dist/cli.js doctor 6 项全 ok；skill install 产出带 front matter 的 SKILL.md。
+
+## M2c.3 文档与法务（2026-11-07，完成）
+
+- README 重写为面向使用者：安装（Release tarball + doctor）/ 5 分钟上手 / Agent 接入 /
+  图表目录（35 视图）/ 排障 / 升级卸载；开发内容移 CONTRIBUTING.md；截图 docs/img/readme-hero.png（dist CLI 自渲）。
+- `test/docs/readme.test.ts`：视图 ID 集合 = VIEW_IDS；`<!--readme-smoke-->` 块内命令逐条
+  在 dist/cli.js + 临时 cwd 执行（未构建跳过，timeout 180s——8 条命令超默认 5s）。
+- 坑：README 示例命令要保持 shell 无关（无 heredoc/内联 JSON），Windows cmd 可跑。
