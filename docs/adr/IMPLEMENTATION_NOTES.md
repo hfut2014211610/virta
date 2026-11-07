@@ -687,3 +687,19 @@
   - runtime_check：77 页 0 flagged（无 console/pageerror/请求失败/空 DOM）；
   - check_svg：0 findings（路径语法/NaN 文本全干净）。
 - packs:check 登记 7 个 M2b.0 XSS 语料进生成器后确定性通过（80 files）。
+
+## M2c.0 复现锚点（2026-11-07，完成）
+
+- 新增 `vitest.dist.config.ts` + `npm run test:dist`（include test/dist/**；主套件排除该目录；前置 `npm run build`）。
+- `test/dist/smoke.test.ts`（T1 骨架）：`npm pack`（`--dry-run --json` 取清单避免依赖 tar）→
+  仓库外 `mkdtemp` 安装 → 走 `node_modules/.bin/virta(.cmd)` 以临时目录为 cwd 跑命令。
+  19 个 it.fails 锚点全部按预期复现：R1 双 shebang（SyntaxError）、R5 `npm install <tgz>`
+  E404 `@virta/chart-core@0.0.0`、R2/R3 cwd 资源引用、R4/R6 未实现的 dist 能力。
+  E9 体积预算当前已满足（272KB/解压 1.1MB），作普通断言守门。
+- `test/dist/static.test.ts`（T3 骨架）：cwd 相对资源引用、静态 esbuild import、
+  `resolveDir: process.cwd()`、main.ts shebang 4 项当前违规，it.fails 锚定。
+- `test/security/no-leak.test.ts`（§0.4 入库通用检查）：已跟踪文本文件无本机绝对路径
+  （盘符、`/Users/<name>`、`/home/<name>`；`…` 等描述性占位不误伤）+ 无非 noreply 邮箱
+  （example.* 等保留域名除外）+ `git log` 全部作者/提交者邮箱为 noreply。
+- 坑：`.gitignore` 的 `dist/` 通配任意层级，已加 `!/test/dist/` 例外，否则 test/dist 不入库。
+- DoD：`npm run test:dist` 2 passed + 19 expected-fail；no-leak 3/3；typecheck + npm test 348 全绿。

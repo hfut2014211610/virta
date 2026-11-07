@@ -9,6 +9,6 @@ export default defineConfig({
       "packages/*/test/**/*.test.ts",
       "test/**/*.test.ts",
     ],
-    exclude: ["test/e2e/**", "test/perf/**", "**/node_modules/**"],
+    exclude: ["test/e2e/**", "test/perf/**", "test/dist/**", "**/node_modules/**"],
   },
 });

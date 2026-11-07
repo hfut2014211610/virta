@@ -17,3 +17,6 @@ test-results/
 /nul
 test/perf/.out/
 .tmp/
+
+# dist 冒烟测试不属构建产物
+!/test/dist/

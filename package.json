@@ -16,6 +16,7 @@
     "test:visual": "playwright test",
     "test:visual:update": "playwright test --update-snapshots",
     "test:perf": "vitest run --config vitest.perf.config.ts",
+    "test:dist": "vitest run --config vitest.dist.config.ts",
     "packs:gen": "tsx scripts/packs/generate.ts",
     "packs:check": "tsx scripts/packs/check.ts",
     "golden:dump": "python scripts/golden/dump_legacy.py",
