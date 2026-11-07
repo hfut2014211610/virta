@@ -55,9 +55,10 @@ function fontFallbackOk(fontFiles: string[]): boolean {
 }
 
 const runtimeCache = new Map<string, string>();
-const VIEW_MAP = JSON.parse(readFileSync(join('packages/viewer/view-map.json'), 'utf8')) as Record<string, { charts: string; renderer: string; adapter: string; toModel: string; toModelCurve?: string }>;
+const VIEW_MAP = JSON.parse(readFileSync(join('packages/viewer/view-map.json'), 'utf8')) as Record<string, { charts: string; renderer: string; adapter: string; toModel: string; toModelCurve?: string; post?: string }>;
 
-/** per-view 入口源码：与 scripts/build.mjs 同款，只打包本视图 renderer+toModel。 */
+/** per-view 入口源码：与 scripts/build.mjs 同款，只打包本视图 renderer+toModel(+post)。
+ *  ADR-0012：adapt 走统一管线 runPipeline（派生列/映射/缺失值/后处理与 CLI 同一条路径）。 */
 function viewEntrySource(view: string): string {
   const m = VIEW_MAP[view];
   if (!m) fail('UNKNOWN_VIEW', `view-map 缺少 ${view}`);
@@ -65,12 +66,13 @@ function viewEntrySource(view: string): string {
   return `import { boot } from './packages/viewer/src/runtime.js';
 import { ${m.renderer} } from './packages/charts/src/${m.charts}.js';
 import { ${[m.toModel, m.toModelCurve].filter(Boolean).join(', ')} } from './packages/data-engine/src/${m.adapter}.js';
-import { facetLayout, facetGroups, FACETABLE } from './packages/viewer/src/facet.js';
+${isDoc ? '' : `import { runPipeline } from './packages/data-engine/src/pipeline.js';
+${m.post ? `import { ${m.post} } from './packages/data-engine/src/families/post.js';` : ''}`}
 const deps = {
   renderer: ${m.renderer},
   ${isDoc
     ? `buildDoc: (text, name) => ${m.toModel}(text, name),`
-    : `adapt: (t, s) => { const raw = t.passthrough?.kind === 'echarts' ? { __echarts: t.passthrough.data } : t.rows; if (s?.mapping && Array.isArray(raw)) for (const [r, c] of Object.entries(s.mapping)) { if (typeof c === 'string' && c !== r) for (const row of raw) { if (row[r] === undefined && row[c] !== undefined) row[r] = row[c]; } } return ${m.toModelCurve ? `(s?.variant === 'curve' ? ${m.toModelCurve} : ${m.toModel})` : m.toModel}(raw); },`}
+    : `adapt: (t, s) => runPipeline(t, s, ${JSON.stringify(view)}, (raw) => ${m.toModelCurve ? `(s?.variant === 'curve' ? ${m.toModelCurve} : ${m.toModel})` : m.toModel}(raw)${m.post ? `, ${m.post}` : ''}).model,`}
 };
 boot(window.__VIRTA__, deps);
 `;

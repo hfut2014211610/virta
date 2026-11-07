@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { build } from 'esbuild';
 import type { PaletteId, Table, Theme, ViewId, ViewSpec } from '@virta/contracts';
 import { getContract, THEME_IDS } from '@virta/contracts';
-import { ADAPTERS, adaptInput, rawToTable } from '@virta/data-engine';
+import { ADAPTERS, adaptInput, rawToTable, resolveTime } from '@virta/data-engine';
 import { readInput } from '@virta/data-engine/node';
 import { getRenderer } from '@virta/charts';
 import { g, scene as mkScene, toSVG, type Node } from '@virta/chart-core';
@@ -33,20 +33,26 @@ export interface ComposeJob {
   exactName?: boolean;
 }
 
-const VIEW_MAP = JSON.parse(readFileSync(join('packages/viewer/view-map.json'), 'utf8')) as Record<string, { charts: string; renderer: string; adapter: string; toModel: string }>;
+const VIEW_MAP = JSON.parse(readFileSync(join('packages/viewer/view-map.json'), 'utf8')) as Record<string, { charts: string; renderer: string; adapter: string; toModel: string; toModelCurve?: string; post?: string }>;
 
-/** compose 运行期入口：runtime-compose + 用到的视图集合。 */
+/** compose 运行期入口：runtime-compose + 用到的视图集合。
+ *  ADR-0012：面板 adapt 走统一管线 runPipeline（映射/派生/缺失值与 CLI 同一条路径）。 */
 function composeEntrySource(views: string[]): string {
   const uniq = [...new Set(views)];
   const imps = uniq.map((v, i) => {
     const m = VIEW_MAP[v];
     if (!m) fail('UNKNOWN_VIEW', `view-map 缺少 ${v}`);
     return `import { ${m.renderer} as R${i} } from './packages/charts/src/${m.charts}.js';
-import { ${m.toModel} as A${i} } from './packages/data-engine/src/${m.adapter}.js';`;
+import { ${m.toModel} as A${i}${m.toModelCurve ? `, ${m.toModelCurve} as C${i}` : ''} } from './packages/data-engine/src/${m.adapter}.js';${m.post ? `
+import { ${m.post} as P${i} } from './packages/data-engine/src/families/post.js';` : ''}`;
   }).join('\n');
-  const map = uniq.map((v, i) => `${JSON.stringify(v)}:{renderer:R${i},flow:${getContract(v as never)?.flow === true},adapt:(i:{table?:{passthrough?:{kind:string;data:unknown};rows:unknown};doc?:string})=>i.doc!==undefined?A${i}(i.doc,'doc'):A${i}(i.table!.passthrough?.kind==='echarts'?{__echarts:i.table!.passthrough.data}:i.table!.rows)}`
-  ).join(',');
+  const map = uniq.map((v, i) => {
+    const m = VIEW_MAP[v]!;
+    const tm = m.toModelCurve ? `(s?.variant === 'curve' ? C${i} : A${i})` : `A${i}`;
+    return `${JSON.stringify(v)}:{renderer:R${i},flow:${getContract(v as never)?.flow === true},adapt:(i,s)=>i.doc!==undefined?A${i}(i.doc,'doc'):runPipeline(i.table,s,${JSON.stringify(v)},(raw)=>${tm}(raw)${m.post ? `,P${i}` : ''}).model}`;
+  }).join(',');
   return `import { bootCompose } from './packages/viewer/src/runtime-compose.js';
+import { runPipeline } from './packages/data-engine/src/pipeline.js';
 ${imps}
 const views = {${map}};
 bootCompose(window.__VIRTA__, views);
@@ -84,11 +90,22 @@ export interface ComposeFileShape {
   title?: string; layout?: 'grid' | 'story';
   theme?: Theme; palette?: PaletteId;
   size?: { width?: number; height?: number };
+  /** 文件级时间契约（ADR-0012）：面板 spec.time 继承此处；缺省时按 render 方式写回 */
+  time?: ViewSpec['time'];
   panels: ComposePanelDef[];
   links?: { column: string }[];
 }
 
-export async function runCompose(job: ComposeJob): Promise<{ files: { format: string; path: string; bytes: number }[]; payload: ComposePayload; panels: number; panelResults: { id: string; rendered: boolean; error?: string }[]; views: string[] }> {
+export interface ComposeResult {
+  files: { format: string; path: string; bytes: number }[];
+  payload: ComposePayload; panels: number;
+  panelResults: { id: string; rendered: boolean; error?: string }[];
+  views: string[];
+  /** 时间写回假设（TZ_ASSUMED/ASOF_ASSUMED）等警告 */
+  warnings: { code: string; level: 'info' | 'warn' | 'error'; message: string }[];
+}
+
+export async function runCompose(job: ComposeJob): Promise<ComposeResult> {
   const cjPath = job.file;
   if (!existsSync(cjPath)) fail('INPUT_NOT_FOUND', `compose.json 不存在：${cjPath}`);
   let cf: ComposeFileShape;
@@ -98,7 +115,7 @@ export async function runCompose(job: ComposeJob): Promise<{ files: { format: st
 }
 
 /** 直接以内存 ComposeFile 运行（demo 等调用方用）；dir 用于解析 pack.json 与数据文件。 */
-export async function runComposeFile(cf: ComposeFileShape, dir: string, job: ComposeJob): Promise<{ files: { format: string; path: string; bytes: number }[]; payload: ComposePayload; panels: number; panelResults: { id: string; rendered: boolean; error?: string }[]; views: string[] }> {
+export async function runComposeFile(cf: ComposeFileShape, dir: string, job: ComposeJob): Promise<ComposeResult> {
   const packPath = join(dir, 'pack.json');
   const pack: PackJson | null = existsSync(packPath) ? JSON.parse(readFileSync(packPath, 'utf8')) as PackJson : null;
   const defs: (ComposePanelDef & { file: string; spec: ViewSpec })[] = [];
@@ -119,6 +136,17 @@ export async function runComposeFile(cf: ComposeFileShape, dir: string, job: Com
   const palette = cf!.palette ?? 'signal';
   const W = cf!.size?.width ?? 1440;
 
+  // ADR-0012：文件级 time 解析一次 → 各面板 spec.time 继承并写回（payload 可复现）；
+  // 缺省时按 render 的方式写回 asOf/tz 并报 TZ_ASSUMED / ASOF_ASSUMED。
+  const rt = resolveTime({ version: 1, view: 'bar', time: cf!.time } as ViewSpec);
+  const warnings: ComposeResult['warnings'] = rt.assumed.map((c) => ({
+    code: c, level: 'info' as const,
+    message: c === 'TZ_ASSUMED' ? `未指定时区，按系统时区 ${rt.tz} 处理` : `未指定 asOf，按当前时刻 ${rt.asOfIso} 处理`,
+  }));
+  const inheritTime = (s: ViewSpec): ViewSpec['time'] => ({
+    ...cf!.time, asOf: cf!.time?.asOf ?? rt.asOfIso, tz: cf!.time?.tz ?? rt.tz, ...s.time,
+  });
+
   // 逐面板：读数 → adaptInput（A7 统一入口）→ 预渲染校验（rendered/error，F5）
   const views: string[] = [];
   const panelData: { id: string; view: ViewId; spec: ViewSpec; table: Table; doc?: string; question?: string; insights: ComposePayload['panels'][0]['insights']; model: unknown; w?: number; h?: number; rendered: boolean; error?: string; flow: boolean }[] = [];
@@ -126,7 +154,7 @@ export async function runComposeFile(cf: ComposeFileShape, dir: string, job: Com
     const fpath = join(dir, d.file);
     if (!existsSync(fpath)) fail('INPUT_NOT_FOUND', `面板 ${i} 数据文件不存在：${fpath}`);
     const loaded = await readInput(fpath);
-    const spec: ViewSpec = { theme, palette, ...d.spec, version: 1 };
+    const spec: ViewSpec = { theme, palette, ...d.spec, version: 1, time: inheritTime(d.spec) };
     const view = spec.view as ViewId;
     if (spec.view as unknown === 'auto') fail('INVALID_SPEC', `面板 ${i} view=auto：compose 需要显式视图`, 'virta inspect 先定视图');
     views.push(view);
@@ -226,8 +254,9 @@ export async function runComposeFile(cf: ComposeFileShape, dir: string, job: Com
       });
       // 首屏每面板 SVG：直接用静态合并场景不可拆分——HTML 里先放占位，浏览器 boot 后立即重渲
       const svgs = panelData.map(() => '');
-      writeFileSync(path, composeHtml({ payload, svgs, runtimeJs: res.outputFiles[0].text, theme }), 'utf8');
-      files.push({ format: 'html', path, bytes: 0 });
+      const html = composeHtml({ payload, svgs, runtimeJs: res.outputFiles[0].text, theme });
+      writeFileSync(path, html, 'utf8');
+      files.push({ format: 'html', path, bytes: Buffer.byteLength(html) });
     }
   }
   return {
@@ -236,6 +265,7 @@ export async function runComposeFile(cf: ComposeFileShape, dir: string, job: Com
     panels: panelData.length,
     panelResults: panelData.map((p) => ({ id: p.id, rendered: p.rendered, error: p.error })),
     views: [...new Set(views)],
+    warnings,
   };
 }
 

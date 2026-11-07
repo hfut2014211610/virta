@@ -1,6 +1,6 @@
 // compose 运行期：多面板联动仪表盘（§5.7 组合页）。
 // links: [{column}] —— 任一面板点击类目 → 同列筛选写入共享 state.filter → 其余面板重新 adapt。
-import { hitTest, toSVG, type Scene } from '@virta/chart-core';
+import { hitTest, toSVG, modelHash, type Scene } from '@virta/chart-core';
 import { applySkin } from '@virta/chart-skin';
 import { THEME_IDS, resolveTheme } from './deps.js';
 import { renderFlowDoc } from './flow-doc.js';
@@ -21,6 +21,8 @@ export interface ComposePanel {
   question?: string;
   insights: { kind: string; text: string; importance: number }[];
   w?: number; h?: number;
+  /** ADR-0012 C4：运行期写回的面板 model 内容指纹（parity 对拍用，不进回执） */
+  modelHash?: string;
 }
 export interface ComposePayload {
   title?: string;
@@ -75,7 +77,7 @@ export function bootCompose(payload: ComposePayload, views: Record<string, Compo
     const isFlow = view.flow === true || isDoc;
     const ft = isDoc ? p.table : filtered(p.table);
     let model: unknown;
-    try { model = view.adapt({ table: ft, doc: p.doc }, p.spec); }
+    try { model = view.adapt({ table: ft, doc: p.doc }, p.spec); p.modelHash = modelHash(model); }
     catch (e) {
       // §4.4：adapt 抛错显示真实错误文案（不是误报「筛选后无数据」）
       box.innerHTML = html`<div class="perr">${(e as Error).message}</div>`;

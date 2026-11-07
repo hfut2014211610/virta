@@ -289,7 +289,7 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
       }
       const receipt = { title: r.payload.title, layout: r.payload.layout, panels: r.panels, panelResults: r.panelResults, views: r.views, links: r.payload.links, files: r.files, summaryMd: `${r.payload.title ?? '组合页'} · ${r.payload.layout} · ${r.panels} 面板 → ${r.files.map((x) => x.format).join('/')}` };
       if (!json) for (const x of r.files) console.log(`✓ 生成 ${x.path}`);
-      out('compose', receipt, json);
+      out('compose', receipt, json, r.warnings as never);
       return 0;
     } catch (e) {
       if (e instanceof CliError) return outErr('compose', e.viz, json);

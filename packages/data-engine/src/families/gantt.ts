@@ -9,9 +9,12 @@ import {
   GANTT_STATUS_ALIAS, GANTT_STATUS_MAP, GANTT_TASK_ALIAS,
 } from '../aliases.js';
 import type { Raw } from './barline.js';
+import { resolveTime } from '../derive.js';
+import type { ViewSpec } from '@virta/contracts';
 
 
-const todayOrdinal = () => Math.floor(Date.now() / 86400000) + 719163;
+// 默认「今天」走 derive.resolveTime（Date.now 只允许存在于此；运行期由 post 钩子用 asOf 覆盖）
+const todayOrdinal = () => Math.floor(resolveTime({ version: 1, view: 'gantt' } as ViewSpec).asOfMs / 86400000) + 719163;
 const isoOf = (od: number) => new Date((od - 719163) * 86400000).toISOString().slice(0, 10);
 const cell = (v: unknown) => (v !== null && v !== undefined && v !== '' ? String(v).trim() : '');
 

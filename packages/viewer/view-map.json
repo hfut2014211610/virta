@@ -81,7 +81,8 @@
     "charts": "b3",
     "renderer": "ganttRenderer",
     "adapter": "families/gantt",
-    "toModel": "toGantt"
+    "toModel": "toGantt",
+    "post": "ganttPost"
   },
   "fishbone": {
     "charts": "b3",

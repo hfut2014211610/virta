@@ -28,11 +28,11 @@ const spec = (view: string, extra: Partial<ViewSpec> = {}): ViewSpec =>
   ({ version: 1, view: view as never, ...extra }) as ViewSpec;
 
 describe('B2 浏览器端 adapt 跳过派生列/missingValue/gantt asOf（M2b.1）', () => {
-  it.fails('per-view 入口必须调用统一管线 runPipeline', () => {
+  it('per-view 入口必须调用统一管线 runPipeline', () => {
     expect(viewEntrySource('grid')).toContain('runPipeline');
     expect(viewEntrySource('gantt')).toContain('runPipeline');
   });
-  it.fails('浏览器管线输出应与 adaptInput 一致：grid 的派生列不消失', async () => {
+  it('浏览器管线输出应与 adaptInput 一致：grid 的派生列不消失', async () => {
     // 管线函数落地前 runPipeline 不存在 → it.fails；落地后比较两条路径
     const { runPipeline } = await import('@virta/data-engine') as never as { runPipeline: Function };
     const t = table(['任务', '当前截止'], [{ 任务: 'a', 当前截止: '2026-11-05' }]);
@@ -43,12 +43,12 @@ describe('B2 浏览器端 adapt 跳过派生列/missingValue/gantt asOf（M2b.1�
     const viaAdapter = (ADAPTERS['grid' as never]!.adapt(t, s) as { model: { rows: Record<string, unknown>[] } }).model;
     const viaPipeline = runPipeline(t, s, 'grid', (raw: unknown) => (ADAPTERS['grid' as never]!.adaptRaw as Function)(raw)) as { model: { rows: Record<string, unknown>[] } };
     expect(viaPipeline.model.rows[0]).toHaveProperty('截止状态');
-    expect(viaPipeline.model.rows[0]).toEqual(viaAdapter.model.rows[0]);
+    expect(viaPipeline.model.rows[0]).toEqual(viaAdapter.rows[0]);
   });
 });
 
 describe('B3 适配不得原地修改输入行（M2b.1）', () => {
-  it.fails('mapping 写入不修改冻结的原行对象', () => {
+  it('mapping 写入不修改冻结的原行对象', () => {
     const t = table(['label', '月份', '数值'], [{ 月份: '1月', 数值: 3 }]);
     Object.freeze(t.rows[0]);
     const s = spec('bar', { mapping: { label: '月份' } });
@@ -176,7 +176,7 @@ describe('B12 flow-table 按原始值排序（M2b.3）', () => {
 });
 
 describe('B13 compose 回执 bytes（M2b.1）', () => {
-  it.fails('html 文件 bytes 等于实际大小', async () => {
+  it('html 文件 bytes 等于实际大小', async () => {
     const { runCompose } = await import('../../packages/cli/src/compose.js');
     const r = await runCompose({ file: 'examples/packs/retail/compose.json', formats: ['html'], out: 'out/repro', scale: 1, fontFiles: [] });
     const f = r.files[0]!;

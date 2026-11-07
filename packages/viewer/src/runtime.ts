@@ -1,6 +1,6 @@
 // viewer 运行期：单文件 HTML 内嵌本模块（esbuild 打成 <view>.js）。
 // 负责：adapt+layout+SVG 渲染、图例开关、tooltip、编辑抽屉、hash 同步、导出。
-import { hitTest, toSVG, type Scene } from '@virta/chart-core';
+import { hitTest, toSVG, modelHash, type Scene } from '@virta/chart-core';
 import { applySkin } from '@virta/chart-skin';
 import { getContract, resolveTheme, PALETTE_IDS } from './deps.js';
 import type { ViewSpec, Table } from '@virta/contracts';
@@ -22,6 +22,8 @@ export interface Payload {
   reason: string;
   counts: Record<string, number>;
   quality: { confidence: string; issues: { level: string; message: string }[]; mapping: Record<string, string | string[]> };
+  /** ADR-0012 C4：运行期在 window.__virta 上暴露的 model 内容指纹（写回，不进回执） */
+  modelHash?: string;
 }
 
 const $ = <T extends HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector(sel) as T;
@@ -92,6 +94,7 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
       ? deps.buildDoc!(payload.doc, payload.spec.text?.title ?? 'doc')
       : deps.adapt!(payload.table, spec);
     lastModel = model;
+    payload.modelHash = modelHash(model);
     const canScroll = renderer?.interactions?.includes('scroll') ?? false;
     const prefH = canScroll ? null : (renderer as { preferredHeight?: (m: unknown, r: { width: number; variant?: string; options?: Record<string, string | number | boolean>; state?: ViewSpec['state'] }) => number | null } | null)
       ?.preferredHeight?.(model, { width, variant: spec.variant, options: spec.options ?? {}, state: spec.state });
@@ -130,6 +133,7 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
           ? deps.buildDoc!(payload.doc, payload.spec.text?.title ?? 'doc')
           : deps.adapt!(payload.table, spec);
         lastModel = model;
+        payload.modelHash = modelHash(model);
         syncThemeDataset();
         if (payload.doc !== undefined) renderFlowDoc(box, model as DocModel);
         else renderFlowTable(box, model as GridModel, spec);

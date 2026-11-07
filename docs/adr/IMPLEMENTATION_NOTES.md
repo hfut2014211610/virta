@@ -590,3 +590,19 @@
 - 语料：edge-cases 新增 xss-column/series/value/link.csv、xss-doc.md、xss-compose.json；
   画廊卡片改名「转义演示」。
 - ADR-0013 已写。
+
+## M2b.1 单一适配管线（B2/B3/B13，2026-11-07）
+
+- `data-engine/src/pipeline.ts` runPipeline：derive→tableToRaw(行浅拷贝)→mapping(只写空缺)
+  →toModel→missingValue→post。ADAPTERS/per-view 入口/compose 入口三处共用；
+  families/index.ts 原 gantt/line3d 包装删除（curve 并入管线 toModel 选择）。
+- `families/post.ts` POST_HOOKS（ganttPost 写今日线）；view-map.json 加 post 字段。
+- 输入不可变：Object.freeze 测试通过；payload 不再泄漏 mapping 复制行。
+- compose 文件级 time 解析+面板继承+asOf/tz 写回；warnings 进 envelope。
+- Date.now 禁令静态检查：viewer 零调用，data-engine 仅 derive.resolveTime。
+- modelHash（chart-core，FNV-1a+键序+toFixed6）经 window.__VIRTA__.modelHash /
+  panels[i].modelHash 暴露；parity.spec 6 例（含 derive/missingValue/asOf/mapping/compose）全绿。
+- 排障记录：parity 首跑 grid-derive 不一致，定位是 --set JSON 被 shell 吃引号导致
+  spec.derive 为字符串（两端 spec 不同而非管线 bug）；用例改 --spec 文件。
+- B13：compose 回执 bytes=Buffer.byteLength(html)。
+- ADR-0012 已写。DoD：typecheck+npm test 全绿（312+11 预期失败）、e2e 64 过、parity 6 过。

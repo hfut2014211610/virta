@@ -82,6 +82,21 @@ describe('运行期禁用动态代码执行', () => {
   });
 });
 
+describe('运行期禁用 Date.now（ADR-0012：时间一律走 spec.time 写回值）', () => {
+  const DE = join(__dirname, '../../packages/data-engine/src');
+  it('viewer/src 无 Date.now', () => {
+    for (const file of walk(SRC)) {
+      expect(/Date\.now\s*\(/.test(readFileSync(file, 'utf8')), file).toBe(false);
+    }
+  });
+  it('data-engine 中只有 derive.resolveTime 允许 Date.now', () => {
+    for (const file of walk(DE)) {
+      if (/derive\.ts$/.test(file)) continue;
+      expect(/Date\.now\s*\(/.test(readFileSync(file, 'utf8')), file).toBe(false);
+    }
+  });
+});
+
 describe('页面模板无内联事件处理器', () => {
   const payload = {
     spec: { version: 1, view: 'bar' } as never,

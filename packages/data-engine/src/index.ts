@@ -11,6 +11,7 @@ export {
 } from './families/index.js';
 export type { FamilyAdapter, ScoreResult } from './families/types.js';
 export { applyDerives, resolveTime, type DueStatus } from './derive.js';
+export { runPipeline, type PostHook, type ResolvedTime } from './pipeline.js';
 export { zonedParts, fromZoned, parseInstant, tzValid, instantOf, ordinalOf, dateOrdinal } from './time/zoned.js';
 export { isWorkday, workdaysBetween, type WorkCal } from './time/workday.js';
 export type { ErModel, FlowchartModel, SequenceModel, BurndownModel, FormulaModel } from './families/t3.js';

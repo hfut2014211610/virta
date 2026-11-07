@@ -8,7 +8,8 @@ mkdirSync("packages/cli/dist", { recursive: true });
 
 const VIEW_MAP = JSON.parse(readFileSync("packages/viewer/view-map.json", "utf8"));
 
-/** per-view 入口源码：只打包本视图的 renderer + toModel + runtime。 */
+/** per-view 入口源码：只打包本视图的 renderer + toModel(+post) + runtime。
+ *  ADR-0012：adapt 走统一管线 runPipeline。 */
 export function viewEntrySource(view) {
   const m = VIEW_MAP[view];
   if (!m) throw new Error(`view-map 缺少 ${view}`);
@@ -16,11 +17,13 @@ export function viewEntrySource(view) {
   return `import { boot } from './packages/viewer/src/runtime.js';
 import { ${m.renderer} } from './packages/charts/src/${m.charts}.js';
 import { ${[m.toModel, m.toModelCurve].filter(Boolean).join(', ')} } from './packages/data-engine/src/${m.adapter}.js';
+${isDoc ? '' : `import { runPipeline } from './packages/data-engine/src/pipeline.js';
+${m.post ? `import { ${m.post} } from './packages/data-engine/src/families/post.js';` : ''}`}
 const deps = {
   renderer: ${m.renderer},
   ${isDoc
     ? `buildDoc: (text, name) => ${m.toModel}(text, name),`
-    : `adapt: (t, s) => { const raw = t.passthrough?.kind === 'echarts' ? { __echarts: t.passthrough.data } : t.rows; if (s?.mapping && Array.isArray(raw)) for (const [r, c] of Object.entries(s.mapping)) { if (typeof c === 'string' && c !== r) for (const row of raw) { if (row[r] === undefined && row[c] !== undefined) row[r] = row[c]; } } return ${m.toModelCurve ? `(s?.variant === 'curve' ? ${m.toModelCurve} : ${m.toModel})` : m.toModel}(raw); },`}
+    : `adapt: (t, s) => runPipeline(t, s, ${JSON.stringify(view)}, (raw) => ${m.toModelCurve ? `(s?.variant === 'curve' ? ${m.toModelCurve} : ${m.toModel})` : m.toModel}(raw)${m.post ? `, ${m.post}` : ''}).model,`}
 };
 boot(window.__VIRTA__, deps);
 `;

@@ -28,9 +28,8 @@ import { toBurndown, toEr, toFlowchart, toFormula, toSequence } from './t3.js';
 import { scoreView } from '../score.js';
 import { insights as familyInsights } from '../insights.js';
 import { counts as familyCounts } from '../counts.js';
-import { applyDerives, resolveTime } from '../derive.js';
-import { ordinalOf } from '../time/zoned.js';
-import type { GanttModel } from './gantt.js';
+import { runPipeline, tableToRaw, type PostHook } from '../pipeline.js';
+import { POST_HOOKS } from './post.js';
 
 export const TO_MODEL: Partial<Record<ViewId, (raw: Raw) => unknown>> = {
   bar: toChart, line: toChart, matrix3d: toChart,
@@ -47,11 +46,8 @@ export const TO_MODEL: Partial<Record<ViewId, (raw: Raw) => unknown>> = {
   er: toEr, flowchart: toFlowchart, sequence: toSequence, burndown: toBurndown, formula: toFormula,
 };
 
-/** Table.rows → legacy Raw（含 ECharts 透传）。 */
-export function tableToRaw(table: Table): Raw {
-  if (table.passthrough?.kind === 'echarts') return { __echarts: table.passthrough.data as Record<string, unknown> };
-  return table.rows as unknown as Raw;
-}
+/** Table.rows → legacy Raw（含 ECharts 透传）。行副本语义见 pipeline.tableToRaw。 */
+export { tableToRaw };
 
 interface LiteQuality {
   rows?: number; kept?: number; warnings?: string[];
@@ -79,46 +75,24 @@ export function projectQuality(q: unknown): QualityReport {
   return report;
 }
 
-/** 通用适配器包装：adaptRaw=to_*；adapt 组合 tableToRaw+projectQuality；
+/** 视图级管线差异：line3d curve 变体换 toModel；gantt 用 post 钩子写今日线（C2）。 */
+const PIPELINE_TOMODEL: Partial<Record<ViewId, (raw: Raw, spec?: ViewSpec) => unknown>> = {
+  line3d: (raw, spec) => (spec?.variant === 'curve' ? toLine3dCurve(raw) : toLine3d(raw)),
+};
+const PIPELINE_POST = POST_HOOKS as unknown as Partial<Record<ViewId, PostHook<never>>>;
+
+/** 通用适配器包装：adaptRaw=to_*；adapt 统一走 runPipeline（C1：与运行期/compose 同一条路径）；
  *  score/insights/counts 分别委托 §5.1 打分表、洞察模板与计数器。 */
 export function makeAdapter<M>(view: ViewId, toModel: (raw: Raw) => M, extras?: Partial<FamilyAdapter<M>>): FamilyAdapter<M> {
   return {
     view,
     adaptRaw: toModel,
     adapt(table: Table, spec: ViewSpec) {
-      // ADR-0010 派生列：适配前统一执行，新列进入 columns 后可被 mapping/model 引用
-      const derived = spec?.derive?.length ? applyDerives(table, spec) : null;
-      const raw = tableToRaw(derived?.table ?? table);
-      // spec.mapping 显式映射：把映射列的值复制到角色名键上（角色名本身在别名表内，
-      // 如 bullet 的 actual/target），让 --set mapping.x=列 / spec.mapping 真正生效；
-      // 只写未存在的键——数据里已有同名列时不覆盖（显式同名列优先）。
-      const mapping = spec?.mapping;
-      if (mapping && Array.isArray(raw)) {
-        for (const [role, col] of Object.entries(mapping)) {
-          if (typeof col !== 'string' || col === role) continue;
-          for (const r of raw as Record<string, unknown>[]) {
-            if (r[role] === undefined && r[col] !== undefined) r[role] = r[col];
-          }
-        }
-      }
-      const model = toModel(raw);
-      // ADR-0011 缺失值：默认 gap（null=未观测）；missingValue=zero 回填 0（legacy 行为）
-      const series = (model as { series?: { name: string; values: (number | null)[] }[] }).series;
-      if (series?.length) {
-        const zero = spec?.options?.['missingValue'] === 'zero';
-        let gaps = 0;
-        for (const s of series) {
-          if (zero) s.values = s.values.map((v) => v ?? 0);
-          else gaps += s.values.filter((v) => v === null).length;
-        }
-        if (gaps) {
-          const q2 = (model as { quality?: { warnings?: string[] } }).quality;
-          q2?.warnings?.push(`${gaps} 个未观测点按 gap 处理（--set options.missingValue=zero 恢复补 0）`);
-        }
-      }
+      const tm = (PIPELINE_TOMODEL[view] ?? ((raw: Raw) => toModel(raw))) as (raw: Raw, spec?: ViewSpec) => M;
+      const { model, issues } = runPipeline(table, spec, view, (raw) => tm(raw, spec), PIPELINE_POST[view] as PostHook<M> | undefined);
       const mq = (model as { quality?: unknown })?.quality;
       const quality = mq ? projectQuality(mq) : (undefined as unknown as QualityReport);
-      if (derived?.issues.length && quality) quality.issues.push(...derived.issues);
+      if (issues.length && quality) quality.issues.push(...issues);
       return { model, quality };
     },
     score: extras?.score ?? ((profile, table) => scoreView(view, profile, table)),
@@ -136,33 +110,3 @@ for (const [view, fn] of Object.entries(TO_MODEL)) {
 export const DOC_ADAPTER = { buildDoc };
 
 export const ADAPTED_VIEWS = Object.keys(TO_MODEL) as ViewId[];
-
-// gantt 今日线（ADR-0010/F3）：给 spec.time 时按 asOf+tz 计算（默认实现是 UTC 的 Date.now()）。
-{
-  const g = ADAPTERS['gantt' as ViewId];
-  const prev = g!.adapt.bind(g!);
-  g!.adapt = (table: Table, spec: ViewSpec) => {
-    const out = prev(table, spec);
-    if (spec?.time?.asOf || spec?.time?.tz) {
-      const { asOfMs, tz } = resolveTime(spec);
-      const m = out.model as GanttModel;
-      const rel = ordinalOf(asOfMs, tz) - (m.baseOrd ?? 0);
-      m.today = m.baseOrd !== null && rel >= 0 && rel <= m.span ? Math.floor(rel) : null;
-    }
-    return out;
-  };
-}
-
-// line3d curve 变体：x/y/z 数值列 → 三维空间轨迹模型（其余变体走通用 adapt）。
-{
-  const base = ADAPTERS['line3d' as ViewId];
-  if (base?.adapt) {
-    const prev = base.adapt.bind(base);
-    base.adapt = (table: Table, spec: ViewSpec) => {
-      if (spec?.variant !== 'curve') return prev(table, spec);
-      const model = toLine3dCurve(tableToRaw(table));
-      const mq = (model as { quality?: unknown })?.quality;
-      return { model, quality: mq ? projectQuality(mq) : (undefined as unknown as QualityReport) };
-    };
-  }
-}
