@@ -12,7 +12,9 @@ const REPO = resolve(__dirname, '../..');
 const git = (args: string[]) => execFileSync('git', args, { cwd: REPO, encoding: 'utf8' }).trim();
 
 const PATH_RES: [RegExp, string][] = [
-  [/[A-Za-z]:\\[^\s\\/:*?"<>|]/, '盘符绝对路径'],
+  // 盘符后至少 2 个路径字符才命中：真实路径（字母+冒号+反斜杠+多字符）；
+  // 单字符正则转义（如 \\s、\\w 写在字母+冒号之后）不误报
+  [/[A-Za-z]:\\[^\s\\/:*?"<>|]{2,}/, '盘符绝对路径'],
   [/\/Users\/[A-Za-z0-9._-]+/, 'macOS /Users/<name> 路径'],
   [/\/home\/[A-Za-z0-9._-]+/, 'Linux /home/<name> 路径'],
 ];

@@ -703,3 +703,5 @@
   （example.* 等保留域名除外）+ `git log` 全部作者/提交者邮箱为 noreply。
 - 坑：`.gitignore` 的 `dist/` 通配任意层级，已加 `!/test/dist/` 例外，否则 test/dist 不入库。
 - DoD：`npm run test:dist` 2 passed + 19 expected-fail；no-leak 3/3；typecheck + npm test 348 全绿。
+- 修正：盘符规则误报正则字面量（`字母:\s` 这类转义），收紧为反斜杠后 ≥2 个路径字符；
+  同时 no-leak 测试文件自身的注释不得含字面匹配样例（CI 首跑挂在自引用，已修）。
