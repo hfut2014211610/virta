@@ -6,7 +6,7 @@ import { basename, extname, join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { execFile } from 'node:child_process';
 import type { Envelope, Table, Theme, ViewId, ViewSpec, VizError } from '@virta/contracts';
-import { CONTRACTS, EXIT_CODES, getContract, THEME_IDS, VIEW_IDS, VIEW_SPEC_SCHEMA } from '@virta/contracts';
+import { CONTRACTS, EXIT_CODES, getContract, THEME_IDS, VIEW_IDS, VIEW_SPEC_SCHEMA, resolveView, validateSpec } from '@virta/contracts';
 import { ADAPTERS, profileTable, rawToTable, recommend, validate, resolveTime, parseInstant, tzValid } from '@virta/data-engine';
 import { readInput, readInline } from '@virta/data-engine/node';
 import { RENDERED_VIEWS } from '@virta/charts';
@@ -54,8 +54,11 @@ async function loadTable(args: PV): Promise<{ table: Table; docText?: string; in
   const inline = v(args, 'data');
   const fmt = v(args, 'format') as 'csv' | 'json' | 'xlsx' | 'md' | 'txt' | undefined;
   if (inline !== undefined) {
-    const res = readInline(inline, fmt === 'csv' ? 'csv' : 'json');
-    return { table: rawToTable(res.raw as never, { name: 'inline', format: 'json', rows: 0 }), input: 'inline' };
+    let res: ReturnType<typeof readInline>;
+    try { res = readInline(inline, fmt === 'csv' ? 'csv' : 'json'); }
+    catch (e) { fail('PARSE_ERROR', `--data 解析失败：${(e as Error).message}`, '--format csv|json；JSON 需为对象数组'); }
+    if (Array.isArray(res!.raw) && !(res!.raw as unknown[]).length) fail('EMPTY_DATA', '--data 数据为空（0 行）');
+    return { table: rawToTable(res!.raw as never, { name: 'inline', format: 'json', rows: 0 }), input: 'inline' };
   }
   if (!pos) fail('INVALID_SPEC', '缺少输入文件参数（或 - 读 stdin）', 'virta render <input|->');
   let loaded: Awaited<ReturnType<typeof readInput>>;
@@ -124,8 +127,12 @@ function buildSpec(args: PV, table?: Table): ViewSpec {
   }
   if (spec.time?.asOf !== undefined && !parseInstant(spec.time.asOf)) fail('INVALID_TIME', `无法解析 time.asOf：${spec.time.asOf}`, '需 ISO 8601 且带时区偏移或 Z');
   if (spec.time?.tz !== undefined && !tzValid(spec.time.tz)) fail('INVALID_TIME', `未知时区 time.tz：${spec.time.tz}`, 'IANA 时区名');
-  if (spec.view !== 'auto' && !VIEW_IDS.includes(spec.view as ViewId)) {
-    fail('UNKNOWN_VIEW', `未知视图 ${spec.view}`, 'virta list 查看全部视图', { candidates: [...VIEW_IDS] });
+  // ADR-0014 C8：别名统一经 resolveView 解析（pivot→grid:pivot）
+  if (spec.view !== 'auto') {
+    const rv = resolveView(spec.view as string);
+    if (!rv) fail('UNKNOWN_VIEW', `未知视图 ${spec.view}`, 'virta list 查看全部视图', { candidates: [...VIEW_IDS] });
+    spec.view = rv!.view;
+    if (rv!.variant && !spec.variant) spec.variant = rv!.variant;
   }
   if (spec.view === 'auto' && table) {
     const top = recommend(profileTable(table), table)[0];
@@ -133,12 +140,17 @@ function buildSpec(args: PV, table?: Table): ViewSpec {
     spec.view = top.view;
     if (top.variant && !spec.variant) spec.variant = top.variant;
     if (top.mode && !spec.mode) spec.mode = top.mode;
-    (spec as { __reason?: string }).__reason = top.reason;
+    specMeta.set(spec, { reason: top.reason });
   }
+  // ADR-0014 C7：--spec/--set/专用参数统一过严格校验（view=auto 时跳过契约相关项）
+  const vr = validateSpec(spec, spec.view === 'auto' ? undefined : getContract(spec.view as ViewId));
+  if (!vr.ok) fail(vr.error.code, vr.error.message, vr.error.hint);
   return spec;
 }
 
 const stemOf = (input: string) => input === '-' ? 'stdin' : basename(input, extname(input)).replace(/[^\w一-龥.-]+/g, '_');
+/** 推荐理由等内部标注：不写进 spec（严格校验白名单），随 spec 生命周期存活 */
+const specMeta = new WeakMap<ViewSpec, { reason?: string }>();
 
 // —— 命令 ——
 const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
@@ -183,6 +195,8 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
     if (docText !== undefined) fail('UNSUPPORTED_FORMAT', 'md/txt 文档请用 render --view report', 'validate 仅支持表格输入');
     const spec = buildSpec(args);
     if (spec.view === 'auto') { spec.view = (recommend(profileTable(table), table)[0]?.view ?? 'bar') as ViewId; }
+    const vr = validateSpec(spec, getContract(spec.view as ViewId));
+    if (!vr.ok) fail(vr.error.code, vr.error.message, vr.error.hint);
     const rec = validate(table, spec);
     if (!json) {
       console.log(rec.valid ? `✓ ${spec.view} 校验通过` : `✗ ${spec.view} 校验未通过`);
@@ -223,8 +237,8 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
       table: docText !== undefined ? { columns: [], rows: [], source: { name: stemOf(input), format: 'md' as const, rows: 0 } } : table,
       spec, formats, doc: docText,
       out: outArg, stem: stemOf(input),
-      width: Number(v(args, 'width') ?? spec.size?.width ?? 1200),
-      height: Number(v(args, 'height') ?? spec.size?.height ?? 675),
+      width: Number(spec.size?.width ?? 1200),
+      height: spec.size?.height === 'auto' ? 0 : Number(spec.size?.height ?? 675),
       scale: Number(v(args, 'scale') ?? 2),
       frame: (v(args, 'frame') ?? 'card') as 'card' | 'chart',
       fontFiles: multi(args, 'font-file'),
@@ -234,7 +248,7 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
       const counts = payload.counts;
       const receipt = {
         view, variant: spec.variant, mode: spec.mode,
-        reason: (spec as { __reason?: string }).__reason ?? 'explicit',
+        reason: specMeta.get(spec)?.reason ?? 'explicit',
         files, counts,
         quality: payload.quality, insights: payload.insights, spec,
         summaryMd: `${payload.spec.text?.title ?? view} · ${view}${spec.variant ? ':' + spec.variant : ''} · ${docText !== undefined ? '1 篇文档' : `${table.rows.length} 行`} → ${files.map((f) => f.format).join('/')}`,
@@ -258,10 +272,35 @@ const COMMANDS: Record<string, (args: PV) => number | Promise<number>> = {
     return 0;
   },
   async guide(args) {
-    const p = 'docs/agent/SKILL.md';
-    const txt = existsSync(p) ? readFileSync(p, 'utf8') : '（docs/agent/SKILL.md 尚未生成）';
-    if (args.values['json']) out('guide', { markdown: txt }, true);
-    else console.log(txt);
+    if (args.values['json']) {
+      out('guide', {
+        commands: Object.keys(COMMANDS),
+        views: [...VIEW_IDS],
+        aliases: { heat: 'heatmap', box: 'boxplot', fish: 'fishbone', pivot: 'grid:pivot', spc: 'control' },
+        exportFormats: ['html', 'svg', 'png'],
+        errorCodes: { 1: ['INTERNAL'], 2: ['UNKNOWN_VIEW', 'INVALID_SPEC', 'INVALID_OPTION', 'INVALID_TIME'], 3: ['INPUT_NOT_FOUND', 'UNSUPPORTED_FORMAT', 'PARSE_ERROR', 'EMPTY_DATA'], 4: ['MISSING_COLUMN', 'AMBIGUOUS_MAPPING', 'validate 未通过'], 5: ['UNSUPPORTED_EXPORT', 'RENDER_FAILED', 'EXPORT_FAILED'] },
+        specSchema: 'virta schema --spec-schema',
+      }, true);
+      return 0;
+    }
+    if (args.values['agent']) {
+      const p = 'docs/agent/SKILL.md';
+      console.log(existsSync(p) ? readFileSync(p, 'utf8') : '（docs/agent/SKILL.md 尚未生成）');
+      return 0;
+    }
+    // 无参：≤40 行常用速览（完整 agent 指南见 --agent）
+    console.log(`virta ${VERSION} 常用速览
+命令：list | schema [view|--spec-schema] | inspect | validate | render | compose | demo | gallery | preview | guide
+渲染：virta render <csv|json|xlsx|md|-> [--view v|auto] [--variant id] [--export html,svg,png] [--out dir]
+视图：${VIEW_IDS.join(' ')}；别名 heat→heatmap box→boxplot fish→fishbone pivot→grid:pivot spc→control
+参数：--spec f|json --set k=v（如 --set options.键=值、--set state.sort=desc）--width/--height px|auto
+      --theme ${THEME_IDS.join('|')} --palette 10 套 --as-of ISO --tz IANA
+组合：virta compose <compose.json>（面板 spec 规则同 render）
+数据：--format csv|json --sheet N --data '<json>'；xlsx 选 --sheet
+文档：render x.md --view report
+输出：{command,ok,data,warnings,error?}；--json 打印回执；错误码见退出码 2=参数 3=输入 4=数据映射 5=导出
+自查：inspect 画像+推荐候选 → validate 校验 → render 出图；compose.json 面板可用 inspect 逐一定图
+更多：virta guide --agent（完整 Agent 指南） | virta guide --json（机器可读）`);
     return 0;
   },
   async compose(args) {

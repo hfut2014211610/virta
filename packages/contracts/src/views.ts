@@ -14,3 +14,11 @@ export type ViewId = typeof VIEW_IDS[number];
 export const VIEW_ALIASES: Record<string, ViewId> = {
   heat: 'heatmap', box: 'boxplot', fish: 'fishbone', pivot: 'grid', spc: 'control',
 };
+
+/** ADR-0014 C8：视图解析唯一入口。别名→规范 id；pivot 附带默认 variant='pivot'。
+ *  返回 { view, variant? } 或 undefined（未知视图由调用方报 UNKNOWN_VIEW）。 */
+export function resolveView(id: string): { view: ViewId; variant?: string } | undefined {
+  const v = (VIEW_IDS as readonly string[]).includes(id) ? (id as ViewId) : VIEW_ALIASES[id];
+  if (!v) return undefined;
+  return v === 'grid' && id === 'pivot' ? { view: 'grid', variant: 'pivot' } : { view: v };
+}

@@ -1,9 +1,7 @@
 // contracts v1 · ViewSpec 的手写 JSON Schema（供 `virta schema --spec-schema` 输出）。
 // 与 spec.ts 的 ViewSpec 保持一致；契约变更须同步更新本文件（ADR-0004）。
-import { THEME_IDS } from './spec.js';
+import { THEME_IDS, PALETTE_IDS } from './spec.js';
 import { VIEW_IDS } from './views.js';
-
-const PALETTES = ['signal', 'cinnabar', 'patina', 'blueprint', 'inkwash', 'mono', 'sundown', 'dunhuang', 'aurora', 'morandi'];
 
 const ANNOTATION = {
   type: 'object',
@@ -39,7 +37,7 @@ export const VIEW_SPEC_SCHEMA = {
       additionalProperties: { anyOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
     },
     theme: { enum: [...THEME_IDS] },
-    palette: { enum: PALETTES },
+    palette: { enum: [...PALETTE_IDS] },
     options: {
       type: 'object',
       description: '键必须在对应 contract.options 中声明',
@@ -59,6 +57,8 @@ export const VIEW_SPEC_SCHEMA = {
         zoom: { type: 'number' },
         explode: { type: 'number' },
         time: { type: ['string', 'number'] },
+        query: { type: 'string' },
+        sortBy: { type: 'string' },
       },
     },
     text: {
@@ -97,7 +97,41 @@ export const VIEW_SPEC_SCHEMA = {
       type: 'object',
       required: ['width', 'height'],
       additionalProperties: false,
-      properties: { width: { type: 'number' }, height: { type: 'number' } },
+      properties: { width: { type: 'number' }, height: { anyOf: [{ type: 'number' }, { const: 'auto' }] } },
+    },
+    time: {
+      type: 'object',
+      description: '时间契约（ADR-0010）',
+      additionalProperties: false,
+      properties: {
+        asOf: { type: 'string', description: 'ISO 8601，必须带时区偏移或 Z' },
+        tz: { type: 'string', description: 'IANA 时区' },
+        weekStart: { enum: [1, 7] },
+        workdays: { type: 'array', items: { type: 'number' } },
+        holidays: { type: 'array', items: { type: 'string' } },
+        extraWorkdays: { type: 'array', items: { type: 'string' } },
+      },
+    },
+    derive: {
+      type: 'array',
+      description: '派生列（ADR-0010）',
+      items: {
+        type: 'object',
+        required: ['type'],
+        properties: {
+          type: { enum: ['dueStatus', 'dateDiff'] },
+          due: { type: 'string' }, done: { type: 'string' }, soonWorkdays: { type: 'number' },
+          from: { type: 'string' }, to: { type: 'string' }, unit: { enum: ['day', 'workday'] },
+          as: { type: 'string' },
+        },
+        additionalProperties: true,
+      },
+    },
+    page: {
+      type: 'object',
+      description: '流式视图的静态分页（ADR-0009）',
+      additionalProperties: false,
+      properties: { height: { type: 'number' }, break: { enum: ['auto', 'section', 'none'] } },
     },
   },
 } as const;

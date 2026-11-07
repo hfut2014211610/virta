@@ -103,6 +103,11 @@ export async function renderChart(job: RenderJob): Promise<RenderResult & { svgS
   const isDoc = job.doc !== undefined;
   if (!renderer || (!isDoc && !adapter)) fail('UNKNOWN_VIEW', `视图 ${view} 暂不支持渲染`, 'virta list 查看已支持视图', { candidates: Object.keys(ADAPTERS) });
   const rend = renderer!;
+  // B8：宽高只经 spec.size 解析（buildSpec 统一写入）；断言有限正数，PNG 小于 16px 直接失败
+  if (!Number.isFinite(job.width) || job.width <= 0) fail('INVALID_OPTION', `宽度需为正数：${job.width}`, '如 --width 1200');
+  if (job.width < 16 && job.formats.includes('png')) fail('EXPORT_FAILED', `宽度 ${job.width}px 小于 16px，resvg 无法渲染`, '改用 --width ≥16 或去掉 --export png');
+  if (spec.size?.height !== 'auto' && (!Number.isFinite(job.height) || job.height <= 0)) fail('INVALID_OPTION', `高度需为正数或 auto：${spec.size?.height ?? job.height}`, '--height 675 或 --height auto（仅流式/自适应视图）');
+  const warnings: RenderResult['warnings'] = [];
 
   const theme: Theme = spec.theme ?? 'light';
   if (!THEME_IDS.includes(theme)) fail('INVALID_SPEC', `未知主题 ${theme}`, `支持：${THEME_IDS.join(' | ')}`);
@@ -123,6 +128,7 @@ export async function renderChart(job: RenderJob): Promise<RenderResult & { svgS
   const frameOverhead = 1000 - frameStatic(job.width, 1000, { text: spec.text, insights, theme: tokens, frame: job.frame }).plot.h;
   if (measured) job.height = Math.max(spec.size?.height === 'auto' ? 0 : job.height, measured.height + frameOverhead);
   else if (spec.size?.height === 'auto' && prefH) job.height = prefH;
+  else if (spec.size?.height === 'auto') { job.height = 675; warnings.push({ code: 'HEIGHT_AUTO_FALLBACK', level: 'info', message: '--height auto 仅对流式/自适应视图生效，已回退 675' }); }
   else if (prefH && prefH > job.height) job.height = Math.min(prefH, 5000);
 
   // 卡片框 → 绘图区 → 图族布局（图例项先行：model.series/groups 可直接枚举）
@@ -234,7 +240,6 @@ export async function renderChart(job: RenderJob): Promise<RenderResult & { svgS
   };
 
   // —— 导出 ——
-  const warnings: RenderResult['warnings'] = [];
   const files: RenderResult['files'] = [];
   const stem = `${job.stem}-${view}${spec.variant ? `-${spec.variant}` : ''}-${theme}`;
   const mkdir = (p: string) => { mkdirSync(p, { recursive: true }); };

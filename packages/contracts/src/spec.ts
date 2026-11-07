@@ -4,9 +4,8 @@ import type { ViewId } from './views.js';
 // ADR-0008：主题从 light/dark 扩为 6 套（新增 minimal/sketch/pastel/tech 四套可切换图表主题）。
 export const THEME_IDS = ['light', 'dark', 'minimal', 'sketch', 'pastel', 'tech'] as const;
 export type Theme = typeof THEME_IDS[number];
-export type PaletteId =
-  | 'signal' | 'cinnabar' | 'patina' | 'blueprint' | 'inkwash'
-  | 'mono' | 'sundown' | 'dunhuang' | 'aurora' | 'morandi';
+export const PALETTE_IDS = ['signal', 'cinnabar', 'patina', 'blueprint', 'inkwash', 'mono', 'sundown', 'dunhuang', 'aurora', 'morandi'] as const;
+export type PaletteId = typeof PALETTE_IDS[number];
 
 export interface ViewSpec {
   version: 1;
@@ -82,4 +81,6 @@ export interface ViewState {
   time?: string | number;
   /** flow-table 全文搜索串（ADR-0009） */
   query?: string;
+  /** flow-table 按该列排序（配合 state.sort 方向） */
+  sortBy?: string;
 }

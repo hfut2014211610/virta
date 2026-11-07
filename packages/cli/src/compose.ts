@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { build } from 'esbuild';
 import type { PaletteId, Table, Theme, ViewId, ViewSpec } from '@virta/contracts';
-import { getContract, THEME_IDS } from '@virta/contracts';
+import { getContract, THEME_IDS, resolveView, validateSpec } from '@virta/contracts';
 import { ADAPTERS, adaptInput, rawToTable, resolveTime } from '@virta/data-engine';
 import { readInput } from '@virta/data-engine/node';
 import { getRenderer } from '@virta/charts';
@@ -155,8 +155,15 @@ export async function runComposeFile(cf: ComposeFileShape, dir: string, job: Com
     if (!existsSync(fpath)) fail('INPUT_NOT_FOUND', `面板 ${i} 数据文件不存在：${fpath}`);
     const loaded = await readInput(fpath);
     const spec: ViewSpec = { theme, palette, ...d.spec, version: 1, time: inheritTime(d.spec) };
-    const view = spec.view as ViewId;
     if (spec.view as unknown === 'auto') fail('INVALID_SPEC', `面板 ${i} view=auto：compose 需要显式视图`, 'virta inspect 先定视图');
+    // ADR-0014：别名解析 + 面板 spec 严格校验（与 buildSpec 同一套规则）
+    const rv = resolveView(spec.view as string);
+    if (!rv) fail('UNKNOWN_VIEW', `面板 ${i} 未知视图 ${spec.view}`, 'virta list 查看全部视图');
+    spec.view = rv!.view;
+    if (rv!.variant && !spec.variant) spec.variant = rv!.variant;
+    const vr = validateSpec(spec, getContract(spec.view as ViewId));
+    if (!vr.ok) fail(vr.error.code, `面板 ${d.chart ?? i}: ${vr.error.message}`, vr.error.hint);
+    const view = spec.view as ViewId;
     views.push(view);
     const renderer = getRenderer(view);
     if (!renderer) fail('UNKNOWN_VIEW', `面板 ${i} 视图 ${view} 无渲染器`);

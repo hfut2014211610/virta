@@ -606,3 +606,22 @@
   spec.derive 为字符串（两端 spec 不同而非管线 bug）；用例改 --spec 文件。
 - B13：compose 回执 bytes=Buffer.byteLength(html)。
 - ADR-0012 已写。DoD：typecheck+npm test 全绿（312+11 预期失败）、e2e 64 过、parity 6 过。
+
+## M2b.2 参数与契约校验（B4/B5/B6/B7/B8，2026-11-07）
+
+- `contracts/validate-spec.ts`：顶层键白名单 VIEW_SPEC_KEYS（与 VIEW_SPEC_SCHEMA 测试锁定）、
+  options 键/枚举/范围/boolean、theme/palette/variant/mode、子键白名单（state/text/time/page/
+  facet/format/size）；编辑距离最近邻 hint；INVALID_SPEC|INVALID_OPTION 退出码 2。
+- spec-schema 补齐 time/derive/page/state.query/state.sortBy/size.height:'auto'；
+  spec.ts 抽 PALETTE_IDS 单源（spec-schema/validate-spec 共用），ViewState 加 sortBy。
+- `resolveView` 唯一别名入口（pivot→grid:pivot）；buildSpec/compose 面板统一接入；
+  validate 命令同走。内部 __reason 改 WeakMap，不进 spec。
+- B4：--data 解析失败 → PARSE_ERROR(3)。B8：宽高只从 spec.size 取一次、断言有限正数、
+  --height auto 仅 flow/preferredHeight 生效否则 675+HEIGHT_AUTO_FALLBACK(info)、
+  PNG<16px → EXPORT_FAILED。
+- guide 三态：无参 ≤40 行速览 / --agent 全文 / --json 结构化。
+- 排障记录：e2e 两失败定位到 recommend 输出 mode:'raw' 与 boxplot 契约 mode.id 'observations'
+  不一致——严格校验抓到的真实不一致，已改 score.ts 用契约 id。
+- 新增 test/specs/validate-spec.test.ts（pack/compose 遍历 + 错误路径 + 键锁定）；
+  B4/B5/B6/B7/B8 锚点转绿，B9–B12 仍 it.fails（归 M2b.3）。
+- ADR-0014 + SKILL.md 已更新。DoD：typecheck+npm test 全绿（332+4 预期失败）、e2e 64 过。

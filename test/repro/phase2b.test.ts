@@ -1,5 +1,5 @@
-// M2b.0 复现锚点：PHASE_2B.md §1 的 B1–B13，每个 it.fails 对应当前缺陷。
-// 各里程碑完成后把对应 it.fails 改为 it 并保持转绿（同 phase2a 的锚点机制）。
+// M2b.0 复现锚点：PHASE_2B.md §1 的 B1–B13，每个 it 对应当前缺陷。
+// 各里程碑完成后把对应 it 改为 it 并保持转绿（同 phase2a 的锚点机制）。
 // B1（XSS）由 test/security/no-raw-innerhtml.test.ts 与 test/visual/xss.spec.ts 锚定。
 import { execFileSync } from 'node:child_process';
 import { statSync } from 'node:fs';
@@ -33,7 +33,7 @@ describe('B2 浏览器端 adapt 跳过派生列/missingValue/gantt asOf（M2b.1�
     expect(viewEntrySource('gantt')).toContain('runPipeline');
   });
   it('浏览器管线输出应与 adaptInput 一致：grid 的派生列不消失', async () => {
-    // 管线函数落地前 runPipeline 不存在 → it.fails；落地后比较两条路径
+    // 管线函数落地前 runPipeline 不存在 → it；落地后比较两条路径
     const { runPipeline } = await import('@virta/data-engine') as never as { runPipeline: Function };
     const t = table(['任务', '当前截止'], [{ 任务: 'a', 当前截止: '2026-11-05' }]);
     const s = spec('grid', {
@@ -60,7 +60,7 @@ describe('B3 适配不得原地修改输入行（M2b.1）', () => {
 });
 
 describe('B4 --data 坏输入要有 JSON 回执（M2b.2）', () => {
-  it.fails('--data {bad → PARSE_ERROR 退出码 3', () => {
+  it('--data {bad → PARSE_ERROR 退出码 3', () => {
     const r = cli(['render', '--data', '{bad', '--format', 'json', '--view', 'bar', '--json']);
     expect(r.code).toBe(3);
     expect(r.parsed?.error?.code).toBe('PARSE_ERROR');
@@ -68,7 +68,7 @@ describe('B4 --data 坏输入要有 JSON 回执（M2b.2）', () => {
 });
 
 describe('B5 --set 严格校验（M2b.2）', () => {
-  it.fails('validateSpec 存在并拒绝非法枚举与未知键', async () => {
+  it('validateSpec 存在并拒绝非法枚举与未知键', async () => {
     const vs = (contracts as never as { validateSpec?: Function }).validateSpec;
     expect(typeof vs).toBe('function');
     const c = contracts.getContract('line');
@@ -77,7 +77,7 @@ describe('B5 --set 严格校验（M2b.2）', () => {
     const bad2 = vs!({ version: 1, view: 'line', bogus: { deep: 1 } }, c) as { ok: boolean };
     expect(bad2.ok).toBe(false);
   });
-  it.fails('CLI --set options.lineStyle=zap → 退出码 2', () => {
+  it('CLI --set options.lineStyle=zap → 退出码 2', () => {
     const r = cli(['render', 'examples/basic/sample-multi.csv', '--view', 'line', '--set', 'options.lineStyle=zap', '--json']);
     expect(r.code).toBe(2);
     expect(r.parsed?.error?.code).toBe('INVALID_OPTION');
@@ -86,7 +86,7 @@ describe('B5 --set 严格校验（M2b.2）', () => {
 });
 
 describe('B6 --palette 非法值（M2b.2）', () => {
-  it.fails('--palette nonsense → INVALID_OPTION 退出码 2', () => {
+  it('--palette nonsense → INVALID_OPTION 退出码 2', () => {
     const r = cli(['render', 'examples/basic/sample-multi.csv', '--palette', 'nonsense', '--json']);
     expect(r.code).toBe(2);
     expect(r.parsed?.error?.code).toBe('INVALID_OPTION');
@@ -94,14 +94,14 @@ describe('B6 --palette 非法值（M2b.2）', () => {
 });
 
 describe('B7 视图别名（M2b.2）', () => {
-  it.fails('resolveView 解析全部别名', () => {
+  it('resolveView 解析全部别名', () => {
     const rv = (contracts as never as { resolveView?: Function }).resolveView;
     expect(typeof rv).toBe('function');
     expect(rv!('heat')).toEqual({ view: 'heatmap' });
     expect(rv!('pivot')).toEqual({ view: 'grid', variant: 'pivot' });
     expect(rv!('spc')).toEqual({ view: 'control' });
   });
-  it.fails('CLI --view pivot → grid 透视变体', () => {
+  it('CLI --view pivot → grid 透视变体', () => {
     const r = cli(['render', 'examples/basic/sample-grid.csv', '--view', 'pivot', '--export', 'svg', '--out', 'out/repro', '--json']);
     expect(r.code).toBe(0);
     expect(r.parsed?.data?.spec?.view).toBe('grid');
@@ -110,7 +110,7 @@ describe('B7 视图别名（M2b.2）', () => {
 });
 
 describe('B8 非流式视图 --height auto（M2b.2）', () => {
-  it.fails('bar + --height auto → 回退 675 且 SVG 无 NaN', () => {
+  it('bar + --height auto → 回退 675 且 SVG 无 NaN', () => {
     const r = cli(['render', 'examples/basic/sample-multi.csv', '--view', 'bar', '--height', 'auto', '--export', 'svg', '--out', 'out/repro', '--json']);
     expect(r.code).toBe(0);
     const f = r.parsed?.data?.files?.[0];

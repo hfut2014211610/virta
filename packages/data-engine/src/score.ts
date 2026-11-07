@@ -83,7 +83,7 @@ const sBoxplot: Scorer = (p) => {
   // 命中 heatmap 轴别名的是矩阵数据，不是分组观测
   if (hit(p, HEAT_X_ALIAS) || hit(p, HEAT_Y_ALIAS)) return no();
   if (g && v && g.distinct <= 20 && p.rows / Math.max(1, g.distinct) >= 5) {
-    return { score: 0.8, reason: `维度 ${g.name} ≤20 组 + 度量，平均每组 ${(p.rows / g.distinct).toFixed(0)} 条观测`, mode: 'raw', mapping: { group: g.name, value: v.name }, missingRoles: [] };
+    return { score: 0.8, reason: `维度 ${g.name} ≤20 组 + 度量，平均每组 ${(p.rows / g.distinct).toFixed(0)} 条观测`, mode: 'observations', mapping: { group: g.name, value: v.name }, missingRoles: [] };
   }
   return no();
 };

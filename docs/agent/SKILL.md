@@ -1,6 +1,6 @@
 # Virta CLI · Agent 使用指南
 
-> `virta guide` / `virta guide --agent` 输出与本文件相同的内容。
+> `virta guide --agent` 输出与本文件相同的内容；`virta guide` 是 ≤40 行速览，`--json` 是机器可读版本。
 
 ## 标准流程
 
@@ -37,6 +37,10 @@ virta render <input> --view <v> --export html,svg,png --out out/ --json   # 3. �
 
 `--set` 语法：`key=value`，点号分层（`options.finish=glass`、`state.sort=desc`），值能 JSON.parse 就按 JSON。
 合并优先级：`--set` > 专用参数（`--theme` 等）> `--spec` > 默认值。
+**严格校验（ADR-0014）**：spec 顶层键、`options.*` 键与枚举/范围、`theme/palette/variant/mode` 均在适配前校验，
+非法即 `INVALID_SPEC`/`INVALID_OPTION`（退出码 2）并给最近邻 hint（如 `missingValu` → `missingValue`）。
+视图别名统一入口：`heat→heatmap box→boxplot fish→fishbone pivot→grid:pivot spc→control`；`--view pivot` 等价
+`--view grid --variant pivot`。
 
 ## Phase 2a 能力（Agent 直用，无需外部脚本）
 
@@ -47,7 +51,8 @@ virta render <input> --view <v> --export html,svg,png --out out/ --json   # 3. �
   默认 `gap`（未观测不画、洞察跳过、tooltip 显示「未观测」）；`=zero` 恢复补 0。
   `options.connectGaps=true` 用虚线桥接缺口段。阶梯线 `lineStyle=step` 为 step-middle。
 - **长内容**：grid/report 为 flow 视图——HTML 里是语义 DOM（`<table>`/搜索/筛选/排序/链接），
-  不再截断；静态导出 `--height auto` 给自然高度，或 `page.height`（默认 1600）分页输出多页
+  不再截断；静态导出 `--height auto` 给自然高度（仅流式/自适应视图，其他视图回退 675 并报
+  `HEIGHT_AUTO_FALLBACK`），或 `page.height`（默认 1600）分页输出多页
   SVG/PNG，回执 `files[]` 带 `page/pages`。
 - **compose 三态面板**：md 文档面板（report）整行 DOM 渲染且不参与联动；
   面板级 `rendered/error`——任一面板失败 `ok:false`（RENDER_FAILED）。
