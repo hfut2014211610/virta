@@ -765,3 +765,18 @@
   rank-race 位于串行循环尾部、并发高峰时中招（单独跑必过）。
   修复：新增 `test/visual/virt.ts`，mkdir 原子锁把渲染生成跨进程串行化（产物文件名本无冲突），
   5 个 spec 统一改用 `virt()`；不加重试。
+
+## M2c.5 RC 发布演练（2026-11-08，rc.1 通过）
+
+- `v0.1.0-rc.1` 需要 `packages/cli/package.json` version = `0.1.0-rc.1`（release.yml gate 校验
+  tag↔版本一致；`*-rc*` 触发 `--prerelease`）。CHANGELOG 增加 `[0.1.0-rc.1]` 一节供 release notes。
+- release.yml run 42431055489：gate（typecheck/test/build/e2e/perf）+ 三平台 dist + publish 全绿；
+  产出 `virta-0.1.0-rc.1.tgz`（≈1.15MB）+ `SHA256SUMS`，prerelease 标记正确。
+- 仓库外演练（空目录、全局安装 Release URL tarball）：
+  - `sha256sum -c SHA256SUMS` OK；
+  - `npm i -g <Release URL>` → 11 包（virta + 3 运行依赖及传递依赖）；
+  - `virta`/`vt --version` → `virta 0.1.0-rc.1`；`doctor` 6 项全 ok（含 resvg 原生加载、CJK 字形）；
+  - `skill path`/`skill install --dir` 正常（8809B SKILL.md + front matter），重复安装 INVALID_OPTION(2)；
+  - `demo delivery` → index + dashboard + 11 张 PNG；`render @samples/sample.csv` → 229KB 离线 HTML
+    无外链；`compose`（包内 packs/delivery/deadline.compose.json）→ 3 面板 grid HTML+PNG。
+- 待办：用户确认后打 `v0.1.0`（version 回写 `0.1.0`），release.yml 会产出非 prerelease。
