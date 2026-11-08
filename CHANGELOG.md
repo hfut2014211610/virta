@@ -3,6 +3,11 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循 semver 0.x：
 回执结构和 CLI 参数的不兼容变更升 minor，并写入 "Breaking" 小节。
 
+## [0.1.0-rc.1] - 2026-11-07
+
+Phase 2c 发布演练候选（prerelease）。功能内容与下方 0.1.0 一致，
+用于验证 GitHub Release tarball 的分发与安装链路。
+
 ## [0.1.0] - 2026-11-07
 
 首个面向团队分发的成品版本：tarball 自包含，`npm i -g <tarball>` 后 `virta`/`vt` 即可用，
