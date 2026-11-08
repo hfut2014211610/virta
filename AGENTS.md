@@ -1,6 +1,6 @@
 # AGENTS.md · Virta 实施指南
 
-> 唯一设计与计划来源：`docs/plan/NEXT_PHASE.md`（Phase 2 · Rev 2）；M8 之后的 Phase 2a 见 `docs/plan/PHASE_2A.md`；Phase 2b 见 `docs/plan/PHASE_2B.md`（已完成）；当前阶段 Phase 2c（成品化与团队分发）见 `docs/plan/PHASE_2C.md`。冲突以该文为准；未覆盖的细节按其 §0.3 处理并追加到 `docs/adr/IMPLEMENTATION_NOTES.md`。
+> 唯一设计与计划来源：`docs/plan/NEXT_PHASE.md`（Phase 2 · Rev 2）；M8 之后的 Phase 2a 见 `docs/plan/PHASE_2A.md`；Phase 2b、2c 见 `docs/plan/PHASE_2B.md`、`PHASE_2C.md`（已完成）；当前阶段 Phase 2d（交互修复、呈现质量与 Agent 实测）见 `docs/plan/PHASE_2D.md`；之后的 Phase 3 规划见 `docs/plan/PHASE_3.md`。冲突以该文为准；未覆盖的细节按其 §0.3 处理并追加到 `docs/adr/IMPLEMENTATION_NOTES.md`。
 
 ## 硬性规则（R1–R8）
 
@@ -45,4 +45,4 @@ npm run gallery        # 生成画廊
 
 `npm run typecheck && npm test` 全绿 → 在 `docs/adr/IMPLEMENTATION_NOTES.md` 记录本里程碑备忘 → `git status` 干净 → 本地提交 → fast-forward push 到 `origin/main` → `gh run watch` 确认 CI（Phase 2b 起）。
 
-> 进度追踪：里程碑与任务清单见 `docs/plan/NEXT_PHASE.md` §10，本文件不维护状态。M0–M9、2a、2b 已完成；当前进行到 Phase 2c（见 `docs/plan/PHASE_2C.md` §6）。
+> 进度追踪：里程碑与任务清单见 `docs/plan/NEXT_PHASE.md` §10，本文件不维护状态。M0–M9、2a、2b、2c（v0.1.0）已完成；当前进行到 Phase 2d（见 `docs/plan/PHASE_2D.md` §6）。
