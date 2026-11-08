@@ -780,3 +780,12 @@
   - `demo delivery` → index + dashboard + 11 张 PNG；`render @samples/sample.csv` → 229KB 离线 HTML
     无外链；`compose`（包内 packs/delivery/deadline.compose.json）→ 3 面板 grid HTML+PNG。
 - 待办：用户确认后打 `v0.1.0`（version 回写 `0.1.0`），release.yml 会产出非 prerelease。
+
+## M2c.5 正式发布（2026-11-08，完成）
+
+- 用户确认后：version 回写 `0.1.0`（commit 484d5c9），打 `v0.1.0` tag。
+- release.yml run 42433916873 全绿；GitHub Release `v0.1.0` 为正式版（非 prerelease，latest），
+  附件 `virta-0.1.0.tgz` + `SHA256SUMS`。
+- 正式版复验：`sha256sum -c` OK；`npm i -g <v0.1.0 Release URL>` → `virta 0.1.0`，
+  `doctor` 6 项全 ok。
+- **Phase 2c DoD 达成**：Release URL 可安装、三平台 CI 通过、演练与发布记录齐全。
