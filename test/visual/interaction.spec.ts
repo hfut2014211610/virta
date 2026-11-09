@@ -71,6 +71,27 @@ async function sweepForTooltip(page: Page, boxSel: string): Promise<{ x: number;
       }
     }
   }
+  // 兜底：网格全漏时，从 __scene.hits 直接取命中形状中心换算成视口坐标精确悬停
+  const pts = await page.locator(boxSel).evaluate((el) => {
+    const sc = (el as HTMLElement & { __scene?: { hits?: { shape: { type: string; cx?: number; cy?: number; x?: number; y?: number; w?: number; h?: number; x1?: number; x2?: number; y1?: number; y2?: number; points?: { x: number; y: number }[] } }[] } }).__scene;
+    if (!sc?.hits?.length) return [] as { x: number; y: number }[];
+    const rect = el.getBoundingClientRect();
+    const dpr = rect.width ? (sc as { width?: number }).width! / rect.width : 1;
+    return sc.hits.map((h) => {
+      const s = h.shape;
+      const px = s.type === 'circle' ? s.cx! : s.type === 'line' ? (s.x1! + s.x2!) / 2 : s.type === 'polygon' ? s.points!.reduce((a, p) => a + p.x, 0) / s.points!.length : s.x! + s.w! / 2;
+      const py = s.type === 'circle' ? s.cy! : s.type === 'line' ? (s.y1! + s.y2!) / 2 : s.type === 'polygon' ? s.points!.reduce((a, p) => a + p.y, 0) / s.points!.length : s.y! + s.h! / 2;
+      return { x: rect.x + px / dpr, y: rect.y + py / dpr };
+    });
+  }).catch(() => []);
+  for (const p of pts.slice(0, 40)) {
+    await page.mouse.move(p.x, p.y);
+    await page.waitForTimeout(20);
+    if (await tip.isVisible().catch(() => false)) {
+      const text = (await tip.textContent())?.trim();
+      if (text) return p;
+    }
+  }
   return null;
 }
 

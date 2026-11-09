@@ -211,12 +211,12 @@ export const sunburstRenderer: FamilyRenderer<SunburstModel> = {
         const am = (a0 + a1) / 2, rr = (lv + 0.5) * ringW;
         // D4：弧标签宽 > 该层弧长则隐藏（小尺寸下防相邻弧标签互撞）
         if (arcLabels && a1 - a0 > 0.09 && (a1 - a0) * rr >= measureText(n.name, 'body', 10) + 8) nodes.push({ type: 'text', x: cx + rr * Math.cos(am), y: cy + rr * Math.sin(am), text: n.name, font: 'body', size: 10, anchor: 'middle', baseline: 'middle', rotate: ((am * 180) / Math.PI + (am > Math.PI / 2 || am < -Math.PI / 2 ? 180 : 0)), fill: t.paper });
-        // 命中区用扇环多边形近似（外弧+内弧采样），窄扇区也可全角覆盖，不再漏扫格
-        const rIn = lv * ringW, rOut = (lv + 1) * ringW - 1.5, seg = Math.max(2, Math.ceil((a1 - a0) / 0.15));
-        const pts: { x: number; y: number }[] = [];
-        for (let s = 0; s <= seg; s++) { const a = a0 + ((a1 - a0) * s) / seg; pts.push({ x: cx + rOut * Math.cos(a), y: cy + rOut * Math.sin(a) }); }
-        for (let s = seg; s >= 0; s--) { const a = a0 + ((a1 - a0) * s) / seg; pts.push({ x: cx + rIn * Math.cos(a), y: cy + rIn * Math.sin(a) }); }
-        hits.push({ shape: { type: 'polygon', points: pts }, datum });
+        // 命中区沿扇区弧长布多个采样圆（半径=环宽一半），窄/宽扇区都覆盖，不再漏扫格
+        const nHit = Math.max(2, Math.ceil(((a1 - a0) * rr) / Math.max(6, ringW)));
+        for (let s = 0; s <= nHit; s++) {
+          const a = a0 + ((a1 - a0) * s) / nHit;
+          hits.push({ shape: { type: 'circle', cx: cx + rr * Math.cos(a), cy: cy + rr * Math.sin(a), r: ringW / 2 }, datum });
+        }
       }
       let a = a0;
       n.children?.forEach((k, i) => { const span = equalAngle ? (a1 - a0) / Math.max(1, n.children.length) : (k.value / Math.max(1e-9, n.value)) * (a1 - a0); walk(k as never, lv + 1, a, a + span, lv === 0 ? i : ci); a += span; });
