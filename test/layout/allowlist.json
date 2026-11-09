@@ -1,15 +1,62 @@
 [
-  { "case": "report", "kind": "text-clipped", "note": "基线：flow 文档静态渲染 600×360 内容超高溢出（D4 系，M2d.2 核实）" },
-  { "case": "combo", "kind": "text-overlap", "note": "基线：600×360 双轴刻度/图例重叠（D4）" },
-  { "case": "fishbone", "kind": "text-clipped", "note": "基线：鱼骨支干标签 600×360 溢出（D4）" },
-  { "case": "fishbone", "kind": "text-overlap", "note": "基线：鱼骨支干标签重叠（D4）" },
-  { "case": "er", "kind": "text-overlap", "note": "基线：ER 字段/实体名重叠（D4）" },
-  { "case": "sunburst", "kind": "text-overlap", "note": "基线：弧标签 600×360 重叠（D4）" },
-  { "case": "line3d", "kind": "text-clipped", "note": "基线：3D 投影标签溢出（D4）" },
-  { "case": "burndown", "kind": "text-clipped", "note": "基线：轴刻度/理想标注溢出（D4）" },
-  { "case": "pack/quality/control", "kind": "text-overlap", "note": "基线：控制图 σ 标注重叠（D4）" },
-  { "case": "compose/examples/packs/retail/compose.json", "kind": "text-clipped", "note": "基线：trend 24 刻度日期叠字等（D4）" },
-  { "case": "compose/examples/packs/delivery/deadline.compose.json", "kind": "text-clipped", "note": "基线：gantt 行标签溢出（D4）" },
-  { "case": "compose/examples/edge-cases/xss-compose.json", "kind": "text-clipped", "note": "基线：注入长标签溢出（XSS 语料刻意构造）" },
-  { "case": "compose/examples/edge-cases/xss-compose.json", "kind": "text-overlap", "note": "基线：注入长标签重叠（XSS 语料刻意构造）" }
+  {
+    "case": "report",
+    "kind": "text-clipped",
+    "note": "基线：flow 文档静态渲染 600×360 内容超高溢出（D4 系，M2d.2 核实）"
+  },
+  {
+    "case": "combo",
+    "kind": "text-overlap",
+    "note": "基线：600×360 双轴刻度/图例重叠（D4）"
+  },
+  {
+    "case": "fishbone",
+    "kind": "text-clipped",
+    "note": "基线：鱼骨支干标签 600×360 溢出（D4）"
+  },
+  {
+    "case": "fishbone",
+    "kind": "text-overlap",
+    "note": "基线：鱼骨支干标签重叠（D4）"
+  },
+  {
+    "case": "er",
+    "kind": "text-overlap",
+    "note": "基线：ER 字段/实体名重叠（D4）"
+  },
+  {
+    "case": "sunburst",
+    "kind": "text-overlap",
+    "note": "基线：弧标签 600×360 重叠（D4）"
+  },
+  {
+    "case": "line3d",
+    "kind": "text-clipped",
+    "note": "基线：3D 投影标签溢出（D4）"
+  },
+  {
+    "case": "burndown",
+    "kind": "text-clipped",
+    "note": "基线：轴刻度/理想标注溢出（D4）"
+  },
+  {
+    "case": "pack/quality/control",
+    "kind": "text-overlap",
+    "note": "基线：控制图 σ 标注重叠（D4）"
+  },
+  {
+    "case": "compose/examples/packs/retail/compose.json",
+    "kind": "text-clipped",
+    "note": "基线：trend 24 刻度日期叠字等（D4）"
+  },
+  {
+    "case": "compose/examples/packs/delivery/deadline.compose.json",
+    "kind": "text-clipped",
+    "note": "基线：gantt 行标签溢出（D4）"
+  },
+  {
+    "case": "compose/examples/edge-cases/xss-compose.json",
+    "kind": "text-clipped",
+    "note": "基线：注入长标签溢出（XSS 语料刻意构造）"
+  }
 ]

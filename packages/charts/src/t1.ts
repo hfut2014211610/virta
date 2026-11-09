@@ -1,7 +1,7 @@
 // T1 新视图渲染器（M6）：combo / rank / histogram / kpi / compare / cohort。
 import type { ViewId } from '@virta/contracts';
 import type { Node, Scene } from '@virta/chart-core';
-import { g, linePath as segPath, scaleBand, scaleLinear, scene } from '@virta/chart-core';
+import { g, linePath as segPath, paddedDomain, scaleBand, scaleLinear, scene } from '@virta/chart-core';
 import { axisTitle, formatNumber, xAxisBand, xAxisTicks, yAxis, type LegendItem } from '@virta/chart-skin';
 import { paletteColors } from '@virta/design-system';
 import type {
@@ -31,8 +31,9 @@ export const comboRenderer: FamilyRenderer<BarlineModel> = {
     const x = scaleBand(m.labels, [plot.x, plot.x + plot.w], 0.2);
     const y1v = m.series.filter((_, i) => i !== y2Idx).flatMap((s) => s.values).filter((v): v is number => v !== null);
     const y2v = m.series[y2Idx].values.filter((v): v is number => v !== null);
-    const y1 = scaleLinear([Math.min(0, ...y1v), Number(ctx.options?.['yMax'] ?? (Math.max(...y1v, 0) * 1.08 || 1))], [plot.y + plot.h, plot.y]);
-    const y2 = scaleLinear([Math.min(0, ...y2v), Number(ctx.options?.['y2Max'] ?? (Math.max(...y2v, 0) * 1.08 || 1))], [plot.y + plot.h, plot.y]);
+    // D6/H10：combo 柱以零为基准 → include
+    const y1 = scaleLinear(paddedDomain(Math.min(0, ...y1v), Number(ctx.options?.['yMax'] ?? (Math.max(...y1v, 0) * 1.08 || 1)), { zero: 'include' }), [plot.y + plot.h, plot.y]);
+    const y2 = scaleLinear(paddedDomain(Math.min(0, ...y2v), Number(ctx.options?.['y2Max'] ?? (Math.max(...y2v, 0) * 1.08 || 1)), { zero: 'include' }), [plot.y + plot.h, plot.y]);
     const fmtY2 = y2IsPct ? (v: number) => `${fm(ctx)(v)}%` : fm(ctx);
     nodes.push(...yAxis(y1, plot, t, fm(ctx)));
     // 右轴刻度画在 plot 右侧（无网格线）
@@ -265,7 +266,7 @@ export const compareRenderer: FamilyRenderer<CompareModel> = {
     const fmt = fm(ctx);
     if (variant === 'slope') {
       const plot = { x: ctx.plot.x + 130, y: ctx.plot.y + 26, w: ctx.plot.w - 260, h: ctx.plot.h - 90 };
-      const y = scaleLinear([lo - (hi - lo) * 0.05, hi + (hi - lo) * 0.08], [plot.y + plot.h, plot.y]);
+      const y = scaleLinear(paddedDomain(lo, hi, { pad: 0.06, zero: 'clamp' }), [plot.y + plot.h, plot.y]);
       const xA = plot.x, xB = plot.x + plot.w;
       // 两端标签垂直避让（贪心下移 ≥13px）
       const spread = (ys: number[]) => {

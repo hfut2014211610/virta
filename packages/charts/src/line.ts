@@ -1,7 +1,7 @@
 // line 图族 layout：smooth/straight/step × none/area/stack × window × marker × endLabels。
 import type { ViewId } from '@virta/contracts';
 import type { Node, Scene } from '@virta/chart-core';
-import { g, linePath as segPath, scaleLinear, scalePoint, scene } from '@virta/chart-core';
+import { g, linePath as segPath, paddedDomain, scaleLinear, scalePoint, scene } from '@virta/chart-core';
 import { annotationNodes, axisTitle, formatNumber, xAxisTicks, yAxis, type LegendItem } from '@virta/chart-skin';
 import { paletteColors } from '@virta/design-system';
 import type { BarlineModel } from '@virta/data-engine';
@@ -55,12 +55,16 @@ export const lineRenderer: FamilyRenderer<BarlineModel> = {
         vMax = Math.max(vMax, pos); vMin = Math.min(vMin, neg);
       });
     } else {
+      vMin = Infinity; vMax = -Infinity;
       visSeries.forEach((s) => s.values.forEach((v) => { if (v === null) return; vMin = Math.min(vMin, v); vMax = Math.max(vMax, v); }));
+      if (!Number.isFinite(vMin)) { vMin = 0; vMax = 0; }
     }
     if (vMax === vMin) vMax = vMin + 1;
     if (ctx.options?.['yMax'] !== undefined) vMax = Number(ctx.options['yMax']);
     if (ctx.options?.['yMin'] !== undefined) vMin = Number(ctx.options['yMin']);
-    const y = scaleLinear([vMin, vMax], [plot.y + plot.h, plot.y]);
+    // D6/H10：堆叠以零为基准（include），其余 clamp——全正数据不下零、留 5% 边距
+    const [dMin, dMax] = paddedDomain(vMin, vMax, { zero: stacked ? 'include' : 'clamp' });
+    const y = scaleLinear([dMin, dMax], [plot.y + plot.h, plot.y]);
     const xOf = scalePoint(labels, [plot.x + 6, plot.x + plot.w - 6]);
 
     nodes.push(...yAxis(y, { x: plot.x, y: plot.y, w: plot.w, h: plot.h }, t, fmt));
@@ -93,8 +97,9 @@ export const lineRenderer: FamilyRenderer<BarlineModel> = {
           const nums = seg.d.match(/-?\d+\.?\d*/g)!.map(Number);
           const segXs = nums.filter((_, i) => i % 2 === 0);
           const firstX = segXs[0]!, lastX = segXs[segXs.length - 1]!;
-          const b0 = y(stacked ? ysBase[labels.findIndex((_, li) => Math.abs(xs[li] - firstX) < 0.01)]! : 0);
-          const b1 = y(stacked ? ysBase[labels.findIndex((_, li) => Math.abs(xs[li] - lastX) < 0.01)]! : 0);
+          // D5：ysBase 已是像素值，不得再过一次 y()（原代码双重换算导致底边错误）
+          const b0 = stacked ? ysBase[labels.findIndex((_, li) => Math.abs(xs[li] - firstX) < 0.01)]! : y(0);
+          const b1 = stacked ? ysBase[labels.findIndex((_, li) => Math.abs(xs[li] - lastX) < 0.01)]! : y(0);
           nodes.push({ type: 'path', d: `${seg.d} L${lastX.toFixed(2)} ${b1.toFixed(2)} L${firstX.toFixed(2)} ${b0.toFixed(2)} Z`, fill: { ref: gid } });
         }
       }

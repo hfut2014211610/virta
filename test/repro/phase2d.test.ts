@@ -32,7 +32,7 @@ const walk = (sc: Scene): Node[] => {
 };
 
 describe('D8 treemap squarify 面积保真（H11，M2d.2 修复）', () => {
-  it.fails('flat：每矩形面积 = 值占比 × 画布面积（≤0.5%），总和 = 画布面积', () => {
+  it('flat：每矩形面积 = 值占比 × 画布面积（≤0.5%），总和 = 画布面积', () => {
     const rows = [
       { label: 'A', value: 120 }, { label: 'B', value: 80 }, { label: 'C', value: 60 },
       { label: 'D', value: 40 }, { label: 'E', value: 20 }, { label: 'F', value: 10 },
@@ -57,7 +57,7 @@ describe('D8 treemap squarify 面积保真（H11，M2d.2 修复）', () => {
     expect(avgAspect).toBeLessThanOrEqual(3);
   });
 
-  it.fails('sample-treemap 1200×675：叶子矩形平均长宽比 ≤3', () => {
+  it('sample-treemap 1200×675：叶子矩形平均长宽比 ≤3', () => {
     const rows = [
       { 大区: '华东', 城市: '上海', 销售额: 120 }, { 大区: '华东', 城市: '杭州', 销售额: 80 }, { 大区: '华东', 城市: '南京', 销售额: 60 },
       { 大区: '华南', 城市: '深圳', 销售额: 150 }, { 大区: '华南', 城市: '广州', 销售额: 95 },
@@ -75,7 +75,7 @@ describe('D8 treemap squarify 面积保真（H11，M2d.2 修复）', () => {
 });
 
 describe('D6 值域零界（H10，M2d.2 修复）', () => {
-  it.fails('paddedDomain：全正/全负 clamp 于零界，跨零不钳', () => {
+  it('paddedDomain：全正/全负 clamp 于零界，跨零不钳', () => {
     const pd = (core as unknown as { paddedDomain?: (min: number, max: number, o?: { pad?: number; zero?: string }) => [number, number] }).paddedDomain;
     expect(typeof pd).toBe('function');
     // 全正：朴素留白会越过 0 → clamp 到 0；不越界时保留留白
@@ -89,7 +89,7 @@ describe('D6 值域零界（H10，M2d.2 修复）', () => {
     expect(lo4).toBeLessThan(-50); expect(hi4).toBeGreaterThan(80);
   });
 
-  it.fails('paddedDomain：include 恒含 0；free 不钳；单点退化为区间', () => {
+  it('paddedDomain：include 恒含 0；free 不钳；单点退化为区间', () => {
     const pd = (core as unknown as { paddedDomain?: (min: number, max: number, o?: { pad?: number; zero?: string }) => [number, number] }).paddedDomain;
     expect(typeof pd).toBe('function');
     const [lo, hi] = pd!(100, 200, { zero: 'include' });
@@ -106,13 +106,13 @@ describe('D6 值域零界（H10，M2d.2 修复）', () => {
 });
 
 describe('D5 堆叠面积底边（§4.2，M2d.2 修复）', () => {
-  it.fails('第 k 层填充底边 = 前 k−1 层累加值换算后的像素位置', () => {
+  it('第 k 层填充底边 = 前 k−1 层累加值换算后的像素位置', () => {
     const rows = [{ m: '1月', a: 10, b: 5 }, { m: '2月', a: 20, b: 8 }, { m: '3月', a: 15, b: 12 }];
     const m = adapt('line', table(['m', 'a', 'b'], rows)) as { series: { name: string; values: (number | null)[] }[] };
     const sc = getRenderer('line')!.layout(m, ctxOf(1200, 675, { options: { fill: 'stack' } }));
     // line plot：ctx.plot 内缩 padL56/padR18/padT22/padB34 → {x:76,y:42,w:1086,h:579}
-    // vMax = 各标签正向累计最大值 = max(15, 28, 27) = 28
-    const y = scaleLinear([0, 28], [42 + 579, 42]);
+    // vMax = 各标签正向累计最大值 = max(15, 28, 27) = 28；值域走 paddedDomain(include)
+    const y = scaleLinear(core.paddedDomain(0, 28, { zero: 'include' }), [42 + 579, 42]);
     const fills = walk(sc).filter((n) =>
       n.type === 'path' && typeof n.fill === 'object' && n.fill !== null && (n.fill as { ref?: string }).ref === 'area1',
     ) as (Node & { d: string })[];

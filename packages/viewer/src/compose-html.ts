@@ -1,6 +1,6 @@
 // compose 单文件 HTML：多面板网格 + 联动筛选条 + 内联首屏 SVG + payload + 运行期。
 import { buildCss } from '@virta/design-system';
-import type { Theme } from '@virta/contracts';
+import { getContract, type Theme, type ViewId } from '@virta/contracts';
 import { cspMeta } from './html.js';
 import type { ComposePayload } from './runtime-compose.js';
 
@@ -18,7 +18,7 @@ export function composeHtml(o: ComposeHtmlOpts): string {
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const grid = payload.layout === 'grid';
   const panels = payload.panels.map((p, i) => {
-    const title = p.spec.text?.title ?? p.id;
+    const title = p.spec.text?.title ?? getContract(p.view as ViewId)?.title ?? p.id;
     const ins = p.insights.slice(0, 2).map((x) => `<span class="pins">${esc(x.text)}</span>`).join('');
     const style = grid ? `grid-column:span ${p.flow ? 12 : Math.min(12, Math.max(1, p.w ?? 6))}` : '';
     return `<section class="panel" style="${style}">

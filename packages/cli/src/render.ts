@@ -123,13 +123,17 @@ export async function renderChart(job: RenderJob): Promise<RenderResult & { svgS
     ? legendNames.map((name, i) => ({ name, color: paletteColors(palette, theme)[i % paletteColors(palette, theme).length], hidden: hiddenS.has(name) }))
     : undefined;
   // ADR-0010：有 asOf 时静态卡脚注显示「数据截至 …（tz）」
+  // D7/H5：静态导出未给标题 → 兜底为中文视图名 + TITLE_MISSING（info）
+  if (!spec.text?.title && job.formats.some((fm) => fm === 'svg' || fm === 'png')) {
+    warnings.push({ code: 'TITLE_MISSING', level: 'info', message: `未指定标题，已回退为「${contract?.title ?? view}」`, hint: '--title "…"' });
+  }
   const textWithAsOf = (() => {
-    if (!spec.time?.asOf) return spec.text;
+    if (!spec.time?.asOf) return spec.text?.title ? spec.text : { ...spec.text, title: contract?.title };
     const { tz } = resolveTime(spec);
     const zp = zonedParts(parseInstant(spec.time.asOf)!, tz);
     const p = (n: number) => String(n).padStart(2, '0');
     const note = `数据截至 ${zp.y}-${p(zp.mo)}-${p(zp.d)} ${p(zp.h)}:${p(zp.mi)}（${tz}）`;
-    return { ...spec.text, source: [spec.text?.source, note].filter(Boolean).join(' · ') };
+    return { ...spec.text, title: spec.text?.title ?? contract?.title, source: [spec.text?.source, note].filter(Boolean).join(' · ') };
   })();
   const framed = frameStatic(job.width, job.height, {
     text: textWithAsOf, insights, legend, theme: tokens, frame: job.frame,

@@ -1,7 +1,7 @@
 // bar 图族 layout：grouped/stacked/pct/pareto/waterfall × 表面/形状/伪3D。
 import type { ViewId } from '@virta/contracts';
 import type { Node, Paint, Scene } from '@virta/chart-core';
-import { g, scaleBand, scaleLinear, scene } from '@virta/chart-core';
+import { g, paddedDomain, scaleBand, scaleLinear, scene } from '@virta/chart-core';
 import { annotationNodes, axisTitle, formatNumber, xAxisBand, yAxis, type LegendItem } from '@virta/chart-skin';
 import { paletteColors, accentFor, rampSequential } from '@virta/design-system';
 import type { BarlineModel } from '@virta/data-engine';
@@ -130,7 +130,8 @@ export const barRenderer: FamilyRenderer<BarlineModel> = {
     // facet sharedScale：分面共享值域覆盖
     if (ctx.options?.['yMax'] !== undefined) vMax = Number(ctx.options['yMax']);
     if (ctx.options?.['yMin'] !== undefined) vMin = Number(ctx.options['yMin']);
-    const y = scaleLinear([vMin, vMax], [plot.y + plot.h, plot.y]);
+    // D6/H10：柱状图以零为基准 → include
+    const y = scaleLinear(paddedDomain(vMin, vMax, { zero: 'include' }), [plot.y + plot.h, plot.y]);
     const band = scaleBand(labels, [plot.x, plot.x + plot.w]);
 
     nodes.push(...yAxis(y, { x: plot.x, y: plot.y, w: plot.w, h: plot.h }, t, (v) => pctMode ? `${Math.round(v)}%` : fmt(v)));

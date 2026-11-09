@@ -183,7 +183,8 @@ export async function runComposeFile(cf: ComposeFileShape, dir: string, job: Com
     ];
     let ty = r.y + 10;
     if (p.question) { pn.push({ type: 'text', x: r.x + 14, y: ty + 4, text: p.question, font: 'mono', size: 10.5, baseline: 'top', fill: tokens.acc }); ty += 16; }
-    pn.push({ type: 'text', x: r.x + 14, y: ty + 4, text: p.spec.text?.title ?? p.id, font: 'body', size: 14, weight: 600, baseline: 'top', fill: tokens.ink });
+    // H4：标题兜底链 spec.text.title → 契约中文视图名，永不显示 chart id
+    pn.push({ type: 'text', x: r.x + 14, y: ty + 4, text: p.spec.text?.title ?? getContract(p.view)?.title ?? p.id, font: 'body', size: 14, weight: 600, baseline: 'top', fill: tokens.ink });
     const first = p.insights[0];
     if (first) pn.push({ type: 'text', x: r.x + 14, y: ty + 24, text: `◆ ${first.text}`, font: 'body', size: 10.5, baseline: 'top', fill: tokens.muted });
     const inner = { x: r.x + 12, y: ty + (first ? 42 : 28), w: r.w - 24, h: r.h - (ty + (first ? 42 : 28) - r.y) - 12 };

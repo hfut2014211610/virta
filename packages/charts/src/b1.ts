@@ -1,7 +1,7 @@
 // B1：matrix3d / scatter / pie / bullet / funnel。
 import type { ViewId } from '@virta/contracts';
 import type { Node, Paint, Scene } from '@virta/chart-core';
-import { g, niceTicks, scaleLinear, scene } from '@virta/chart-core';
+import { g, niceTicks, paddedDomain, scaleLinear, scene } from '@virta/chart-core';
 import { annotationNodes, formatNumber, yAxis, type LegendItem } from '@virta/chart-skin';
 import { paletteColors, accentFor, lerpOklch } from '@virta/design-system';
 import type { BarlineModel, BulletModel, FunnelModel, PieModel, ScatterModel } from '@virta/data-engine';
@@ -181,14 +181,13 @@ export const scatterRenderer: FamilyRenderer<ScatterModel> = {
     const nodes: Node[] = [];
     const hits: Scene['hits'] = [];
     const xs = m.points.map((p) => p.x), ys = m.points.map((p) => p.y);
-    let xMin = Number(ctx.options?.['xMin'] ?? Math.min(0, ...xs)), xMax = Number(ctx.options?.['xMax'] ?? Math.max(1, ...xs));
-    let yMin = Number(ctx.options?.['yMin'] ?? Math.min(0, ...ys)), yMax = Number(ctx.options?.['yMax'] ?? Math.max(1, ...ys));
-    // 未显式指定域时给 6% 边距，避免边缘点被点半径裁切（横向/纵向展示不完整）
-    const padX = (xMax - xMin || Math.abs(xMax) || 1) * 0.06, padY = (yMax - yMin || Math.abs(yMax) || 1) * 0.06;
-    if (ctx.options?.['xMin'] === undefined) xMin -= padX;
-    if (ctx.options?.['xMax'] === undefined) xMax += padX;
-    if (ctx.options?.['yMin'] === undefined) yMin -= padY;
-    if (ctx.options?.['yMax'] === undefined) yMax += padY;
+    // D6/H10：clamp 零界——全正数据不下零（原实现对 min(0,·) 再减 6% pad 导致负刻度）
+    let [xMin, xMax] = paddedDomain(xs.length ? Math.min(...xs) : 0, xs.length ? Math.max(...xs) : 1, { pad: 0.06, zero: 'clamp' });
+    let [yMin, yMax] = paddedDomain(ys.length ? Math.min(...ys) : 0, ys.length ? Math.max(...ys) : 1, { pad: 0.06, zero: 'clamp' });
+    if (ctx.options?.['xMin'] !== undefined) xMin = Number(ctx.options['xMin']);
+    if (ctx.options?.['xMax'] !== undefined) xMax = Number(ctx.options['xMax']);
+    if (ctx.options?.['yMin'] !== undefined) yMin = Number(ctx.options['yMin']);
+    if (ctx.options?.['yMax'] !== undefined) yMax = Number(ctx.options['yMax']);
     const logX = ctx.options?.['logX'] === true && xMin > 0;
     const logY = ctx.options?.['logY'] === true && yMin > 0;
     const lx = (v: number) => Math.log10(Math.max(1e-12, v));

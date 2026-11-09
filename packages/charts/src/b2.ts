@@ -1,7 +1,7 @@
 // B2：heatmap / treemap / sunburst / sankey / boxplot / radar。
 import type { ViewId } from '@virta/contracts';
 import type { Node, Scene } from '@virta/chart-core';
-import { g, measureText, scaleLinear, scene } from '@virta/chart-core';
+import { g, measureText, placeLabels, scaleLinear, scene } from '@virta/chart-core';
 import { annotationNodes, formatNumber, yAxis, type LegendItem } from '@virta/chart-skin';
 import { paletteColors, rampDiverging, rampSequential } from '@virta/design-system';
 import type { BoxplotModel, HeatmapModel, RadarModel, SankeyModel, SunburstModel, TreemapModel } from '@virta/data-engine';
@@ -90,21 +90,39 @@ export const heatmapRenderer: FamilyRenderer<HeatmapModel> = {
   },
 };
 
-// —— treemap：squarified ——
-function squarify(items: { label: string; value: number; share: number; group?: string }[], x: number, y: number, w: number, h: number, out: { label: string; value: number; group?: string; x: number; y: number; w: number; h: number }[]) {
+// —— treemap：squarified（H11 标准算法）——
+// 目标面积 = value/total × 原始矩形面积（不随剩余矩形缩小）；
+// worst 用行面积与剩余矩形短边算最差长宽比，放不下就换行并扣掉该行面积。
+function squarify(items: { label: string; value: number; share?: number; group?: string }[], x: number, y: number, w: number, h: number, out: { label: string; value: number; group?: string; x: number; y: number; w: number; h: number }[]) {
   const total = items.reduce((a, b) => a + b.value, 0) || 1;
-  let row: typeof items = [], cx = x, cy = y, cw = w, ch = h;
+  const totalArea = w * h;
+  const area = (v: number) => (v / total) * totalArea;
+  let cx = x, cy = y, cw = w, ch = h;
+  let row: typeof items = [];
+  const rowArea = (r: typeof items) => r.reduce((a, b) => a + area(b.value), 0);
   const worst = (r: typeof items) => {
-    const s = r.reduce((a, b) => a + b.value, 0) / total;
-    const side = Math.min(cw, ch);
+    const s = Math.min(cw, ch) || 1;
+    const sum = rowArea(r) || 1;
     let m = 0;
-    for (const it of r) { const f = (it.value / total) * cw * ch / (side || 1) / (s * Math.max(cw, ch) / (side || 1) || 1); m = Math.max(m, Math.max(f, 1 / f)); }
+    for (const it of r) {
+      const a = area(it.value);
+      m = Math.max(m, Math.max((s * s * a) / (sum * sum), (sum * sum) / (s * s * a)));
+    }
     return m;
   };
   const layRow = (r: typeof items) => {
-    const s = r.reduce((a, b) => a + b.value, 0) / total;
-    if (cw >= ch) { const rw = s * cw; let ry = cy; for (const it of r) { const rh = (it.value / total) * cw * ch / (rw || 1); out.push({ label: it.label, value: it.value, group: it.group, x: cx, y: ry, w: rw, h: rh }); ry += rh; } cx += rw; cw -= rw; }
-    else { const rh = s * ch; let rx = cx; for (const it of r) { const rw = (it.value / total) * cw * ch / (rh || 1); out.push({ label: it.label, value: it.value, group: it.group, x: rx, y: cy, w: rw, h: rh }); rx += rw; } cy += rh; ch -= rh; }
+    const sum = rowArea(r);
+    if (cw >= ch) {
+      const rw = Math.min(cw, sum / (ch || 1));
+      let ry = cy;
+      for (const it of r) { const rh = area(it.value) / (rw || 1); out.push({ label: it.label, value: it.value, group: it.group, x: cx, y: ry, w: rw, h: rh }); ry += rh; }
+      cx += rw; cw -= rw;
+    } else {
+      const rh = Math.min(ch, sum / (cw || 1));
+      let rx = cx;
+      for (const it of r) { const rw = area(it.value) / (rh || 1); out.push({ label: it.label, value: it.value, group: it.group, x: rx, y: cy, w: rw, h: rh }); rx += rw; }
+      cy += rh; ch -= rh;
+    }
   };
   for (const it of items) {
     if (row.length && worst([...row, it]) > worst(row)) { layRow(row); row = []; }
@@ -267,6 +285,8 @@ export const sankeyRenderer: FamilyRenderer<SankeyModel> = {
       // 流向带命中区（先压栈，节点命中优先级更高）：悬停流带显示 source→target 流量
       hits.push({ shape: { type: 'path', d: dPath }, datum: { kind: 'link', index: l.s, series: `${m.nodes[l.s].name} → ${m.nodes[l.t].name}`, value: l.v, tooltip: { title: `${m.nodes[l.s].name} → ${m.nodes[l.t].name}`, rows: [{ swatch: colors[l.s % colors.length], name: '流量', value: f(l.v) }] } } });
     }
+    // D4/H8：节点标签走 placeLabels 贪心避让（左列放节点左侧，其余右侧）
+    const cands: import('@virta/chart-core').LabelCandidate[] = [];
     m.nodes.forEach((n, i) => {
       const p = pos[i];
       const c = colors[i % colors.length];
@@ -275,10 +295,17 @@ export const sankeyRenderer: FamilyRenderer<SankeyModel> = {
       nodes.push({ type: 'rect', x: p.x, y: p.y, w: 14, h: p.h, r: 2, fill: c, opacity: nDim ? 0.25 : 1, datum });
       if (labelMode !== 'none' && p.h > 10) {
         const txt = labelMode === 'both' ? `${n.name} ${f(n.value)}` : n.name;
-        nodes.push({ type: 'text', x: n.depth === 0 ? p.x - 5 : p.x + 19, y: p.y + p.h / 2, text: txt, font: 'body', size: 10.5, anchor: n.depth === 0 ? 'end' : 'start', baseline: 'middle', fill: t.muted, opacity: nDim ? 0.35 : 1 });
+        cands.push({ x: n.depth === 0 ? p.x - 8 : p.x + 22, y: p.y + p.h / 2, text: txt,
+          width: measureText(txt, 'body', 10.5), height: 12, priority: n.value, leader: true, datum });
       }
       hits.push({ shape: { type: 'rect', x: p.x, y: p.y, w: 14, h: p.h }, datum });
     });
+    const placed = placeLabels(cands, [ctx.plot.x, ctx.plot.y, ctx.plot.x + ctx.plot.w, ctx.plot.y + ctx.plot.h]).placed;
+    for (const pl of placed) {
+      if (pl.leader) nodes.push({ type: 'line', x1: pl.leader[0], y1: pl.leader[1], x2: pl.leader[2], y2: pl.leader[3], stroke: t.faint, strokeWidth: 0.8, opacity: 0.6 });
+      const left = pl.x + pl.w / 2 < pl.anchorX;
+      nodes.push({ type: 'text', x: left ? pl.x + pl.w : pl.x, y: pl.y + pl.h / 2, text: pl.text, font: 'body', size: 10.5, anchor: left ? 'end' : 'start', baseline: 'middle', fill: t.muted, datum: pl.datum });
+    }
     const sc = scene(ctx.width, ctx.height, [g(nodes)]);
     sc.defs = defs;
     sc.hits = hits;

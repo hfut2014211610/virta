@@ -16,6 +16,29 @@ export function niceTicks(min: number, max: number, target = 6): { domain: [numb
   return { domain: [lo, hi], ticks, step };
 }
 
+/**
+ * H10 值域规则（D6）：朴素留白 + 零界处理。
+ * - `zero:'clamp'`：全非负时下界不越过 0；全非正时上界不越过 0（散点/折线）。
+ * - `zero:'include'`：域内恒含 0（以零为基准的柱/面积图）。
+ * - `zero:'free'`：只留白（值域由控制限决定的 control 等）。
+ * pad 默认 5%；min===max 时按 |v|×10% 或 ±1 展开成区间。
+ */
+export function paddedDomain(min: number, max: number, o?: { pad?: number; zero?: 'include' | 'clamp' | 'free' }): [number, number] {
+  const pad = o?.pad ?? 0.05, zero = o?.zero ?? 'free';
+  if (min > max) [min, max] = [max, min];
+  const span = max - min;
+  const padAmt = span > 0 ? span * pad : Math.max(Math.abs(min) * 0.1, 1) * pad * 20;
+  let lo = min - padAmt, hi = max + padAmt;
+  if (zero === 'clamp') {
+    if (min >= 0) lo = Math.max(0, lo);
+    if (max <= 0) hi = Math.min(0, hi);
+  } else if (zero === 'include') {
+    if (min > 0) lo = 0;
+    if (max < 0) hi = 0;
+  }
+  return [lo, hi];
+}
+
 export function scaleLinear(domain: [number, number], range: [number, number], targetTicks = 6): LinearScale {
   const { domain: d, ticks } = niceTicks(domain[0], domain[1], targetTicks);
   const span = d[1] - d[0] || 1;

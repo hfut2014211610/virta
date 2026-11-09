@@ -1,7 +1,7 @@
 // T3 简版图族渲染：er / flowchart / sequence / burndown / formula。
 import type { ViewId } from '@virta/contracts';
 import type { Node, Scene } from '@virta/chart-core';
-import { g, niceTicks, scaleLinear, scene } from '@virta/chart-core';
+import { g, measureText, niceTicks, scaleLinear, scene } from '@virta/chart-core';
 import { formatNumber, type LegendItem } from '@virta/chart-skin';
 import { accentFor, lerpOklch, paletteColors } from '@virta/design-system';
 import type { BurndownModel, ErModel, FlowchartModel, FormulaModel, SequenceModel } from '@virta/data-engine';
@@ -247,7 +247,11 @@ export const formulaRenderer: FamilyRenderer<FormulaModel> = {
     const t = ctx.tokens;
     const acc = accentFor(ctx.palette, ctx.theme);
     const nodes: Node[] = [];
-    const fs = ({ s: 17, m: 22, l: 28 } as Record<string, number>)[String(ctx.options?.['size'] ?? 'm')] ?? 22;
+    const baseFs = ({ s: 17, m: 22, l: 28 } as Record<string, number>)[String(ctx.options?.['size'] ?? 'm')] ?? 22;
+    // H12/D9：按可用空间等比放大——最宽公式行或总高达到 plot 的 70% 为止，上限 48px
+    const maxW = Math.max(1, ...m.items.map((it) => measureText(mathPretty(it.formula), 'display', 1)));
+    const grow = Math.min(48 / baseFs, (ctx.plot.w * 0.7) / (maxW * baseFs), (ctx.plot.h * 0.7) / (m.items.length * 2.4 * baseFs));
+    const fs = baseFs * Math.max(1, grow);
     const rowH = fs * 2.4;
     const y0 = ctx.plot.y + ctx.plot.h / 2 - (m.items.length * rowH) / 2 + rowH / 2;
     const hits: Scene['hits'] = [];

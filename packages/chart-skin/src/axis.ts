@@ -1,6 +1,6 @@
 // 坐标轴（§5.4 + ADR-0008）：刻度标签 muted 色、网格线（skin.grid 控制）、零基线（skin.baseline）、左上角轴标题/单位。
 import type { Node } from '@virta/chart-core';
-import type { LinearScale, BandScale } from '@virta/chart-core';
+import { ellipsize, measureText, type LinearScale, type BandScale } from '@virta/chart-core';
 import type { ChartTheme } from '@virta/design-system';
 
 export interface AxisOpts { x: number; y: number; w: number; h: number }
@@ -29,19 +29,40 @@ export function yAxis(scale: LinearScale, o: AxisOpts, t: ChartTheme, labelFmt?:
 
 /** x 轴（band 类目）：底部刻度标签；过密按步抽样。 */
 export function xAxisBand(band: BandScale, o: AxisOpts, t: ChartTheme, maxLabels = 12): Node[] {
-  const out: Node[] = [];
-  const step = Math.max(1, Math.ceil(band.domain.length / maxLabels));
-  band.domain.forEach((lab, i) => {
-    if (i % step) return;
-    const cx = band(lab) + band.bandwidth / 2;
-    out.push({ type: 'text', x: cx, y: o.y + o.h + 6, text: lab, font: 'mono', size: 11, anchor: 'middle', baseline: 'top', fill: t.muted });
-  });
-  return out;
+  return xTicksFit(band.domain.filter((_, i) => i % Math.max(1, Math.ceil(band.domain.length / maxLabels)) === 0)
+    .map((lab) => ({ pos: band(lab) + band.bandwidth / 2, text: lab })), o, t);
 }
 
-/** x 轴（point/连续刻度）。 */
+/**
+ * H9 x 轴自适应：实测标签宽度 → ①放不下则隔 n 取一（保首尾）
+ * ②仍挤则整组旋转 −45° ③再不行截断加省略号。timeOf 可选：时间刻度优先年份变化处。
+ */
+export function xTicksFit(values: { pos: number; text: string }[], o: AxisOpts, t: ChartTheme): Node[] {
+  const W = (s: string) => measureText(s, 'mono', 11);
+  const step = (vals: typeof values) => {
+    const n = vals.length;
+    return n > 1 ? (vals[n - 1]!.pos - vals[0]!.pos) / (n - 1) : Infinity;
+  };
+  // ① 稀疏：相邻标签间至少留 4px 空隙；保证首尾都在
+  let vals = values;
+  for (let thin = 1; thin < values.length; thin++) {
+    vals = values.filter((_, i) => i % thin === 0 || i === values.length - 1);
+    const worst = Math.max(0, ...vals.map((v) => W(v.text)));
+    if (step(vals) >= worst + 4) break;
+  }
+  const gap = step(vals);
+  const rot = vals.length > 1 && Math.max(0, ...vals.map((v) => W(v.text))) > gap - 4;
+  const maxW = rot ? gap * Math.SQRT2 - 4 : gap - 4;
+  return vals.map((v) => {
+    const text = rot || maxW < W(v.text) ? ellipsize(v.text, 'mono', 11, Math.max(24, maxW)) : v.text;
+    return { type: 'text' as const, x: v.pos, y: o.y + o.h + 6, text, font: 'mono' as const, size: 11,
+      anchor: (rot ? 'end' : 'middle') as 'start' | 'middle' | 'end', baseline: 'top' as const, fill: t.muted, rotate: rot ? -45 : undefined };
+  });
+}
+
+/** x 轴（point/连续刻度）：按实测宽度稀疏/旋转/截断。 */
 export function xAxisTicks(values: { pos: number; text: string }[], o: AxisOpts, t: ChartTheme): Node[] {
-  return values.map((v) => ({ type: 'text' as const, x: v.pos, y: o.y + o.h + 6, text: v.text, font: 'mono' as const, size: 11, anchor: 'middle' as const, baseline: 'top' as const, fill: t.muted }));
+  return xTicksFit(values, o, t);
 }
 
 /** 左上角轴标题/单位。 */
