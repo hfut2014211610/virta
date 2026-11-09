@@ -9,6 +9,7 @@ import { renderFlowTable } from './flow-table.js';
 import type { DocModel, GridModel } from '@virta/data-engine';
 import type { Theme, ViewSpec, Table } from '@virta/contracts';
 import { html, raw } from './safe-html.js';
+import { showTooltip, hideTooltip } from './tooltip.js';
 
 export interface ComposePanel {
   id: string;
@@ -128,6 +129,17 @@ export function bootCompose(payload: ComposePayload, views: Record<string, Compo
       renderChips();
       payload.panels.forEach((_, j) => { if (j !== i) renderPanel(j); });
     });
+    // H3：组合页悬停提示——页面级 #tooltip（fixed），每个面板 hitTest 后共享浮层
+    svg?.addEventListener('mousemove', (e) => {
+      const tip = $('#tooltip');
+      if (!tip) return;
+      const rect = box.getBoundingClientRect();
+      const dpr = (sc.width || rect.width) / rect.width;
+      const d = hitTest(sc, (e.clientX - rect.left) * dpr, (e.clientY - rect.top) * dpr);
+      if (d?.tooltip) showTooltip(tip, d, e.clientX, e.clientY, document.documentElement);
+      else hideTooltip(tip);
+    });
+    svg?.addEventListener('mouseleave', () => { const tip = $('#tooltip'); if (tip) hideTooltip(tip); });
   }
 
   function renderChips() {

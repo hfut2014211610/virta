@@ -52,6 +52,7 @@ const htmlOf = (view: string, file: string) => `${CWD()}/${OUT}/${stemOf(file)}-
 
 /** 在容器内按 12×8 网格扫描，返回第一个让 #tooltip 可见且非空的视口坐标。 */
 async function sweepForTooltip(page: Page, boxSel: string): Promise<{ x: number; y: number } | null> {
+  await page.locator(boxSel).scrollIntoViewIfNeeded().catch(() => {});
   const bb = await page.locator(boxSel).boundingBox();
   if (!bb) return null;
   const tip = page.locator('#tooltip');
@@ -79,7 +80,7 @@ test.beforeAll(() => {
 });
 
 for (const [view, file] of CASES) {
-  test.fail(`${view}：悬停提示框可见且完整位于视口内`, async ({ page }) => {
+  test(`${view}：悬停提示框可见且完整位于视口内`, async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('file://' + htmlOf(view, file));
     await page.waitForSelector('#chart-box svg', { timeout: 10000 });
@@ -94,7 +95,7 @@ for (const [view, file] of CASES) {
   });
 }
 
-test.fail('移出隐藏：提示框出现后鼠标移出 #chart-box → 隐藏', async ({ page }) => {
+test('移出隐藏：提示框出现后鼠标移出 #chart-box → 隐藏', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('file://' + htmlOf('bar', 'sample.csv'));
   await page.waitForSelector('#chart-box svg');
@@ -152,7 +153,7 @@ test('状态恢复：变体+排序切换后 URL 新开页保持一致', async ({
   await page2.close();
 });
 
-test.fail('组合页悬停：每个面板至少一个点能触发提示框', async ({ page }) => {
+test('组合页悬停：每个面板至少一个点能触发提示框', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 960 });
   await page.goto(`file:///${CWD()}/${OUT}/compose-grid-light.html`);
   await page.waitForSelector('#virta-app');
@@ -199,7 +200,7 @@ test('组合页联动：点击数据点 → 其他面板 modelHash 变化；清�
   expect(hashes2).toEqual(hashes0);
 });
 
-test.fail('3D 视图：拖拽旋转期间提示框隐藏，结束后悬停可再次触发', async ({ page }) => {
+test('3D 视图：拖拽旋转期间提示框隐藏，结束后悬停可再次触发', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('file://' + htmlOf('scatter3d', 'sample-scatter3d.csv'));
   await page.waitForSelector('#chart-box svg');

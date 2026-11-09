@@ -64,6 +64,7 @@ h1 em{font-style:normal;color:var(--acc);font-weight:500}
 .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-card,20px);padding:20px;box-shadow:var(--shadow);position:relative}
 #tooltip{position:absolute;pointer-events:none;background:var(--tip);color:var(--tipink);padding:10px 12px;border-radius:var(--r-tip,10px);font-family:var(--mono);font-size:12px;line-height:1.7;display:none;z-index:10;min-width:160px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 #tooltip b{color:var(--acc)}
+#tooltip i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
 #detail{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;min-height:22px}
 #detail b{color:var(--ink)}
 .table{width:100%;border-collapse:collapse;font-size:13px;margin-top:18px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-table,14px);overflow:hidden}

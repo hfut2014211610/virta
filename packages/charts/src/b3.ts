@@ -1163,7 +1163,7 @@ export const scatter3dRenderer: FamilyRenderer<ScatterModel> = {
       const datum = { kind: 'point', index: 0, series: p.group, label: p.label, value: p.y, tooltip: { title: p.label, rows: [{ swatch: c, name: m.x_key || 'x', value: f(p.x) }, { name: m.y_key || 'y', value: f(p.y) }, { name: 'z', value: f(p.z ?? 0) }] } };
       nodes.push({ type: 'line', x1: px, y1: py, x2: px, y2: P(nx(p.x), 0, nz(p.z ?? 0))[1], stroke: c, strokeWidth: 0.5, opacity: 0.4 });
       nodes.push({ type: 'circle', cx: px, cy: py, r, fill: c, opacity: 0.85, datum });
-      hits.push({ shape: { type: 'circle', cx: px, cy: py, r: r + 5 }, datum });
+      hits.push({ shape: { type: 'circle', cx: px, cy: py, r: Math.max(r + 8, 18) }, datum });
     }
     const sc = scene(ctx.width, ctx.height, [g(nodes)]);
     sc.hits = hits;

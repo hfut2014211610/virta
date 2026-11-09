@@ -262,7 +262,10 @@ export const sankeyRenderer: FamilyRenderer<SankeyModel> = {
         fill = { ref: `sk${l.s}_${l.t}` };
       }
       const fDim = focus != null && m.nodes[l.s].name !== focus && m.nodes[l.t].name !== focus;
-      nodes.push({ type: 'path', d: `M${x1} ${sy} C${mx} ${sy} ${mx} ${dy} ${x2} ${dy} L${x2} ${dy + dh} C${mx} ${dy + dh} ${mx} ${sy + sh} ${x1} ${sy + sh} Z`, fill: fill as never, opacity: fDim ? 0.05 : 0.28 });
+      const dPath = `M${x1} ${sy} C${mx} ${sy} ${mx} ${dy} ${x2} ${dy} L${x2} ${dy + dh} C${mx} ${dy + dh} ${mx} ${sy + sh} ${x1} ${sy + sh} Z`;
+      nodes.push({ type: 'path', d: dPath, fill: fill as never, opacity: fDim ? 0.05 : 0.28 });
+      // 流向带命中区（先压栈，节点命中优先级更高）：悬停流带显示 source→target 流量
+      hits.push({ shape: { type: 'path', d: dPath }, datum: { kind: 'link', index: l.s, series: `${m.nodes[l.s].name} → ${m.nodes[l.t].name}`, value: l.v, tooltip: { title: `${m.nodes[l.s].name} → ${m.nodes[l.t].name}`, rows: [{ swatch: colors[l.s % colors.length], name: '流量', value: f(l.v) }] } } });
     }
     m.nodes.forEach((n, i) => {
       const p = pos[i];
@@ -389,6 +392,8 @@ export const radarRenderer: FamilyRenderer<RadarModel> = {
       const d = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(2)} ${p[1].toFixed(2)}`).join(' ') + ' Z';
       if (fillPoly) nodes.push({ type: 'path', d, fill: c, opacity: dim ? 0.03 : 0.15 });
       nodes.push({ type: 'path', d, fill: 'none', stroke: c, strokeWidth: dim ? 1 : 2, opacity: dim ? 0.22 : 1 });
+      // 系列多边形命中区（先压栈，顶点命中优先级更高）：悬停系列面显示该轴全部值
+      hits.push({ shape: { type: 'path', d }, datum: { kind: 'series', index: si, series: it.name, tooltip: { title: it.name, rows: m.axes.slice(0, 8).map((ax, ai) => ({ swatch: c, name: ax.label, value: fmt(ctx)(it.values[ai]!) })) } } });
       pts.forEach(([px, py], i) => {
         if (vertexLabels) nodes.push({ type: 'text', x: px + (px > cx ? 5 : -5), y: py + (py > cy ? 5 : -5), text: fmt(ctx)(it.values[i]), font: 'mono', size: 9.5, anchor: px > cx ? 'start' : 'end', baseline: py > cy ? 'top' : 'bottom', fill: c });
         hits.push({ shape: { type: 'circle', cx: px, cy: py, r: 9 }, datum: { kind: 'vertex', index: i, series: it.name, label: m.axes[i].label, value: it.values[i], tooltip: { title: `${it.name} · ${m.axes[i].label}`, rows: [{ swatch: c, name: '值', value: fmt(ctx)(it.values[i]) }] } } });

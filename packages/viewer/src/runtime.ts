@@ -10,6 +10,7 @@ import { facetGroups, facetLayout, FACETABLE } from './facet.js';
 import type { DocModel, GridModel } from '@virta/data-engine';
 import { ZH } from './i18n/zh-CN.js';
 import { html, raw, safeColor } from './safe-html.js';
+import { showTooltip, hideTooltip } from './tooltip.js';
 
 export interface Payload {
   spec: ViewSpec;
@@ -158,10 +159,10 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
         lastModel = model;
         payload.modelHash = modelHash(model);
         syncThemeDataset();
-        if (payload.doc !== undefined) deps.renderFlowDoc?.(box, model as DocModel);
-        else deps.renderFlowTable?.(box, model as GridModel, spec);
+        if (payload.doc !== undefined) deps.renderFlowDoc?.($('#chart-stage'), model as DocModel);
+        else deps.renderFlowTable?.($('#chart-stage'), model as GridModel, spec);
       } catch (e) {
-        box.innerHTML = html`<div class="render-err">当前数据不支持该组合<br><small>${(e as Error).message}</small></div>`;
+        $('#chart-stage').innerHTML = html`<div class="render-err">当前数据不支持该组合<br><small>${(e as Error).message}</small></div>`;
       }
       (box as HTMLElement & { __scene?: unknown }).__scene = undefined;
       renderLegend(undefined);
@@ -174,15 +175,16 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
     try {
       sc = layoutScene();
     } catch (e) {
-      $('#chart-box').innerHTML = html`<div class="render-err">当前数据不支持该组合<br><small>${(e as Error).message}</small></div>`;
+      $('#chart-stage').innerHTML = html`<div class="render-err">当前数据不支持该组合<br><small>${(e as Error).message}</small></div>`;
       syncHash();
       syncChrome();
       return;
     }
-    box.innerHTML = raw(toSVG(sc)).html;
-    (box.firstElementChild as SVGElement | null)?.setAttribute('width', '100%');
+    const stage = $('#chart-stage');
+    stage.innerHTML = raw(toSVG(sc)).html;
+    (stage.firstElementChild as SVGElement | null)?.setAttribute('width', '100%');
     // SVG 的 height 属性只接受长度不接受 auto → 走 CSS（属性写法会报 Expected length）
-    if (box.firstElementChild instanceof SVGElement) box.firstElementChild.style.height = 'auto';
+    if (stage.firstElementChild instanceof SVGElement) stage.firstElementChild.style.height = 'auto';
     (box as HTMLElement & { __scene?: unknown }).__scene = sc;
     renderLegend((sc as { legend?: { name: string; color: string; hidden?: boolean }[] }).legend);
     buildTable();
@@ -271,10 +273,12 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
   // —— 3D 拖拽旋转/滚轮缩放标记（tooltip 拖拽期间让位）——
   let drag3d = false;
 
-  // —— tooltip ——
-  const tip = $('#tooltip');
+  // —— tooltip（H1/H2：浮层是 #chart-stage 的兄弟节点，渲染不触及；每次现取）——
+  const tipEl = () => $('#tooltip');
   $('#chart-box').addEventListener('mousemove', (e) => {
-    if (drag3d) { tip.style.display = 'none'; return; }
+    const tip = tipEl();
+    if (!tip) return;
+    if (drag3d) { hideTooltip(tip); return; }
     const box = $('#chart-box');
     const sc = (box as HTMLElement & { __scene?: ReturnType<typeof layoutScene> }).__scene;
     if (!sc) return;
@@ -284,17 +288,14 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
     const d = hitTest(sc, x, y);
     if (d?.tooltip) {
       const t = d.tooltip;
-      tip.innerHTML = html`<b>${t.title ?? ''}</b>${(t.rows ?? []).map((r) => raw(html`<div><i style="background:${safeColor(r.swatch)}"></i>${r.name} <b>${r.value}</b></div>`))}`;
-      tip.style.display = 'block';
-      tip.style.left = `${e.clientX - rect.left + 14}px`;
-      tip.style.top = `${e.clientY - rect.top + 10}px`;
+      showTooltip(tip, d, e.clientX, e.clientY, box);
       $('#detail').textContent = `${t.title ?? ''} ${(t.rows ?? []).map((r) => `${r.name}=${r.value}`).join(' ')}`;
     } else {
-      tip.style.display = 'none';
+      hideTooltip(tip);
       $('#detail').textContent = '—';
     }
   });
-  $('#chart-box').addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+  $('#chart-box').addEventListener('mouseleave', () => { const tip = tipEl(); if (tip) hideTooltip(tip); });
 
   // —— 3D 交互：拖拽旋转（rotate）/ 滚轮缩放（zoom）/ 自动旋转（options.autoRotate）——
   {
@@ -596,9 +597,10 @@ export function boot(payload: Payload, deps: RuntimeDeps): void {
       focusIdx = Math.max(0, Math.min(sc.hits.length - 1, focusIdx + (e.key === 'ArrowRight' ? 1 : -1)));
       const d = sc.hits[focusIdx].datum;
       $('#detail').textContent = `${d?.label ?? ''} ${d?.series ?? ''} = ${d?.value ?? ''}`;
-      tip.style.display = 'none';
+      const tip = tipEl();
+      if (tip) hideTooltip(tip);
       e.preventDefault();
-    } else if (e.key === 'Escape') { tip.style.display = 'none'; focusIdx = -1; }
+    } else if (e.key === 'Escape') { const tip = tipEl(); if (tip) hideTooltip(tip); focusIdx = -1; }
   });
   // —— 响应式 ——
   new ResizeObserver(() => render()).observe($('#chart-box'));

@@ -3,7 +3,8 @@ export type QualityCode =
   | 'MISSING_VALUES' | 'INVALID_NUMBERS' | 'PERCENT_SCALE' | 'NEGATIVE_VALUES' | 'DUPLICATE_KEYS'
   | 'UNKNOWN_TYPE_MARKER' | 'KIND_CONFLICT' | 'SPARSE_GRID' | 'CYCLE_REMOVED' | 'UNPARSABLE_DATES'
   | 'ROWS_SKIPPED' | 'TRUNCATED' | 'VARIANT_DISABLED' | 'FONT_FALLBACK' | 'LOW_CONFIDENCE_MAPPING'
-  | 'TZ_ASSUMED' | 'ASOF_ASSUMED' | 'GAP_VALUES' | 'LINK_UNSAFE';
+  | 'TZ_ASSUMED' | 'ASOF_ASSUMED' | 'GAP_VALUES' | 'LINK_UNSAFE'
+  | 'LAYOUT_TEXT_OVERLAP' | 'LAYOUT_TEXT_CLIPPED' | 'LAYOUT_LOW_CONTRAST' | 'TITLE_MISSING';
 
 export interface QualityIssue {
   code: QualityCode;
@@ -13,6 +14,8 @@ export interface QualityIssue {
   column?: string;
   count?: number;
   examples?: string[];
+  /** ADR-0016：可操作的恢复提示（如 TITLE_MISSING → `--title "…"`） */
+  hint?: string;
 }
 
 export interface QualityReport {

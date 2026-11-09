@@ -113,7 +113,7 @@ details.fold summary{cursor:pointer;font:12.5px var(--body);color:var(--muted)}
 .flow-table tr.ft-tone-info td:first-child{box-shadow:inset 3px 0 0 var(--acc)}
 .flow-table a{color:var(--acc)}
 @media(max-width:720px){body{padding:14px}}
-@media print{header .seg,#toolbar,#opt-row,#detail,details.fold,.ft-bar{display:none!important}#chart-box svg{width:100%}
+@media print{header .seg,#toolbar,#opt-row,#detail,#tooltip,details.fold,.ft-bar{display:none!important}#chart-box svg{width:100%}
 #chart-box{max-height:none!important;overflow:visible!important}
 .ft-wrap{max-height:none;overflow:visible;border:none}
 .flow-table thead{display:table-header-group}.flow-table tbody tr{break-inside:avoid}
@@ -140,7 +140,7 @@ details.fold summary{cursor:pointer;font:12.5px var(--body);color:var(--muted)}
   <div class="trow open" id="opt-row"></div>
   <div class="card" style="margin-top:10px">
     <div id="legend"></div>
-    <div id="chart-box">${svg}<div id="tooltip" aria-live="polite"></div></div>
+    <div id="chart-box"><div id="chart-stage">${svg}</div><div id="tooltip" aria-live="polite" role="tooltip"></div></div>
     <div id="detail">—</div>
   </div>
   <div class="foot"><span>${esc([t.source, t.unit].filter(Boolean).join(' · '))}</span><span>${confBadge}</span></div>

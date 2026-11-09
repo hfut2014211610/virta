@@ -250,12 +250,17 @@ export const formulaRenderer: FamilyRenderer<FormulaModel> = {
     const fs = ({ s: 17, m: 22, l: 28 } as Record<string, number>)[String(ctx.options?.['size'] ?? 'm')] ?? 22;
     const rowH = fs * 2.4;
     const y0 = ctx.plot.y + ctx.plot.h / 2 - (m.items.length * rowH) / 2 + rowH / 2;
+    const hits: Scene['hits'] = [];
     m.items.forEach((it, i) => {
       const y = y0 + i * rowH;
       nodes.push({ type: 'text', x: ctx.plot.x + ctx.plot.w / 2, y, text: mathPretty(it.formula), font: 'display', size: fs, anchor: 'middle', baseline: 'middle', fill: t.ink });
       if (it.name) nodes.push({ type: 'text', x: ctx.plot.x + ctx.plot.w / 2, y: y + fs * 0.85, text: it.name, font: 'body', size: fs * 0.46, anchor: 'middle', baseline: 'middle', fill: t.faint });
       if (i) nodes.push({ type: 'line', x1: ctx.plot.x + ctx.plot.w / 2 - 60, y1: y - rowH / 2 + 4, x2: ctx.plot.x + ctx.plot.w / 2 + 60, y2: y - rowH / 2 + 4, stroke: acc, strokeWidth: 0.8, opacity: 0.3 });
+      hits.push({ shape: { type: 'rect', x: ctx.plot.x + ctx.plot.w * 0.2, y: y - rowH / 2, w: ctx.plot.w * 0.6, h: rowH },
+        datum: { kind: 'formula', index: i, label: it.name || `公式 ${i + 1}`, tooltip: { title: it.name || `公式 ${i + 1}`, rows: [{ name: '表达式', value: it.formula }] } } });
     });
-    return scene(ctx.width, ctx.height, [g(nodes)]);
+    const sc = scene(ctx.width, ctx.height, [g(nodes)]);
+    sc.hits = hits;
+    return sc;
   },
 };

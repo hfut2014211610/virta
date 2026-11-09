@@ -50,6 +50,7 @@ ${cspMeta(payloadScript, runtimeJs)}
 .pins::before{content:'◆ ';color:var(--acc)}
 .pbox{position:relative}
 .pbox svg{display:block;cursor:pointer}
+#tooltip{position:fixed}
 .perr{font:12px var(--mono);color:var(--faint);padding:40px 0;text-align:center}
 .pclr{border:1px solid var(--acc);background:none;border-radius:99px;padding:3px 12px;font:11.5px var(--body);color:var(--acc);cursor:pointer;margin-left:8px}
 .pbox-flow{overflow:auto;max-height:none}
@@ -57,7 +58,7 @@ ${cspMeta(payloadScript, runtimeJs)}
 .pdoc::before{content:'不参与联动';position:absolute;top:6px;right:10px;font:10px var(--mono);color:var(--faint)}
 .story .panel{margin-bottom:16px}
 @media(max-width:900px){.panel{grid-column:span 12 !important}}
-@media print{.toolbar,#flinks{display:none}}
+@media print{.toolbar,#flinks,#tooltip{display:none}}
 </style></head>
 <body data-theme="${theme}">
 <div id="virta-app" class="${grid ? 'grid-page' : 'story'}">
@@ -71,6 +72,7 @@ ${cspMeta(payloadScript, runtimeJs)}
 ${panels}
   </div>
 </div>
+<div id="tooltip" aria-live="polite" role="tooltip"></div>
 <script>${payloadScript}</script>
 <script>${runtimeJs}</script>
 </body></html>`;

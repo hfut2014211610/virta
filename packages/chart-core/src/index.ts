@@ -9,3 +9,4 @@ export * from './labels.js';
 export * from './interpolate.js';
 export * from './linepath.js';
 export * from './model-hash.js';
+export * from './lint.js';

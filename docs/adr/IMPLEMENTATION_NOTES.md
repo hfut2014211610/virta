@@ -803,3 +803,28 @@
   根因=每用例 2 遍全量读盘（isText+readFileSync）×729 文件 + 冷启动 git 子进程 >5s 默认超时。
   修复：文件只读一次（readText 返回文本/null）、texts() 惰性缓存共用、显式 timeout 60s。
 - DoD：typecheck+test 全绿（350 通过 | 5 expected fail | 6 skipped）；interaction.spec 39 例按预期锚定。
+
+## M2d.1 交互修复与版面检查器（2026-11-09，完成）
+
+- H1 DOM 重构：`#chart-box > #chart-stage + #tooltip`；一切渲染写入（SVG/错误提示/
+  flow-doc/flow-table）只写 `#chart-stage`，`#chart-box` 保留测量/`__scene`/事件/滚动。
+  每次 mousemove 现取 `$('#tooltip')`，不在启动时缓存；打印样式隐藏 #tooltip。
+- H2 共享 `viewer/src/tooltip.ts`：转义 HTML + 近右/下边界翻转定位；
+  `#tooltip i` swatch 样式补进 design-system css。
+- H3 组合页：页面级 `position:fixed` 的 `#tooltip`（compose-html.ts），
+  各面板 mousemove→hitTest→showTooltip、mouseleave 隐藏；点击联动不变。
+- 命中区补齐（悬停测试要求全 SVG 视图可触发）：kpi 卡片、formula 行新增 hits；
+  sankey 增加流向带命中（节点优先）；radar 增加系列多边形命中（顶点优先）；
+  scatter3d 命中半径 max(r+8,18)。
+- H6 检查器 `chart-core/src/lint.ts`：四类检查（重叠15%/出画布2px/对比度3:1/非有限），
+  阈值为导出常量；`MeasureFn` 注入。
+- H7 回执：render 整幅 + compose 逐面板（前缀「面板「id」」）接入
+  `LAYOUT_TEXT_OVERLAP/CLIPPED/LOW_CONTRAST`（warn）；
+  contracts 增量：QualityCode +4（含 TITLE_MISSING）、QualityIssue.hint（ADR-0016）。
+- `test/layout/lint.test.ts`：① 35 视图主样例×{light,dark}×{1200×675,600×360}
+  ② 5 场景包全部 chart ③ 3 个 compose 文件逐面板（经 runComposeFile 告警）。
+  **error 基线 80 条**（report 24、combo 22、fishbone 6、er 4、sunburst 2、line3d 2、
+  burndown 4、pack/quality/control 4、retail/deadline/xss compose 12）由
+  `allowlist.json` 13 条豁免兜底；失效条目自动报错，M2d.2 修复后须清空。
+- interaction.spec.ts：test.fail 全移除，39/39 通过（含 3D 拖拽隐藏与组合页逐面板悬停）。
+- DoD：typecheck+test(354)+e2e(64) 全绿。

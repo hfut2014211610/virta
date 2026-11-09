@@ -7,12 +7,12 @@ import { getContract, THEME_IDS, resolveView, validateSpec } from '@virta/contra
 import { ADAPTERS, adaptInput, rawToTable, resolveTime } from '@virta/data-engine';
 import { readInput } from '@virta/data-engine/node';
 import { getRenderer } from '@virta/charts';
-import { g, scene as mkScene, toSVG, type Node } from '@virta/chart-core';
+import { g, scene as mkScene, toSVG, lintScene, measureText, type Node } from '@virta/chart-core';
 import { composeHtml, type ComposePayload } from '@virta/viewer';
 import { applySkin } from '@virta/chart-skin';
 import { fontPath, resolveTheme } from '@virta/design-system';
 import { Resvg } from '@resvg/resvg-js';
-import { fail } from './render.js';
+import { fail, lintWarnings } from './render.js';
 import { runtimeScript } from './assets.js';
 
 interface ComposePanelDef {
@@ -75,8 +75,8 @@ export interface ComposeResult {
   payload: ComposePayload; panels: number;
   panelResults: { id: string; rendered: boolean; error?: string }[];
   views: string[];
-  /** 时间写回假设（TZ_ASSUMED/ASOF_ASSUMED）等警告 */
-  warnings: { code: string; level: 'info' | 'warn' | 'error'; message: string }[];
+  /** 时间写回假设（TZ_ASSUMED/ASOF_ASSUMED）与版面检查等警告 */
+  warnings: { code: string; level: 'info' | 'warn' | 'error'; message: string; count?: number; examples?: string[]; hint?: string }[];
 }
 
 export async function runCompose(job: ComposeJob): Promise<ComposeResult> {
@@ -200,6 +200,8 @@ export async function runComposeFile(cf: ComposeFileShape, dir: string, job: Com
       options: p.spec.options ?? {}, state: p.spec.state,
       format: p.spec.format, annotations: p.spec.annotations, text: undefined,
     } as never);
+    // H7/ADR-0016：逐面板版面检查 → 回执告警（面板 id 前缀）
+    warnings.push(...lintWarnings(lintScene(sc, measureText, { paper: tokens.paper }), `面板「${p.id}」`));
     children.push(g([...pn, ...sc.root.children]));
   });
   const sc = mkScene(W, H, children, tokens.paper);

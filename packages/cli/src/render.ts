@@ -6,7 +6,7 @@ import { getContract, THEME_IDS } from '@virta/contracts';
 import { ADAPTERS, adaptInput, projectQuality, resolveTime, parseInstant, zonedParts } from '@virta/data-engine';
 import { getRenderer } from '@virta/charts';
 import { FACETABLE, facetGroups, facetLayout } from '@virta/viewer';
-import { scene as mkScene, toSVG } from '@virta/chart-core';
+import { scene as mkScene, toSVG, lintScene, measureText, type LayoutIssue } from '@virta/chart-core';
 import { applySkin, frameStatic, type LegendItem } from '@virta/chart-skin';
 import { singleFileHtml, type Payload } from '@virta/viewer';
 import { fontPath, paletteColors, resolveTheme } from '@virta/design-system';
@@ -32,7 +32,28 @@ export interface RenderJob {
 
 export interface RenderResult {
   files: { format: 'html' | 'svg' | 'png'; path: string; bytes: number; width?: number; height?: number; page?: number; pages?: number }[];
-  warnings: { code: string; level: 'info' | 'warn' | 'error'; message: string }[];
+  warnings: { code: string; level: 'info' | 'warn' | 'error'; message: string; count?: number; examples?: string[]; hint?: string }[];
+}
+
+/** H7/ADR-0016：LayoutIssue → 回执告警（均为 warn，不改退出码；samples 最多 5 条）。 */
+export function lintWarnings(issues: LayoutIssue[], prefix = ''): RenderResult['warnings'] {
+  const kinds: [LayoutIssue['kind'], 'LAYOUT_TEXT_OVERLAP' | 'LAYOUT_TEXT_CLIPPED' | 'LAYOUT_LOW_CONTRAST', string][] = [
+    ['text-overlap', 'LAYOUT_TEXT_OVERLAP', '文字重叠'],
+    ['text-clipped', 'LAYOUT_TEXT_CLIPPED', '文字超出画布'],
+    ['low-contrast', 'LAYOUT_LOW_CONTRAST', '文字对比度不足'],
+  ];
+  const out: RenderResult['warnings'] = [];
+  for (const [kind, code, label] of kinds) {
+    const list = issues.filter((i) => i.kind === kind);
+    if (!list.length) continue;
+    out.push({
+      code, level: 'warn',
+      message: `${prefix}版面检查：${list.length} 处${label}`,
+      count: list.length,
+      examples: list.slice(0, 5).map((i) => i.detail),
+    });
+  }
+  return out;
 }
 
 /** CJK 缺字形探测（§5.8）：用已配置字体渲染固定中文，像素为空则回执警告。 */
@@ -141,6 +162,8 @@ export async function renderChart(job: RenderJob): Promise<RenderResult & { svgS
   sc.hits = inner.hits;
   sc.root.children = [...framed.scene.root.children, ...inner.root.children];
   applySkin(sc, tokens.skin);
+  // H7/ADR-0016：版面检查 → 回执告警（不改退出码）
+  warnings.push(...lintWarnings(lintScene(sc, measureText, { paper: tokens.paper })));
   const svg = toSVG(sc);
 
   // ADR-0009 流式静态分页：自然高度超过 page.height（默认 1600）时按页拆分，

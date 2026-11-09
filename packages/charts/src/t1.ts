@@ -196,6 +196,7 @@ export const kpiRenderer: FamilyRenderer<KpiModel> = {
   layout(m: KpiModel, ctx: LayoutContext): Scene {
     const t = ctx.tokens, colors = paletteColors(ctx.palette, ctx.theme);
     const nodes: Node[] = [];
+    const hits: Scene['hits'] = [];
     const spark = ctx.variant === 'cards+spark';
     const cols = Math.min(6, Math.max(1, Number(ctx.options?.['columns'] ?? 3)));
     const items = m.items.slice(0, 24);
@@ -203,7 +204,12 @@ export const kpiRenderer: FamilyRenderer<KpiModel> = {
     const pad = 10, cw = (ctx.plot.w - pad * (cols - 1)) / cols, ch = (ctx.plot.h - pad * (rows - 1)) / rows;
     items.forEach((it, i) => {
       const cx = ctx.plot.x + (i % cols) * (cw + pad), cy = ctx.plot.y + Math.floor(i / cols) * (ch + pad);
-      nodes.push({ type: 'rect', x: cx, y: cy, w: cw, h: ch, r: 10, fill: t.panel ?? t.paper, stroke: t.line, strokeWidth: 1 });
+      const tipRows: { swatch?: string; name: string; value: string }[] = [{ swatch: colors[i % colors.length], name: '当前', value: fm(ctx)(it.value) }];
+      if (it.previous !== undefined) tipRows.push({ name: '上期', value: fm(ctx)(it.previous) });
+      if (it.target !== undefined) tipRows.push({ name: '目标', value: fm(ctx)(it.target) });
+      const datum = { kind: 'card', index: i, label: it.label, value: it.value, tooltip: { title: it.label, rows: tipRows } };
+      nodes.push({ type: 'rect', x: cx, y: cy, w: cw, h: ch, r: 10, fill: t.panel ?? t.paper, stroke: t.line, strokeWidth: 1, datum });
+      hits.push({ shape: { type: 'rect', x: cx, y: cy, w: cw, h: ch }, datum });
       nodes.push({ type: 'rect', x: cx, y: cy + 14, w: 3.5, h: 18, r: 1.75, fill: colors[i % colors.length] });
       nodes.push({ type: 'text', x: cx + 14, y: cy + 18, text: it.label, font: 'body', size: 12.5, baseline: 'middle', fill: t.muted });
       nodes.push({ type: 'text', x: cx + 14, y: cy + 52, text: fm(ctx)(it.value), font: 'mono', size: 26, weight: 650, baseline: 'middle', fill: t.ink });
@@ -236,6 +242,7 @@ export const kpiRenderer: FamilyRenderer<KpiModel> = {
       }
     });
     const sc = scene(ctx.width, ctx.height, [g(nodes)]);
+    sc.hits = hits;
     return sc;
   },
 };
