@@ -875,3 +875,25 @@
   在 ubuntu-24.04 重拍（run 42560763555）；期间三轮联动用例修复（plegend 兄弟节点、
   视口拉高 2400、scrollIntoView instant、scene.hits 中心点原子派发兜底），
   sunburst 命中区改弧向多圆覆盖。验证 run 42561332996 全绿（含 test:visual 对拍）。
+
+## M2d.4 Agent 实测基线与 v0.2.0（2026-11-09，进行中）
+
+- `scripts/agent-eval/` 落地（§4.6/H15）：`tasks.json` 收录 A01–A12（数据、
+  TASK.md 描述、验收条件逐字保留 + 机读 checks）；`prepare.ts` 在系统临时目录
+  建 `<root>/<id>/` 独立工作目录、按 basename 平铺复制数据文件、写 TASK.md
+  （只含任务描述）；`check.ts` 读取各任务 `receipts/*.json` 判定。
+- 判定口径：只有 `command=render|compose` 的回执算任务尝试（inspect/validate
+  等探查回执计入 receipts 总数但不算尝试）；`mode=any`（缺省）任一尝试满足
+  即过，`mode=last`（A12，对应「最终回执」语义）只看最后一条尝试；
+  results.json 字段 task/pass/firstPass/mode/receipt/checks/receipts/attempts/
+  retries/human（human 预留，维护者评估后填写「适合/不适合」）。
+- 指标口径（check.ts 输出与 README 一致）：首次成功率=首条尝试全过占比；
+  最终成功率=pass 占比；平均重试次数=attempts−1 均值（下限 0）；
+  人工可发出率=human=「适合」/已判任务（未判为 null）。
+- 自测 `test/agent-eval/check.test.ts`（9 例）：全通过组/全失败组人工构造
+  回执、失败后重试、A03 facet 月份分面替代路径、A12 last 语义、探查回执与
+  坏 JSON 排除、summarize 指标计算。
+- 被测会话由维护者另行发起（全新 Agent 会话、cwd=prepare 输出根目录、
+  无仓库访问权、固定指令与流程见 scripts/agent-eval/README.md）；
+  本实施 Agent 不扮演被测方、不代跑任务集。
+- DoD（脚本阶段）：`npm run typecheck && npm test` 全绿（368 例）。

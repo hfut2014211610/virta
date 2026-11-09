@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "note": "PHASE_2D.md §4.6 任务集 A01–A12。data/task/acceptance 逐字保留自计划表格；files 是 prepare.ts 复制用的仓库相对路径；checks 是 check.ts 的机读判定（desc 与验收条件对应）。mode=last 表示以最后一条 render/compose 回执为准（A12「最终回执」语义），缺省 any 表示任一回执满足即算任务完成。",
+  "tasks": [
+    {
+      "id": "A01",
+      "data": "retail/monthly_sales.csv",
+      "files": ["examples/packs/retail/monthly_sales.csv"],
+      "task": "按渠道看 2024–2025 年月度销售额的走势，判断销售从什么时候开始承压，出一张能直接发到群里的 PNG。",
+      "acceptance": "`view ∈ {line, combo}`；`spec.text.title` 非空；有 png 文件",
+      "checks": [
+        { "kind": "view", "values": ["line", "combo"], "desc": "view ∈ {line, combo}" },
+        { "kind": "title", "desc": "spec.text.title 非空" },
+        { "kind": "file", "format": "png", "desc": "有 png 文件" }
+      ]
+    },
+    {
+      "id": "A02",
+      "data": "retail/category_tree.csv",
+      "files": ["examples/packs/retail/category_tree.csv"],
+      "task": "展示各品类、二级品类、系列的销售额构成，要能看出哪条品类线贡献最大。导出 HTML 和 PNG。",
+      "acceptance": "`view ∈ {sunburst, treemap}`；有 html 和 png",
+      "checks": [
+        { "kind": "view", "values": ["sunburst", "treemap"], "desc": "view ∈ {sunburst, treemap}" },
+        { "kind": "file", "format": "html", "desc": "有 html 文件" },
+        { "kind": "file", "format": "png", "desc": "有 png 文件" }
+      ]
+    },
+    {
+      "id": "A03",
+      "data": "retail/funnel_jul_aug.csv",
+      "files": ["examples/packs/retail/funnel_jul_aug.csv"],
+      "task": "7 月和 8 月的转化漏斗分别在哪一步流失最多？出一张图对比两个月。",
+      "acceptance": "`view = funnel`；`variant = multi`，或者 `spec.facet` 按月份分面",
+      "checks": [
+        { "kind": "view", "values": ["funnel"], "desc": "view = funnel" },
+        { "kind": "variant-or-month-facet", "desc": "variant = multi，或者 spec.facet 按月份分面" }
+      ]
+    },
+    {
+      "id": "A04",
+      "data": "retail/traffic_paths.csv",
+      "files": ["examples/packs/retail/traffic_paths.csv"],
+      "task": "用户从哪些入口一路流向下单和支付？出一张流向图。",
+      "acceptance": "`view = sankey`",
+      "checks": [
+        { "kind": "view", "values": ["sankey"], "desc": "view = sankey" }
+      ]
+    },
+    {
+      "id": "A05",
+      "data": "retail/profit_bridge.csv",
+      "files": ["examples/packs/retail/profit_bridge.csv"],
+      "task": "利润从毛利到期末净利是怎么一步步变化的？",
+      "acceptance": "`view = bar` 且 `variant = waterfall`",
+      "checks": [
+        { "kind": "view", "values": ["bar"], "desc": "view = bar" },
+        { "kind": "variant", "value": "waterfall", "desc": "variant = waterfall" }
+      ]
+    },
+    {
+      "id": "A06",
+      "data": "retail/store_hours.csv",
+      "files": ["examples/packs/retail/store_hours.csv"],
+      "task": "门店一周内哪天、几点客流最高？",
+      "acceptance": "`view = heatmap`",
+      "checks": [
+        { "kind": "view", "values": ["heatmap"], "desc": "view = heatmap" }
+      ]
+    },
+    {
+      "id": "A07",
+      "data": "saas/cohort_retention.csv",
+      "files": ["examples/packs/saas/cohort_retention.csv"],
+      "task": "看看各月注册的新用户，后续每期的留存表现如何，哪一批最差。",
+      "acceptance": "`view = cohort`",
+      "checks": [
+        { "kind": "view", "values": ["cohort"], "desc": "view = cohort" }
+      ]
+    },
+    {
+      "id": "A08",
+      "data": "quality/daily_defect_rate.csv",
+      "files": ["examples/packs/quality/daily_defect_rate.csv"],
+      "task": "每日不良率有没有出现失控点？请画质量控制图。",
+      "acceptance": "`view = control`",
+      "checks": [
+        { "kind": "view", "values": ["control"], "desc": "view = control" }
+      ]
+    },
+    {
+      "id": "A09",
+      "data": "delivery/plan.csv",
+      "files": ["examples/packs/delivery/plan.csv"],
+      "task": "画出项目计划和任务依赖，以 2026-11-05 作为报告日，标出今天的位置。",
+      "acceptance": "`view = gantt`；回执中的 `time.asOf` 以 `2026-11-05` 开头",
+      "checks": [
+        { "kind": "view", "values": ["gantt"], "desc": "view = gantt" },
+        { "kind": "asof", "prefix": "2026-11-05", "desc": "time.asOf 以 2026-11-05 开头" }
+      ]
+    },
+    {
+      "id": "A10",
+      "data": "finance/budget_vs_actual.csv",
+      "files": ["examples/packs/finance/budget_vs_actual.csv"],
+      "task": "各部门的预算执行情况如何？要同时看到实际、预算和好坏区间。",
+      "acceptance": "`view = bullet`",
+      "checks": [
+        { "kind": "view", "values": ["bullet"], "desc": "view = bullet" }
+      ]
+    },
+    {
+      "id": "A11",
+      "data": "A01、A03、A04 的数据",
+      "files": [
+        "examples/packs/retail/monthly_sales.csv",
+        "examples/packs/retail/funnel_jul_aug.csv",
+        "examples/packs/retail/traffic_paths.csv"
+      ],
+      "task": "把月度销售走势、转化漏斗、流量路径这三张图拼成一个仪表盘 HTML。",
+      "acceptance": "`command = compose`；`ok = true`；panels 数量为 3；有 html 文件",
+      "checks": [
+        { "kind": "command", "value": "compose", "desc": "command = compose" },
+        { "kind": "ok", "desc": "ok = true" },
+        { "kind": "panels", "value": 3, "desc": "panels 数量为 3" },
+        { "kind": "file", "format": "html", "desc": "有 html 文件" }
+      ]
+    },
+    {
+      "id": "A12",
+      "data": "basic/sample-multi.csv",
+      "files": ["examples/basic/sample-multi.csv"],
+      "task": "以\"城市\"为横轴，按业务线分组画柱状图。注意：文件里的列名可能和描述不完全一致。",
+      "acceptance": "最终回执 `ok = true` 且 `view = bar`；允许中途出现 MISSING_COLUMN 等失败回执，但最终必须成功（考察 Agent 能否利用错误提示自行纠正）",
+      "mode": "last",
+      "checks": [
+        { "kind": "ok", "desc": "ok = true" },
+        { "kind": "view", "values": ["bar"], "desc": "view = bar" }
+      ]
+    }
+  ]
+}
