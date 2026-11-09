@@ -1,6 +1,6 @@
 {
   "name": "virta",
-  "version": "0.1.0",
+  "version": "0.2.0-rc.1",
   "type": "module",
   "description": "Virta 数据可视化 CLI：CSV/JSON/Excel/Markdown → 离线交互 HTML 与 SVG/PNG 图表（推荐、校验、组合仪表盘）",
   "keywords": [
