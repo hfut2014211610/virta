@@ -855,3 +855,13 @@
   （`opts.bounds`），修正此前误报。
 - **结果**：lint error 80 → 0，`allowlist.json` 已清空（12 条豁免全部修复后移除）。
 - DoD：typecheck + test(359) + e2e(64) + perf + packs:check 全绿。
+
+## M2d.3 CI 固定与缩略图总览（2026-11-09，进行中）
+
+- H14：`ci.yml`/`release.yml` 的 test/gate/publish job 固定 `ubuntu-24.04`（视觉基线以固定
+  平台为准，避免 `ubuntu-latest` 镜像迁移造成整体漂移）；dist 矩阵继续 `-latest`。
+- actions 升级（原生 Node 24 运行时，发布均满 7 天）：
+  `actions/checkout@v7.0.1`（2026-07-20）、`actions/setup-node@v7.1.0`（2026-10-08）。
+- 缩略图总览：35 视图 ×{light,dark} + 5 场景包 dashboard 首屏/整页，生成器与产物
+  均在仓库外 `../virta-m2d3-review/`（不入库），等维护者确认后才能
+  `workflow_dispatch update_snapshots=true` 重拍基线。
