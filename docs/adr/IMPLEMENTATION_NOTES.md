@@ -871,3 +871,7 @@
   ② 用例视口拉高到 1440×2400（scrollIntoViewIfNeeded 在持续重绘面板上等不到 stable）。
 - 组合页悬停用例同源问题（面板超 960px 视口）：视口统一拉高 2400；
   sweepForTooltip 的 scrollIntoViewIfNeeded 改 evaluate 直调 scrollIntoView（不等 stable）。
+- 基线重拍流程收束：维护者确认缩略图总览后，workflow_dispatch update_snapshots=true
+  在 ubuntu-24.04 重拍（run 42560763555）；期间三轮联动用例修复（plegend 兄弟节点、
+  视口拉高 2400、scrollIntoView instant、scene.hits 中心点原子派发兜底），
+  sunburst 命中区改弧向多圆覆盖。验证 run 42561332996 全绿（含 test:visual 对拍）。
