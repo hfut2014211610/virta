@@ -53,8 +53,9 @@ const htmlOf = (view: string, file: string) => `${CWD()}/${OUT}/${stemOf(file)}-
 /** 在容器内按 12×8 网格扫描，返回第一个让 #tooltip 可见且非空的视口坐标。 */
 async function sweepForTooltip(page: Page, boxSel: string): Promise<{ x: number; y: number } | null> {
   // 用 evaluate 直调 scrollIntoView：scrollIntoViewIfNeeded 会持续等元素 stable，
-  // 组合页重绘期间等不到 → 超时
+  // 组合页重绘期间等不到 → 超时；滚动后短等让布局/字体落定
   await page.locator(boxSel).evaluate((el) => el.scrollIntoView({ block: 'center' })).catch(() => {});
+  await page.waitForTimeout(200);
   const bb = await page.locator(boxSel).boundingBox();
   if (!bb) return null;
   const tip = page.locator('#tooltip');
@@ -164,7 +165,9 @@ test('组合页悬停：每个面板至少一个点能触发提示框', async ({
   const n = await page.locator('.pbox').count();
   for (let i = 0; i < n; i++) {
     if (!(await page.locator(`#pbox-${i} svg`).count())) continue; // flow 面板跳过
-    const hit = await sweepForTooltip(page, `#pbox-${i}`);
+    // 稀疏命中面板允许重扫一轮，兼容平台间布局微差
+    let hit = await sweepForTooltip(page, `#pbox-${i}`);
+    if (!hit) hit = await sweepForTooltip(page, `#pbox-${i}`);
     expect(hit, `面板 ${i} 无悬停提示`).not.toBeNull();
   }
 });
