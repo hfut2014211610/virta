@@ -3,6 +3,18 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循 semver 0.x：
 回执结构和 CLI 参数的不兼容变更升 minor，并写入 "Breaking" 小节。
 
+## [0.2.0] - 2026-11-09
+
+Phase 2d 正式版：交互修复、呈现质量与 Agent 实测基线。
+Agent 实测基线（SWE-2 flash high，12 任务）：首次成功率 100%、
+最终成功率 100%、平均重试 0.33、人工可发出率 100%。
+
+### Fixed
+
+- 旭日图下钻后无法返回：中心圆新增命中区，点击取消 focus 回到顶层
+- cohort「对角裁剪」开关生效但视觉无感知：未到期壳格改淡填充+虚线描边
+- `scripts/agent-eval/check.ts`：重跑保留已填 `human` 判定；可发出率按前缀匹配
+
 ## [0.2.0-rc.1] - 2026-11-09
 
 Phase 2d 发布候选（prerelease）：交互修复、呈现质量与 Agent 实测基线工具。
