@@ -54,7 +54,8 @@ const htmlOf = (view: string, file: string) => `${CWD()}/${OUT}/${stemOf(file)}-
 async function sweepForTooltip(page: Page, boxSel: string): Promise<{ x: number; y: number } | null> {
   // 用 evaluate 直调 scrollIntoView：scrollIntoViewIfNeeded 会持续等元素 stable，
   // 组合页重绘期间等不到 → 超时；滚动后短等让布局/字体落定
-  await page.locator(boxSel).evaluate((el) => el.scrollIntoView({ block: 'center' })).catch(() => {});
+  // behavior:'instant' 防 scroll-behavior:smooth 动画期间坐标漂移
+  await page.locator(boxSel).evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' })).catch(() => {});
   await page.waitForTimeout(200);
   const bb = await page.locator(boxSel).boundingBox();
   if (!bb) return null;
@@ -84,15 +85,19 @@ async function sweepForTooltip(page: Page, boxSel: string): Promise<{ x: number;
       return { x: rect.x + px / dpr, y: rect.y + py / dpr };
     });
   }).catch(() => []);
-  for (const p of pts.slice(0, 40)) {
-    await page.mouse.move(p.x, p.y);
-    await page.waitForTimeout(20);
-    if (await tip.isVisible().catch(() => false)) {
-      const text = (await tip.textContent())?.trim();
-      if (text) return p;
+  // 单 evaluate 原子完成「遍历命中形状→中心点派发 mousemove→读 #tooltip」，
+  // 消除多次 evaluate 往返间的布局漂移窗口
+  const okIdx = await page.locator(boxSel).evaluate((el, points) => {
+    const svg = el.querySelector('svg');
+    const tipEl = document.querySelector('#tooltip');
+    for (let i = 0; i < Math.min(points.length, 40); i++) {
+      const pt = points[i]!;
+      svg?.dispatchEvent(new MouseEvent('mousemove', { clientX: pt.x, clientY: pt.y, bubbles: true }));
+      if (tipEl && getComputedStyle(tipEl).display !== 'none' && (tipEl.textContent ?? '').trim()) return i;
     }
-  }
-  return null;
+    return -1;
+  }, pts).catch(() => -1);
+  return okIdx >= 0 ? pts[okIdx]! : null;
 }
 
 test.beforeAll(() => {
@@ -189,6 +194,13 @@ test('组合页悬停：每个面板至少一个点能触发提示框', async ({
     // 稀疏命中面板允许重扫一轮，兼容平台间布局微差
     let hit = await sweepForTooltip(page, `#pbox-${i}`);
     if (!hit) hit = await sweepForTooltip(page, `#pbox-${i}`);
+    if (!hit) {
+      const diag = await page.locator(`#pbox-${i}`).evaluate((el) => {
+        const sc = (el as HTMLElement & { __scene?: { width?: number; hits?: { shape: { type: string } }[] } }).__scene;
+        return { hasScene: !!sc, nHits: sc?.hits?.length, scW: sc?.width, types: sc?.hits?.slice(0, 5).map((h) => h.shape.type), boxRect: { w: el.getBoundingClientRect().width, h: el.getBoundingClientRect().height }, kids: el.children.length };
+      }).catch((e) => ({ err: String(e) }));
+      console.log(`面板 ${i} 诊断:`, JSON.stringify(diag));
+    }
     expect(hit, `面板 ${i} 无悬停提示`).not.toBeNull();
   }
 });
