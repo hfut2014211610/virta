@@ -897,3 +897,20 @@
   无仓库访问权、固定指令与流程见 scripts/agent-eval/README.md）；
   本实施 Agent 不扮演被测方、不代跑任务集。
 - DoD（脚本阶段）：`npm run typecheck && npm test` 全绿（368 例）。
+
+## M2d.4 Agent 实测基线（v0.2.0-rc.1）
+
+- 被测 Agent：**SWE-2 flash high**；被测版本 virta 0.2.0-rc.1；会话由维护者发起，
+  仅装 virta + 技能、工作目录为临时目录（无仓库访问）。
+- 指标（results.json，评估根目录不入库）：首次成功率 100%（12/12）；
+  最终成功率 100%（12/12）；平均重试次数 0.33；人工可发出率 100%（12/12）。
+- 逐项：A01–A12 全部 PASS；A03 attempts=2、A10 attempts=4（均为 ok 的主动迭代，
+  非失败重试；inspect/validate 探查不计尝试）。
+- 口径观察：A10 达标回执为 bullet（第 3 次尝试），但 Agent 最终交付图是
+  自创长表的 grouped bar——mode:any 下计过，最终形态偏离任务意图，
+  由 human 字段标注（图本身可用，记为适合）。
+- 评估发现的交互缺陷（已修复）：
+  ① 旭日图下钻后无返回路径——根节点 lv=0 无命中区，现中心圆加命中
+    （series=根名），点中心取消 focus 回顶层；
+  ② cohort「对角裁剪」开关生效但视觉无感知——未到期壳格原为
+    fill:none+0.7px 虚线，现改淡填充+1px 虚线描边。

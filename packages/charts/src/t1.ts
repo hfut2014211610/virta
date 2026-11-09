@@ -360,8 +360,8 @@ export const cohortRenderer: FamilyRenderer<CohortModel> = {
         const v = cellOf(r, p);
         const rx = ox + p * cw;
         if (v === null) {
-          // 对角裁剪关闭时画空壳格（未到期），开启时整格略过
-          if (!diag) nodes.push({ type: 'rect', x: rx + 0.5, y: y0 + 0.5, w: cw - 1, h: ch - 1, r: 2, fill: 'none', stroke: t.grid, strokeWidth: 0.7, dash: [2, 3] });
+          // 对角裁剪关闭时画未到期壳格（淡填充+虚线描边，让开关视觉差异可感知）
+          if (!diag) nodes.push({ type: 'rect', x: rx + 0.5, y: y0 + 0.5, w: cw - 1, h: ch - 1, r: 2, fill: t.faint, opacity: 0.35, stroke: t.muted, strokeWidth: 1, dash: [3, 3] });
           return;
         }
         const alpha = Math.min(1, v / vmax);

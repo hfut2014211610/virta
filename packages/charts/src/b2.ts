@@ -231,6 +231,10 @@ export const sunburstRenderer: FamilyRenderer<SunburstModel> = {
     }
     walk(root as never, 0, -Math.PI / 2, Math.PI * 1.5, 0);
     nodes.push({ type: 'text', x: cx, y: cy, text: root.name, font: 'body', size: 13, weight: 600, anchor: 'middle', baseline: 'middle', fill: t.ink });
+    // 下钻后中心圆加命中区（series=根名）：点击中心即取消 focus 返回顶层，否则无返回路径
+    if (foc !== undefined && foc !== null) {
+      hits.push({ shape: { type: 'circle', cx, cy, r: ringW }, datum: { kind: 'sector', index: 0, series: root.name, label: root.name, value: root.value, tooltip: { title: root.name, rows: [{ name: '返回', value: '点击返回顶层' }] } } });
+    }
     const sc = scene(ctx.width, ctx.height, [g(nodes)]);
     sc.defs = defs;
     sc.hits = hits;

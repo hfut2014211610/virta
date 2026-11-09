@@ -210,7 +210,7 @@ export function summarize(results: TaskResult[]): EvalSummary {
   const firstPassed = results.filter((r) => r.firstPass).length;
   const passed = results.filter((r) => r.pass).length;
   const judged = results.filter((r) => typeof r.human === 'string' && r.human.trim() !== '');
-  const sendable = judged.filter((r) => r.human === '适合').length;
+  const sendable = judged.filter((r) => r.human!.startsWith('适合')).length;
   return {
     tasks: n,
     passed,
@@ -246,6 +246,15 @@ export function run(evalRoot: string, outPath?: string): { output: EvalOutput; o
     summary: summarize(results),
   };
   const outFile = outPath ?? path.join(evalRoot, 'results.json');
+  // 保留已填写的 human 判定：重跑判定不覆盖维护者结论
+  if (fs.existsSync(outFile)) {
+    try {
+      const prev = JSON.parse(fs.readFileSync(outFile, 'utf8')) as EvalOutput;
+      const prevHuman = new Map((prev.tasks ?? []).map((t) => [t.task, t.human]));
+      for (const t of results) if (prevHuman.get(t.task)) t.human = prevHuman.get(t.task)!;
+      output.summary = summarize(results);
+    } catch { /* 旧文件损坏则不保留 */ }
+  }
   fs.mkdirSync(path.dirname(outFile), { recursive: true });
   fs.writeFileSync(outFile, JSON.stringify(output, null, 2) + '\n', 'utf8');
   return { output, outFile };
