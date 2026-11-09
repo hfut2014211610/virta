@@ -72,32 +72,25 @@ async function sweepForTooltip(page: Page, boxSel: string): Promise<{ x: number;
       }
     }
   }
-  // 兜底：网格全漏时，从 __scene.hits 直接取命中形状中心换算成视口坐标精确悬停
-  const pts = await page.locator(boxSel).evaluate((el) => {
-    const sc = (el as HTMLElement & { __scene?: { hits?: { shape: { type: string; cx?: number; cy?: number; x?: number; y?: number; w?: number; h?: number; x1?: number; x2?: number; y1?: number; y2?: number; points?: { x: number; y: number }[] } }[] } }).__scene;
-    if (!sc?.hits?.length) return [] as { x: number; y: number }[];
-    const rect = el.getBoundingClientRect();
-    const dpr = rect.width ? (sc as { width?: number }).width! / rect.width : 1;
-    return sc.hits.map((h) => {
-      const s = h.shape;
-      const px = s.type === 'circle' ? s.cx! : s.type === 'line' ? (s.x1! + s.x2!) / 2 : s.type === 'polygon' ? s.points!.reduce((a, p) => a + p.x, 0) / s.points!.length : s.x! + s.w! / 2;
-      const py = s.type === 'circle' ? s.cy! : s.type === 'line' ? (s.y1! + s.y2!) / 2 : s.type === 'polygon' ? s.points!.reduce((a, p) => a + p.y, 0) / s.points!.length : s.y! + s.h! / 2;
-      return { x: rect.x + px / dpr, y: rect.y + py / dpr };
-    });
-  }).catch(() => []);
-  // 单 evaluate 原子完成「遍历命中形状→中心点派发 mousemove→读 #tooltip」，
-  // 消除多次 evaluate 往返间的布局漂移窗口
-  const okIdx = await page.locator(boxSel).evaluate((el, points) => {
+  // 兜底：网格全漏时，单 evaluate 原子完成「读 __scene.hits → 命中形状中心换算
+  // 成当前视口坐标 → 派发 mousemove → 读 #tooltip」，消除跨 evaluate 坐标漂移
+  const hitPt = await page.locator(boxSel).evaluate((el) => {
+    const sc = (el as HTMLElement & { __scene?: { width?: number; hits?: { shape: { type: string; cx?: number; cy?: number; x?: number; y?: number; w?: number; h?: number; x1?: number; x2?: number; y1?: number; y2?: number } }[] } }).__scene;
     const svg = el.querySelector('svg');
     const tipEl = document.querySelector('#tooltip');
-    for (let i = 0; i < Math.min(points.length, 40); i++) {
-      const pt = points[i]!;
-      svg?.dispatchEvent(new MouseEvent('mousemove', { clientX: pt.x, clientY: pt.y, bubbles: true }));
-      if (tipEl && getComputedStyle(tipEl).display !== 'none' && (tipEl.textContent ?? '').trim()) return i;
+    if (!sc?.hits?.length || !svg) return null;
+    const rect = el.getBoundingClientRect();
+    const dpr = rect.width ? sc.width! / rect.width : 1;
+    for (const h of sc.hits.slice(0, 40)) {
+      const s = h.shape;
+      const px = s.type === 'circle' ? s.cx! : s.type === 'line' ? (s.x1! + s.x2!) / 2 : s.x! + s.w! / 2;
+      const py = s.type === 'circle' ? s.cy! : s.type === 'line' ? (s.y1! + s.y2!) / 2 : s.y! + s.h! / 2;
+      svg.dispatchEvent(new MouseEvent('mousemove', { clientX: rect.x + px / dpr, clientY: rect.y + py / dpr, bubbles: true }));
+      if (tipEl && getComputedStyle(tipEl).display !== 'none' && (tipEl.textContent ?? '').trim()) return { x: rect.x + px / dpr, y: rect.y + py / dpr };
     }
-    return -1;
-  }, pts).catch(() => -1);
-  return okIdx >= 0 ? pts[okIdx]! : null;
+    return null;
+  }).catch(() => null);
+  return hitPt;
 }
 
 test.beforeAll(() => {
