@@ -21,7 +21,8 @@ test('compose 仪表盘：全部面板首屏渲染', async ({ page }) => {
 });
 
 test('compose 联动：点击图元 → 筛选 chip 出现且其他面板重渲', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 960 });
+  // 视口拉高：紧凑图例加高面板后，靠下面板仍在视口内，坐标点击可达
+  await page.setViewportSize({ width: 1440, height: 2400 });
   await page.goto('file:///' + process.cwd().split('\\').join('/') + `/${F}`);
   await page.waitForSelector('#virta-app');
   await page.waitForFunction(() => document.querySelectorAll('.pbox svg').length >= 7);

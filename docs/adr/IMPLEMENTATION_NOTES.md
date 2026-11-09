@@ -865,3 +865,7 @@
 - 缩略图总览：35 视图 ×{light,dark} + 5 场景包 dashboard 首屏/整页，生成器与产物
   均在仓库外 `../virta-m2d3-review/`（不入库），等维护者确认后才能
   `workflow_dispatch update_snapshots=true` 重拍基线。
+- 重拍首轮在 ubuntu-24.04 上发现两个组合页联动用例失败：`.plegend` 加高前面板后
+  `#pbox-3` 落到 960px 视口下沿之下，`page.mouse.click` 坐标不落事件。
+  ① 图例改插 `.pbox` 同级兄弟节点（pbox 保持 svg-only，命中坐标映射不变）；
+  ② 用例视口拉高到 1440×2400（scrollIntoViewIfNeeded 在持续重绘面板上等不到 stable）。

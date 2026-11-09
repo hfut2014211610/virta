@@ -167,7 +167,8 @@ test('组合页悬停：每个面板至少一个点能触发提示框', async ({
 });
 
 test('组合页联动：点击数据点 → 其他面板 modelHash 变化；清除筛选后恢复', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 960 });
+  // 视口拉高：紧凑图例加高面板后，靠下面板仍在视口内，坐标点击可达
+  await page.setViewportSize({ width: 1440, height: 2400 });
   await page.goto(`file:///${CWD()}/${OUT}/compose-grid-light.html`);
   await page.waitForSelector('#virta-app');
   await page.waitForFunction(() => document.querySelectorAll('.pbox svg').length >= 7);

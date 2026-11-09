@@ -110,7 +110,7 @@ export function bootCompose(payload: ComposePayload, views: Record<string, Compo
     } as never);
     applySkin(sc, tokens.skin);
     box.innerHTML = raw(toSVG(sc)).html;
-    // D5：≥2 系列面板在图下显示紧凑图例（单行可折行，最多 8 项，超出「+N」；DOM API 构造避开 innerHTML sink）
+    // D5：≥2 系列面板在图下显示紧凑图例（pbox 同级兄弟节点，不入 pbox——pbox 须保持 svg-only，否则命中坐标映射偏移）
     const lg = (sc as { legend?: { name: string; color: string }[] }).legend;
     if (lg && lg.length >= 2) {
       const div = document.createElement('div');
@@ -129,7 +129,7 @@ export function bootCompose(payload: ComposePayload, views: Record<string, Compo
         more.textContent = `+${lg.length - 8}`;
         div.appendChild(more);
       }
-      box.appendChild(div);
+      box.insertAdjacentElement('afterend', div);
     }
     (box as HTMLElement & { __scene?: Scene }).__scene = sc;
     const svg = box.firstElementChild as SVGElement | null;
