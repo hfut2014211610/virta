@@ -789,3 +789,17 @@
 - 正式版复验：`sha256sum -c` OK；`npm i -g <v0.1.0 Release URL>` → `virta 0.1.0`，
   `doctor` 6 项全 ok。
 - **Phase 2c DoD 达成**：Release URL 可安装、三平台 CI 通过、演练与发布记录齐全。
+
+## M2d.0 交互/修复锚点（2026-11-09，完成）
+
+- `test/visual/interaction.spec.ts`（§4.4 全覆盖）：33 个 SVG 视图主样例悬停扫格
+  （12×8，含视口内完整性断言）+ 移出隐藏 + 图例切换 + 状态恢复 + 组合页悬停/联动 + 3D 拖拽。
+  实测确认：全部悬停相关用例失败（D1：#tooltip 被 innerHTML 清除、D2：组合页未注册 mousemove），
+  以 test.fail 锚定；图例/状态恢复/联动 3 例为绿。
+- `test/repro/phase2d.test.ts`：D8 squarify 面积保真（flat 单行退化恰好面积精确，
+  故同用例加非退化断言——平均长宽比 ≤3 才稳定复现）、D6 paddedDomain（函数尚不存在）、
+  D5 堆叠面积底边（第 k 层底边=前 k−1 层累计值像素）共 5 个 it.fails 锚点。
+- D13 提前修复（阻塞各里程碑 DoD）：`no-leak.test.ts` 在本机连续 2 次超时（非偶发），
+  根因=每用例 2 遍全量读盘（isText+readFileSync）×729 文件 + 冷启动 git 子进程 >5s 默认超时。
+  修复：文件只读一次（readText 返回文本/null）、texts() 惰性缓存共用、显式 timeout 60s。
+- DoD：typecheck+test 全绿（350 通过 | 5 expected fail | 6 skipped）；interaction.spec 39 例按预期锚定。
