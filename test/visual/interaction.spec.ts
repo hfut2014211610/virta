@@ -52,7 +52,9 @@ const htmlOf = (view: string, file: string) => `${CWD()}/${OUT}/${stemOf(file)}-
 
 /** 在容器内按 12×8 网格扫描，返回第一个让 #tooltip 可见且非空的视口坐标。 */
 async function sweepForTooltip(page: Page, boxSel: string): Promise<{ x: number; y: number } | null> {
-  await page.locator(boxSel).scrollIntoViewIfNeeded().catch(() => {});
+  // 用 evaluate 直调 scrollIntoView：scrollIntoViewIfNeeded 会持续等元素 stable，
+  // 组合页重绘期间等不到 → 超时
+  await page.locator(boxSel).evaluate((el) => el.scrollIntoView({ block: 'center' })).catch(() => {});
   const bb = await page.locator(boxSel).boundingBox();
   if (!bb) return null;
   const tip = page.locator('#tooltip');
@@ -154,7 +156,8 @@ test('状态恢复：变体+排序切换后 URL 新开页保持一致', async ({
 });
 
 test('组合页悬停：每个面板至少一个点能触发提示框', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 960 });
+  // 视口拉高：面板加紧凑图例后整页超过 960px，坐标扫格须全在视口内
+  await page.setViewportSize({ width: 1440, height: 2400 });
   await page.goto(`file:///${CWD()}/${OUT}/compose-grid-light.html`);
   await page.waitForSelector('#virta-app');
   await page.waitForFunction(() => document.querySelectorAll('.pbox svg').length >= 7);

@@ -869,3 +869,5 @@
   `#pbox-3` 落到 960px 视口下沿之下，`page.mouse.click` 坐标不落事件。
   ① 图例改插 `.pbox` 同级兄弟节点（pbox 保持 svg-only，命中坐标映射不变）；
   ② 用例视口拉高到 1440×2400（scrollIntoViewIfNeeded 在持续重绘面板上等不到 stable）。
+- 组合页悬停用例同源问题（面板超 960px 视口）：视口统一拉高 2400；
+  sweepForTooltip 的 scrollIntoViewIfNeeded 改 evaluate 直调 scrollIntoView（不等 stable）。
