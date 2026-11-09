@@ -9,7 +9,10 @@
       "question": "关键路径是什么？",
       "spec": {
         "version": 1,
-        "view": "gantt"
+        "view": "gantt",
+        "text": {
+          "title": "项目计划"
+        }
       },
       "expectTop": "gantt",
       "expectInsight": "critical-path"
@@ -21,6 +24,9 @@
       "spec": {
         "version": 1,
         "view": "gantt",
+        "text": {
+          "title": "基线 vs 截止"
+        },
         "time": {
           "asOf": "2025-10-20T09:00:00+08:00",
           "tz": "Asia/Shanghai"
@@ -34,7 +40,10 @@
       "question": "燃尽偏离了吗？",
       "spec": {
         "version": 1,
-        "view": "line"
+        "view": "line",
+        "text": {
+          "title": "冲刺燃尽"
+        }
       },
       "expectTop": "line"
     },
@@ -44,7 +53,10 @@
       "question": "缺陷在哪回流？",
       "spec": {
         "version": 1,
-        "view": "network"
+        "view": "network",
+        "text": {
+          "title": "缺陷回流"
+        }
       },
       "expectTop": "network",
       "expectInsight": "concentration"
@@ -55,7 +67,10 @@
       "question": "工时花在哪？",
       "spec": {
         "version": 1,
-        "view": "treemap"
+        "view": "treemap",
+        "text": {
+          "title": "工时分布"
+        }
       },
       "expectTop": "sunburst",
       "expectInsight": "concentration"
@@ -66,7 +81,10 @@
       "question": "需求漏斗健康吗？",
       "spec": {
         "version": 1,
-        "view": "funnel"
+        "view": "funnel",
+        "text": {
+          "title": "需求漏斗"
+        }
       },
       "expectTop": "funnel"
     },
@@ -76,7 +94,10 @@
       "question": "团队能力短板？",
       "spec": {
         "version": 1,
-        "view": "radar"
+        "view": "radar",
+        "text": {
+          "title": "团队技能"
+        }
       },
       "expectTop": "radar"
     },
@@ -86,7 +107,10 @@
       "question": "服务依赖核心在哪？",
       "spec": {
         "version": 1,
-        "view": "network"
+        "view": "network",
+        "text": {
+          "title": "服务依赖"
+        }
       },
       "expectTop": "network",
       "expectInsight": "concentration"
@@ -97,7 +121,10 @@
       "question": "组织结构？",
       "spec": {
         "version": 1,
-        "view": "tree"
+        "view": "tree",
+        "text": {
+          "title": "组织结构"
+        }
       },
       "expectTop": "tree",
       "expectInsight": "distribution"
@@ -108,7 +135,10 @@
       "question": "哪个模块质量差？",
       "spec": {
         "version": 1,
-        "view": "scatter"
+        "view": "scatter",
+        "text": {
+          "title": "缺陷密度"
+        }
       },
       "expectTop": "scatter"
     },
@@ -118,7 +148,10 @@
       "question": "本周指标？",
       "spec": {
         "version": 1,
-        "view": "report"
+        "view": "report",
+        "text": {
+          "title": "本周指标"
+        }
       }
     }
   ]

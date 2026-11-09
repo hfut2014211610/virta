@@ -163,7 +163,7 @@ describe('§4.3 版面检查基线', () => {
       const r = await runComposeFile(cf, join(f, '..'), { formats: ['svg'], out, scale: 1, fontFiles: [] });
       for (const w of r.warnings) {
         const kind = w.code === 'LAYOUT_TEXT_OVERLAP' ? 'text-overlap' : w.code === 'LAYOUT_TEXT_CLIPPED' ? 'text-clipped' : 'low-contrast';
-        const f2: Finding = { scope: `compose/${f}`, caseId: `compose/${f}`, kind, severity: kind === 'low-contrast' ? 'warn' : 'error', detail: w.message };
+        const f2: Finding = { scope: `compose/${f}`, caseId: `compose/${f}`, kind, severity: kind === 'low-contrast' ? 'warn' : 'error', detail: `${w.message}${w.examples?.length ? `：${w.examples.slice(0, 3).join('；')}` : ''}` };
         (kind === 'low-contrast' ? warns : findings).push(f2);
       }
     }
@@ -179,6 +179,7 @@ describe('§4.3 版面检查基线', () => {
     const stale = ALLOW.filter((_, i) => !used.has(i));
     const lines = [
       `error 共 ${findings.length}（豁免命中 ${used.size} 条，意外 ${unexpected.length}），warn 共 ${warns.length}`,
+      ...findings.slice(0, 80).map((f) => `  ${f.scope} ${f.kind}: ${f.detail}`),
       ...unexpected.slice(0, 30).map((f) => `  [意外] ${f.scope} ${f.kind}: ${f.detail}`),
       ...stale.map((a) => `  [allowlist 失效] ${a.case} ${a.kind}（${a.note}）`),
     ];

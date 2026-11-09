@@ -27,8 +27,12 @@ describe('仓库内 spec 全部通过 validateSpec', () => {
   const composes = walkJson(EXAMPLES, /compose[^/\\]*\.json$/);
   it(`pack.json（${packs.length} 个）`, () => {
     for (const f of packs) {
-      const pack = JSON.parse(readFileSync(f, 'utf8')) as { charts?: { id: string; spec: unknown }[] };
-      for (const c of pack.charts ?? []) check(c.spec, `${f} → ${c.id}`);
+      const pack = JSON.parse(readFileSync(f, 'utf8')) as { charts?: { id: string; spec: { text?: { title?: string } } } };
+      for (const c of pack.charts ?? []) {
+        check(c.spec, `${f} → ${c.id}`);
+        // H4/D3：场景包每张图必须有中文标题（标题兜底链第一档）
+        expect(typeof c.spec.text?.title === 'string' && c.spec.text.title.length > 0, `${f} → ${c.id} 缺 spec.text.title`).toBe(true);
+      }
     }
   });
   it(`compose json（${composes.length} 个）`, () => {

@@ -8,7 +8,7 @@ import { renderFlowDoc } from './flow-doc.js';
 import { renderFlowTable } from './flow-table.js';
 import type { DocModel, GridModel } from '@virta/data-engine';
 import type { Theme, ViewSpec, Table } from '@virta/contracts';
-import { html, raw } from './safe-html.js';
+import { html, raw, safeColor } from './safe-html.js';
 import { showTooltip, hideTooltip } from './tooltip.js';
 
 export interface ComposePanel {
@@ -110,6 +110,27 @@ export function bootCompose(payload: ComposePayload, views: Record<string, Compo
     } as never);
     applySkin(sc, tokens.skin);
     box.innerHTML = raw(toSVG(sc)).html;
+    // D5：≥2 系列面板在图下显示紧凑图例（单行可折行，最多 8 项，超出「+N」；DOM API 构造避开 innerHTML sink）
+    const lg = (sc as { legend?: { name: string; color: string }[] }).legend;
+    if (lg && lg.length >= 2) {
+      const div = document.createElement('div');
+      div.className = 'plegend';
+      for (const it of lg.slice(0, 8)) {
+        const span = document.createElement('span');
+        span.className = 'plg-item';
+        const dot = document.createElement('i');
+        dot.style.background = safeColor(it.color);
+        span.append(dot, document.createTextNode(it.name));
+        div.appendChild(span);
+      }
+      if (lg.length > 8) {
+        const more = document.createElement('span');
+        more.className = 'plg-item';
+        more.textContent = `+${lg.length - 8}`;
+        div.appendChild(more);
+      }
+      box.appendChild(div);
+    }
     (box as HTMLElement & { __scene?: Scene }).__scene = sc;
     const svg = box.firstElementChild as SVGElement | null;
     svg?.setAttribute('width', '100%'); if (svg) svg.style.height = 'auto';

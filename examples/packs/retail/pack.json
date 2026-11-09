@@ -27,7 +27,10 @@
       "question": "哪条品类线贡献增量？",
       "spec": {
         "version": 1,
-        "view": "sunburst"
+        "view": "sunburst",
+        "text": {
+          "title": "品类结构"
+        }
       },
       "expectTop": "sunburst"
     },
@@ -37,7 +40,10 @@
       "question": "转化在哪一步掉？",
       "spec": {
         "version": 1,
-        "view": "funnel"
+        "view": "funnel",
+        "text": {
+          "title": "转化漏斗"
+        }
       },
       "expectTop": "funnel",
       "expectInsight": "bottleneck"
@@ -48,7 +54,10 @@
       "question": "流量怎么走？",
       "spec": {
         "version": 1,
-        "view": "sankey"
+        "view": "sankey",
+        "text": {
+          "title": "流量路径"
+        }
       },
       "expectTop": "sankey"
     },
@@ -58,7 +67,10 @@
       "question": "客流高峰在什么时候？",
       "spec": {
         "version": 1,
-        "view": "heatmap"
+        "view": "heatmap",
+        "text": {
+          "title": "门店客流时段"
+        }
       },
       "expectTop": "heatmap"
     },
@@ -69,6 +81,9 @@
       "spec": {
         "version": 1,
         "view": "bar",
+        "text": {
+          "title": "利润桥"
+        },
         "variant": "waterfall"
       },
       "expectTop": "bar"
@@ -79,7 +94,10 @@
       "question": "哪些指标没达标？",
       "spec": {
         "version": 1,
-        "view": "bullet"
+        "view": "bullet",
+        "text": {
+          "title": "KPI 达标"
+        }
       },
       "expectTop": "bullet",
       "expectInsight": "target"
@@ -90,7 +108,10 @@
       "question": "高价 SKU 卖得动吗？",
       "spec": {
         "version": 1,
-        "view": "scatter"
+        "view": "scatter",
+        "text": {
+          "title": "价格×销量"
+        }
       },
       "expectTop": "scatter"
     },
@@ -100,7 +121,10 @@
       "question": "各渠道客单价分布？",
       "spec": {
         "version": 1,
-        "view": "boxplot"
+        "view": "boxplot",
+        "text": {
+          "title": "客单价分布"
+        }
       },
       "expectTop": "boxplot"
     },
@@ -111,6 +135,9 @@
       "spec": {
         "version": 1,
         "view": "rank",
+        "text": {
+          "title": "城市排名月变"
+        },
         "variant": "race"
       },
       "expectTop": "rank",
@@ -122,7 +149,10 @@
       "question": "各渠道同比？",
       "spec": {
         "version": 1,
-        "view": "compare"
+        "view": "compare",
+        "text": {
+          "title": "渠道同比"
+        }
       },
       "expectTop": "compare",
       "expectInsight": "change"

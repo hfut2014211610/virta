@@ -1,7 +1,7 @@
 // line 图族 layout：smooth/straight/step × none/area/stack × window × marker × endLabels。
 import type { ViewId } from '@virta/contracts';
-import type { Node, Scene } from '@virta/chart-core';
-import { g, linePath as segPath, paddedDomain, scaleLinear, scalePoint, scene } from '@virta/chart-core';
+import type { LabelCandidate, Node, Scene } from '@virta/chart-core';
+import { g, linePath as segPath, measureText, paddedDomain, placeLabels, scaleLinear, scalePoint, scene } from '@virta/chart-core';
 import { annotationNodes, axisTitle, formatNumber, xAxisTicks, yAxis, type LegendItem } from '@virta/chart-skin';
 import { paletteColors } from '@virta/design-system';
 import type { BarlineModel } from '@virta/data-engine';
@@ -42,6 +42,7 @@ export const lineRenderer: FamilyRenderer<BarlineModel> = {
     const nodes: Node[] = [];
     const hits: Scene['hits'] = [];
     const defs: Scene['defs'] = { gradients: [], radials: [], patterns: [], clips: [] };
+    const endCands: LabelCandidate[] = [];
 
     const stacked = fillMode === 'stack';
     const connectGaps = ctx.options?.['connectGaps'] === true;
@@ -121,12 +122,22 @@ export const lineRenderer: FamilyRenderer<BarlineModel> = {
         }
         hits.push({ shape: { type: 'circle', cx: xs[li], cy: py, r: Math.max(8, lw + 5) }, datum });
       });
-      // 端点标签：最后一个有观测的点
+      // 端点标签：最后一个有观测的点（D4/H8 走 placeLabels 避让）
       if (endLabels) {
         const li = labels.reduce((a, _, i) => (s.values[i] !== null ? i : a), -1);
-        if (li >= 0) nodes.push({ type: 'text', x: xs[li] + 8, y: pts[li]!.y, text: fmt(s.values[li]!), font: 'mono', size: 10.5, baseline: 'middle', fill: color });
+        if (li >= 0) {
+          const txt = fmt(s.values[li]!);
+          endCands.push({ x: xs[li] + 8, y: pts[li]!.y, text: txt, width: measureText(txt, 'mono', 10.5), height: 12, priority: si, leader: true,
+            datum: { kind: 'point', index: li, series: s.name, label: labels[li], value: s.values[li] ?? undefined,
+              tooltip: { title: labels[li]!, rows: [{ swatch: color, name: s.name, value: txt }] } } });
+        }
       }
     });
+    // D4/H8：端点标签落位（近右边界向上/下移，放不下隐藏）
+    for (const pl of placeLabels(endCands, [plot.x, plot.y, plot.x + plot.w, plot.y + plot.h]).placed) {
+      if (pl.leader) nodes.push({ type: 'line', x1: pl.leader[0], y1: pl.leader[1], x2: pl.leader[2], y2: pl.leader[3], stroke: t.faint, strokeWidth: 0.8, opacity: 0.5 });
+      nodes.push({ type: 'text', x: pl.x, y: pl.y + pl.h / 2, text: pl.text, font: 'mono', size: 10.5, baseline: 'middle', fill: colors[(pl.datum?.index ?? 0) % colors.length] });
+    }
 
     nodes.push(...annotationNodes(ctx.annotations, {
       plot, xBand: (l) => (labels.includes(l) ? xOf(l) : undefined), xOf: (v) => (labels.includes(String(v)) ? xOf(String(v)) : undefined), yOf: y, format: fmt,

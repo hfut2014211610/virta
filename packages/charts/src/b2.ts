@@ -209,7 +209,8 @@ export const sunburstRenderer: FamilyRenderer<SunburstModel> = {
         const datum = { kind: 'sector', index: lv, series: n.name, label: n.name, value: n.value, tooltip: { title: n.name, rows: [{ swatch: c, name: '值', value: f(n.value) }] } };
         nodes.push({ type: 'path', d: arc(lv * ringW, (lv + 1) * ringW - 1.5, a0, a1), fill: styleFill(defs, ctx, c, lv), opacity: 0.55 + 0.4 * (lv / depth), datum });
         const am = (a0 + a1) / 2, rr = (lv + 0.5) * ringW;
-        if (arcLabels && a1 - a0 > 0.09) nodes.push({ type: 'text', x: cx + rr * Math.cos(am), y: cy + rr * Math.sin(am), text: n.name, font: 'body', size: 10, anchor: 'middle', baseline: 'middle', rotate: ((am * 180) / Math.PI + (am > Math.PI / 2 || am < -Math.PI / 2 ? 180 : 0)), fill: t.paper });
+        // D4：弧标签宽 > 该层弧长则隐藏（小尺寸下防相邻弧标签互撞）
+        if (arcLabels && a1 - a0 > 0.09 && (a1 - a0) * rr >= measureText(n.name, 'body', 10) + 8) nodes.push({ type: 'text', x: cx + rr * Math.cos(am), y: cy + rr * Math.sin(am), text: n.name, font: 'body', size: 10, anchor: 'middle', baseline: 'middle', rotate: ((am * 180) / Math.PI + (am > Math.PI / 2 || am < -Math.PI / 2 ? 180 : 0)), fill: t.paper });
         hits.push({ shape: { type: 'circle', cx: cx + rr * Math.cos(am), cy: cy + rr * Math.sin(am), r: ringW / 2 }, datum });
       }
       let a = a0;

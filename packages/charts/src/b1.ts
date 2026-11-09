@@ -1,7 +1,7 @@
 // B1：matrix3d / scatter / pie / bullet / funnel。
 import type { ViewId } from '@virta/contracts';
-import type { Node, Paint, Scene } from '@virta/chart-core';
-import { g, niceTicks, paddedDomain, scaleLinear, scene } from '@virta/chart-core';
+import type { LabelCandidate, Node, Paint, Scene } from '@virta/chart-core';
+import { g, measureText, niceTicks, paddedDomain, placeLabels, scaleLinear, scene } from '@virta/chart-core';
 import { annotationNodes, formatNumber, yAxis, type LegendItem } from '@virta/chart-skin';
 import { paletteColors, accentFor, lerpOklch } from '@virta/design-system';
 import type { BarlineModel, BulletModel, FunnelModel, PieModel, ScatterModel } from '@virta/data-engine';
@@ -180,6 +180,7 @@ export const scatterRenderer: FamilyRenderer<ScatterModel> = {
     const plot = PLOT(ctx);
     const nodes: Node[] = [];
     const hits: Scene['hits'] = [];
+    const scatCands: LabelCandidate[] = [];
     const xs = m.points.map((p) => p.x), ys = m.points.map((p) => p.y);
     // D6/H10：clamp 零界——全正数据不下零（原实现对 min(0,·) 再减 6% pad 导致负刻度）
     let [xMin, xMax] = paddedDomain(xs.length ? Math.min(...xs) : 0, xs.length ? Math.max(...xs) : 1, { pad: 0.06, zero: 'clamp' });
@@ -230,9 +231,13 @@ export const scatterRenderer: FamilyRenderer<ScatterModel> = {
       hits.push({ shape: { type: 'circle', cx: X(p.x), cy: Y(p.y), r: Math.max(r + 3, 9) }, datum });
       const dist = Math.hypot(p.x - mx, p.y - my) / sd;
       if (labelMode === 'all' || (labelMode === 'outlier' && dist > 1.8)) {
-        nodes.push({ type: 'text', x: X(p.x) + r + 4, y: Y(p.y) - r - 2, text: p.label, font: 'mono', size: 10, baseline: 'bottom', fill: t.muted });
+        scatCands.push({ x: X(p.x), y: Y(p.y), text: p.label, width: measureText(p.label, 'mono', 10), height: 12, priority: dist, leader: true, datum });
       }
     });
+    for (const pl of placeLabels(scatCands, [plot.x, plot.y, plot.x + plot.w, plot.y + plot.h]).placed) {
+      if (pl.leader) nodes.push({ type: 'line', x1: pl.leader[0], y1: pl.leader[1], x2: pl.leader[2], y2: pl.leader[3], stroke: t.faint, strokeWidth: 0.8, opacity: 0.5 });
+      nodes.push({ type: 'text', x: pl.x, y: pl.y + pl.h / 2, text: pl.text, font: 'mono', size: 10, baseline: 'middle', fill: t.muted });
+    }
     if (ctx.options?.['meanLines'] === true) {
       const acc2 = accentFor(ctx.palette, ctx.theme);
       nodes.push({ type: 'line', x1: X(mx), y1: plot.y, x2: X(mx), y2: plot.y + plot.h, stroke: acc2, strokeWidth: 1, dash: [3, 4], opacity: 0.7 });
@@ -309,6 +314,8 @@ export const pieRenderer: FamilyRenderer<PieModel> = {
     const ex = Number(ctx.state?.explode ?? -1);
     const nodes: Node[] = [];
     const hits: Scene['hits'] = [];
+    const cands: LabelCandidate[] = [];
+    const leaders = new Map<string, [number, number]>();
     let a = -Math.PI / 2;
     slices.forEach((s, i) => {
       const a1 = a + s.share * Math.PI * 2 * (slices.length === 1 ? 0.9999 : 1);
@@ -325,13 +332,21 @@ export const pieRenderer: FamilyRenderer<PieModel> = {
       } else if (labelMode !== 'none' && s.share > 0.03) {
         const lr = r1 + 16;
         const lx = cx + ox + lr * Math.cos(am), ly = cy + oy + lr * Math.sin(am);
-        nodes.push({ type: 'line', x1: cx + ox + (r1 + 2) * Math.cos(am), y1: cy + oy + (r1 + 2) * Math.sin(am), x2: lx, y2: ly, stroke: t.faint, strokeWidth: 1 });
-        nodes.push({ type: 'text', x: lx + (lx > cx ? 4 : -4), y: ly, text: `${s.label} ${(s.share * 100).toFixed(0)}%`, font: 'body', size: 11, anchor: lx > cx ? 'start' : 'end', baseline: 'middle', fill: t.muted });
+        const txt = `${s.label} ${(s.share * 100).toFixed(0)}%`;
+        // D4/H8：外侧标签交 placeLabels 避让；引导线改从扇形边画到落点
+        cands.push({ x: lx + (lx > cx ? 4 : -4), y: ly, text: txt, width: measureText(txt, 'body', 11),
+          height: 13, priority: s.share, leader: true, datum });
+        leaders.set(txt, [cx + ox + (r1 + 2) * Math.cos(am), cy + oy + (r1 + 2) * Math.sin(am)]);
       }
       hits.push({ shape: { type: 'circle', cx: cx + ox + (r0 + r1) / 2 * Math.cos(am), cy: cy + oy + (r0 + r1) / 2 * Math.sin(am), r: (r1 - r0) / 2 + 10 }, datum });
       a = a1;
     });
     if (donut && centerLabel) nodes.push({ type: 'text', x: cx, y: cy, text: fmt(ctx)(slices.reduce((s2, x) => s2 + x.value, 0)), font: 'display', size: 26, weight: 600, anchor: 'middle', baseline: 'middle', fill: t.ink });
+    for (const pl of placeLabels(cands, [ctx.plot.x, ctx.plot.y, ctx.plot.x + ctx.plot.w, ctx.plot.y + ctx.plot.h]).placed) {
+      const src = leaders.get(pl.text);
+      if (src) nodes.push({ type: 'line', x1: src[0], y1: src[1], x2: pl.x + pl.w / 2, y2: pl.y + pl.h / 2, stroke: t.faint, strokeWidth: 1 });
+      nodes.push({ type: 'text', x: pl.x + pl.w / 2, y: pl.y + pl.h / 2, text: pl.text, font: 'body', size: 11, anchor: 'middle', baseline: 'middle', fill: t.muted });
+    }
     const sc = scene(ctx.width, ctx.height, [g(nodes)]);
     sc.defs = defs;
     sc.hits = hits;

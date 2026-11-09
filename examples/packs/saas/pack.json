@@ -10,6 +10,9 @@
       "spec": {
         "version": 1,
         "view": "heatmap",
+        "text": {
+          "title": "日活热力"
+        },
         "mode": "calendar"
       },
       "expectTop": "heatmap"
@@ -22,6 +25,7 @@
         "version": 1,
         "view": "cohort",
         "text": {
+          "title": "留存队列",
           "note": "6/15 上线后新批次第 4 周留存 38%→46%"
         }
       },
@@ -34,7 +38,10 @@
       "question": "各版本功能使用差异？",
       "spec": {
         "version": 1,
-        "view": "radar"
+        "view": "radar",
+        "text": {
+          "title": "功能使用对比"
+        }
       },
       "expectTop": "radar"
     },
@@ -44,7 +51,10 @@
       "question": "新手在哪流失？",
       "spec": {
         "version": 1,
-        "view": "sankey"
+        "view": "sankey",
+        "text": {
+          "title": "新手引导路径"
+        }
       },
       "expectTop": "sankey"
     },
@@ -55,6 +65,9 @@
       "spec": {
         "version": 1,
         "view": "bar",
+        "text": {
+          "title": "ARR 增长结构"
+        },
         "variant": "waterfall"
       },
       "expectTop": "bar"
@@ -65,7 +78,10 @@
       "question": "渠道经济模型健康吗？",
       "spec": {
         "version": 1,
-        "view": "scatter"
+        "view": "scatter",
+        "text": {
+          "title": "渠道单位经济"
+        }
       },
       "expectTop": "scatter"
     },
@@ -75,7 +91,10 @@
       "question": "NPS 分布形态？",
       "spec": {
         "version": 1,
-        "view": "boxplot"
+        "view": "boxplot",
+        "text": {
+          "title": "NPS 分布"
+        }
       },
       "expectTop": "boxplot"
     },
@@ -85,7 +104,10 @@
       "question": "版本计划会延期吗？",
       "spec": {
         "version": 1,
-        "view": "gantt"
+        "view": "gantt",
+        "text": {
+          "title": "版本路线图"
+        }
       },
       "expectTop": "gantt"
     },
@@ -95,7 +117,10 @@
       "question": "ARPA 为什么降？",
       "spec": {
         "version": 1,
-        "view": "combo"
+        "view": "combo",
+        "text": {
+          "title": "MRR 与 ARPA"
+        }
       },
       "expectInsight": "trend"
     },
@@ -105,7 +130,10 @@
       "question": "套餐结构变化？",
       "spec": {
         "version": 1,
-        "view": "compare"
+        "view": "compare",
+        "text": {
+          "title": "套餐结构对比"
+        }
       },
       "expectTop": "compare",
       "expectInsight": "change"

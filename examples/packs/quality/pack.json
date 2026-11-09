@@ -10,6 +10,9 @@
       "spec": {
         "version": 1,
         "view": "bar",
+        "text": {
+          "title": "缺陷帕累托"
+        },
         "variant": "pareto"
       },
       "expectTop": "bar",
@@ -21,7 +24,10 @@
       "question": "根因在哪一环？",
       "spec": {
         "version": 1,
-        "view": "fishbone"
+        "view": "fishbone",
+        "text": {
+          "title": "不良根因"
+        }
       },
       "expectTop": "fishbone"
     },
@@ -31,7 +37,10 @@
       "question": "不良率何时失控？",
       "spec": {
         "version": 1,
-        "view": "control"
+        "view": "control",
+        "text": {
+          "title": "不良率控制图"
+        }
       },
       "expectTop": "control",
       "expectInsight": "outlier"
@@ -42,7 +51,10 @@
       "question": "夜班是否更高发？",
       "spec": {
         "version": 1,
-        "view": "heatmap"
+        "view": "heatmap",
+        "text": {
+          "title": "班次×时段缺陷率"
+        }
       },
       "expectTop": "heatmap"
     },
@@ -52,7 +64,10 @@
       "question": "哪道工序离散大？",
       "spec": {
         "version": 1,
-        "view": "boxplot"
+        "view": "boxplot",
+        "text": {
+          "title": "工序时长分布"
+        }
       },
       "expectTop": "boxplot"
     },
@@ -63,6 +78,9 @@
       "spec": {
         "version": 1,
         "view": "bullet",
+        "text": {
+          "title": "各线良率"
+        },
         "mapping": {
           "actual": "实际良率",
           "target": "目标"
@@ -76,7 +94,10 @@
       "question": "各线月度产出？",
       "spec": {
         "version": 1,
-        "view": "matrix3d"
+        "view": "matrix3d",
+        "text": {
+          "title": "月度产出矩阵"
+        }
       },
       "expectTop": "rank"
     },
@@ -86,7 +107,10 @@
       "question": "工艺参数与不良的关系？",
       "spec": {
         "version": 1,
-        "view": "parallel"
+        "view": "parallel",
+        "text": {
+          "title": "参数×不良"
+        }
       },
       "expectTop": "parallel",
       "expectInsight": "concentration"

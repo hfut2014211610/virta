@@ -828,3 +828,30 @@
   `allowlist.json` 13 条豁免兜底；失效条目自动报错，M2d.2 修复后须清空。
 - interaction.spec.ts：test.fail 全移除，39/39 通过（含 3D 拖拽隐藏与组合页逐面板悬停）。
 - DoD：typecheck+test(354)+e2e(64) 全绿。
+
+## M2d.2 呈现质量修复（2026-11-09，完成）
+
+- **D8/H11 squarify 重写**：目标面积 = value/total × 原始矩形面积（不随剩余矩形缩小）；
+  worst 用行面积与剩余短边算最差长宽比，放不下换行并扣该行面积。
+- **D6/H10 paddedDomain**：`scales.ts` 新增 `paddedDomain(min,max,{pad?,zero:'include'|'clamp'|'free'})`，
+  pad 默认 5%、单点退化区间、include 恒含 0、clamp 不越过零界、free 只留白；
+  接入 scatter/line(非堆叠 clamp、堆叠 include)/bar/combo/compare。
+- **D5 堆叠底边**：修复 `ysBase` 已像素值再过一次 `y()` 的双重换算 bug；
+  组合页 ≥2 系列面板新增 `.plegend` 紧凑图例（DOM API 构造，最多 8 项 +「+N」）。
+- **D3/H4 标题兜底链**：compose-html/compose 面板标题 fallback
+  `spec.text.title → contract.title`（永不显示 chart id）；
+  `generate.ts` 为全部 46 张场景包图注入 `spec.text.title`，packs:gen 确定性重生成；
+  `validate-spec.test.ts` 新增每图必须有 `text.title` 断言。
+- **D7/H5 TITLE_MISSING**：静态导出（svg/png）未给标题 → 回执 info 告警（hint `--title "…"`），
+  frame 标题兜底为中文视图名（asOf 分支同样兜底）。
+- **D9/H12 formula**：字号按可用空间等比放大（最宽公式行/总高达到 plot 70% 为止，上限 48px）。
+- **H9 轴刻度自适应**：`xTicksFit`（xAxisBand/xAxisTicks 共用）——实测标签宽度，
+  等距稀疏（首尾必含）→ 仍挤则整组 −45° → 再不行 ellipsize；修复"保尾部"导致末两标签互撞。
+- **D4/H8 placeLabels 接入**：sankey 节点标签、pie 外侧标签、scatter 点标签、line 端点标签、
+  control UCL/LCL 限值标签、fishbone 原因标签、er 边标签；
+  sunburst 弧标签按弧长过滤；burndown niceTicks 顶格越界跳过；box3d 刻度标签 clipH 保护；
+  report 静态渲染丢弃越过画布底部的节点。
+- **lintScene bounds**：组合页面板节点为全画布绝对坐标，越界判定改按面板内框
+  （`opts.bounds`），修正此前误报。
+- **结果**：lint error 80 → 0，`allowlist.json` 已清空（12 条豁免全部修复后移除）。
+- DoD：typecheck + test(359) + e2e(64) + perf + packs:check 全绿。

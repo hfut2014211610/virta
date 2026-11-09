@@ -10,6 +10,9 @@
       "spec": {
         "version": 1,
         "view": "bullet",
+        "text": {
+          "title": "预算 vs 实际"
+        },
         "mapping": {
           "actual": "实际",
           "target": "预算"
@@ -24,6 +27,9 @@
       "spec": {
         "version": 1,
         "view": "bar",
+        "text": {
+          "title": "利润桥"
+        },
         "variant": "waterfall"
       },
       "expectTop": "bar"
@@ -34,7 +40,10 @@
       "question": "费用结构？",
       "spec": {
         "version": 1,
-        "view": "sunburst"
+        "view": "sunburst",
+        "text": {
+          "title": "费用结构"
+        }
       },
       "expectTop": "sunburst"
     },
@@ -45,6 +54,9 @@
       "spec": {
         "version": 1,
         "view": "grid",
+        "text": {
+          "title": "地区×渠道×品类"
+        },
         "variant": "pivot"
       },
       "expectTop": "grid"
@@ -55,7 +67,10 @@
       "question": "毛利率何时下滑？",
       "spec": {
         "version": 1,
-        "view": "combo"
+        "view": "combo",
+        "text": {
+          "title": "收入与毛利率"
+        }
       },
       "expectTop": "combo",
       "expectInsight": "trend"
@@ -72,6 +87,7 @@
           "scale": "diverging"
         },
         "text": {
+          "title": "现金流热力",
           "unit": "万元"
         }
       },

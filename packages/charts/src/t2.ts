@@ -1,7 +1,7 @@
 // T2 新视图渲染器（M7）：tree / network / control / parallel。
 import type { ViewId } from '@virta/contracts';
-import type { Node, Scene } from '@virta/chart-core';
-import { g, scaleBand, scaleLinear, scalePoint, scene } from '@virta/chart-core';
+import type { LabelCandidate, Node, Scene } from '@virta/chart-core';
+import { g, measureText, placeLabels, scaleBand, scaleLinear, scalePoint, scene } from '@virta/chart-core';
 import { axisTitle, formatNumber, xAxisTicks, yAxis } from '@virta/chart-skin';
 import { paletteColors } from '@virta/design-system';
 import type { ControlModel, NetworkModel, ParallelModel, TreeModel } from '@virta/data-engine';
@@ -246,6 +246,8 @@ export const controlRenderer: FamilyRenderer<ControlModel> = {
     const t = ctx.tokens, colors = paletteColors(ctx.palette, ctx.theme);
     const nodes: Node[] = [];
     const hits: Scene['hits'] = [];
+    const limCands: LabelCandidate[] = [];
+    const limCols = new Map<string, string>();
     // 变体差异：xbar 均值图用规范限 → 不画 σ 估计带与 WE 判异标记；i/p 保留
     const variant = String(ctx.variant ?? 'i');
     const bands = ctx.options?.['showSigmaBands'] !== false && variant !== 'xbar';
@@ -278,8 +280,12 @@ export const controlRenderer: FamilyRenderer<ControlModel> = {
         nodes.push({ type: 'line', x1: plot.x, y1: y(v), x2: plot.x + plot.w, y2: y(v), stroke: col, strokeWidth: 1, dash: [5, 3] });
       }
       const limTag = (nm: string) => (ln.name ? `${nm}·${ln.name}` : nm);
-      nodes.push({ type: 'text', x: plot.x + plot.w + 4, y: y(ln.ucl), text: limTag('UCL'), font: 'mono', size: 9, anchor: 'start', baseline: 'middle', fill: col });
-      nodes.push({ type: 'text', x: plot.x + plot.w + 4, y: y(ln.lcl), text: limTag('LCL'), font: 'mono', size: 9, anchor: 'start', baseline: 'middle', fill: col });
+      // D4/H8：控制限标签可能互撞（多线 UCL/LCL 邻近），走 placeLabels 垂直避让
+      for (const [nm, lv] of [['UCL', ln.ucl], ['LCL', ln.lcl]] as const) {
+        const txt = limTag(nm);
+        limCands.push({ x: plot.x + plot.w + 6, y: y(lv), text: txt, width: measureText(txt, 'mono', 9), height: 10, priority: li, leader: true, datum: { kind: 'point', index: li, series: ln.name || undefined, label: txt, value: lv, tooltip: { title: txt, rows: [{ swatch: col, name: nm, value: fm(ctx)(lv) }] } } });
+        limCols.set(txt, col);
+      }
       // 折线 + 点
       const pts = ln.points.map((p) => ({ p, x: x(p.x), y: y(p.v) }));
       const lDim = ctx.state?.focus != null && ctx.state.focus !== ln.name;
@@ -290,6 +296,10 @@ export const controlRenderer: FamilyRenderer<ControlModel> = {
         hits.push({ shape: { type: 'circle', cx: px, cy: py, r: 7 }, datum: { kind: 'point', index: pi, label: p.x, value: p.v, series: ln.name || undefined, tooltip: { title: p.x, rows: [{ swatch: col, name: ln.name || m.value_key, value: `${fm(ctx)(p.v)}${bad && p.flag === 'r1' ? '（失控·超3σ）' : bad && p.flag === 'r2' ? '（异常·同侧2σ）' : ''}` }] } } });
       });
     });
+    for (const pl of placeLabels(limCands, [plot.x + plot.w, plot.y, ctx.plot.x + ctx.plot.w, plot.y + plot.h]).placed) {
+      if (pl.leader) nodes.push({ type: 'line', x1: pl.leader[0], y1: pl.leader[1], x2: pl.leader[2], y2: pl.leader[3], stroke: t.faint, strokeWidth: 0.8 });
+      nodes.push({ type: 'text', x: pl.x, y: pl.y + pl.h / 2, text: pl.text, font: 'mono', size: 9, anchor: 'start', baseline: 'middle', fill: limCols.get(pl.text) ?? t.muted });
+    }
     const sc = scene(ctx.width, ctx.height, [g(nodes)]);
     sc.hits = hits;
     return sc;

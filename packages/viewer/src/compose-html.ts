@@ -51,6 +51,9 @@ ${cspMeta(payloadScript, runtimeJs)}
 .pbox{position:relative}
 .pbox svg{display:block;cursor:pointer}
 #tooltip{position:fixed}
+.plegend{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;font:11px var(--body);color:var(--muted)}
+.plg-item{display:inline-flex;gap:5px;align-items:center;white-space:nowrap}
+.plg-item i{width:8px;height:8px;border-radius:2px;display:inline-block}
 .perr{font:12px var(--mono);color:var(--faint);padding:40px 0;text-align:center}
 .pclr{border:1px solid var(--acc);background:none;border-radius:99px;padding:3px 12px;font:11.5px var(--body);color:var(--acc);cursor:pointer;margin-left:8px}
 .pbox-flow{overflow:auto;max-height:none}

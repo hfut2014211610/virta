@@ -1,7 +1,7 @@
 // B3：gantt / fishbone / grid / report / pie3d / line3d / scatter3d。
 import type { ViewId } from '@virta/contracts';
-import type { Node, Scene } from '@virta/chart-core';
-import { g, ellipsize, measureText, niceTicks, scaleLinear, scene } from '@virta/chart-core';
+import type { LabelCandidate, Node, Scene } from '@virta/chart-core';
+import { g, ellipsize, measureText, niceTicks, placeLabels, scaleLinear, scene } from '@virta/chart-core';
 import { formatNumber, type LegendItem } from '@virta/chart-skin';
 import { accentFor, lerpOklch, paletteColors, rampDiverging } from '@virta/design-system';
 import type { DocModel, FishboneModel, GanttModel, GridModel, Line3dModel, Pie3dModel, ScatterModel, BarlineModel } from '@virta/data-engine';
@@ -371,6 +371,7 @@ export const fishboneRenderer: FamilyRenderer<FishboneModel> = {
     const plot = { x: ctx.plot.x + 96, y: ctx.plot.y + 34, w: ctx.plot.w - 150, h: ctx.plot.h - 68 };
     const nodes: Node[] = [];
     const hits: Scene['hits'] = [];
+    const causeCands: LabelCandidate[] = [];
     const spineY = ctx.plot.y + ctx.plot.h / 2;
     const headX = plot.x + plot.w + 30;
     const focus = ctx.state?.focus;
@@ -411,10 +412,18 @@ export const fishboneRenderer: FamilyRenderer<FishboneModel> = {
         const stub = 42;
         const tip = { kind: 'cause', index: k, series: cat.name, label: cause.label, tooltip: { title: cause.label, rows: [{ swatch: c, name: cat.name, value: cause.sub || '—' }, { name: '负责人', value: cause.owner || '—' }] } };
         nodes.push({ type: 'line', x1: fx(px), y1: py, x2: fx(px - stub), y2: py, stroke: c, strokeWidth: 1.3, opacity: op * 0.85, datum: tip });
-        nodes.push({ type: 'text', x: fx(px - stub - 4), y: py - 3, text: cause.label + (cause.sub ? `/${cause.sub}` : ''), font: 'body', size: 10, anchor: anch('end'), baseline: 'bottom', fill: t.muted, opacity: op, datum: tip });
+        // D4/H8：原因标签走 placeLabels（中心锚点），放不下隐藏
+        const txt = cause.label + (cause.sub ? `/${cause.sub}` : '');
+        const tw = measureText(txt, 'body', 10);
+        const endX = fx(px - stub - 4);
+        causeCands.push({ x: left ? endX + tw / 2 : endX - tw / 2, y: py - 8, text: txt, width: tw, height: 12, priority: cat.causes.length - k, leader: true, datum: tip });
         hits.push({ shape: { type: 'rect', x: Math.min(fx(px), fx(px - stub)) - measureText(cause.label, 'body', 10) - 10, y: py - 8, w: measureText(cause.label, 'body', 10) + stub + 20, h: 16 }, datum: tip });
       });
     });
+    for (const pl of placeLabels(causeCands, [ctx.plot.x, ctx.plot.y, ctx.plot.x + ctx.plot.w, ctx.plot.y + ctx.plot.h]).placed) {
+      if (pl.leader) nodes.push({ type: 'line', x1: pl.leader[0], y1: pl.leader[1], x2: pl.leader[2], y2: pl.leader[3], stroke: t.faint, strokeWidth: 0.8 });
+      nodes.push({ type: 'text', x: pl.x + pl.w / 2, y: pl.y + pl.h / 2, text: pl.text, font: 'body', size: 10, anchor: 'middle', baseline: 'middle', fill: t.muted });
+    }
     const sc = scene(ctx.width, ctx.height, [g(nodes)]);
     sc.hits = hits;
     if (showLegend) (sc as { legend?: LegendItem[] }).legend = m.cats.map((c2, i) => ({ name: c2.name, color: colors[i % colors.length] }));
@@ -862,7 +871,15 @@ export const reportRenderer: FamilyRenderer<DocModel> = {
       }
       if (bn.length) blocks.push({ y0: y0 - ctx.plot.y, y1: y - ctx.plot.y, nodes: bn });
     }
-    const nodes = blocks.filter((bl) => bl.y1 > winY0 && bl.y0 < winY1).flatMap((bl) => bl.nodes);
+    const nodes = blocks.filter((bl) => bl.y1 > winY0 && bl.y0 < winY1).flatMap((bl) => bl.nodes)
+      // D4：静态导出（非 flow）时丢弃越过画布底部的节点（块级截断后仍可能半块溢出）
+      .filter((n) => {
+        if (flow) return true;
+        const lim = ctx.plot.y + ctx.plot.h;
+        if (n.type === 'text') return (n.baseline === 'top' ? n.y + n.size * 1.2 : n.y + n.size * 0.5) <= lim;
+        if (n.type === 'rect' || n.type === 'line') return ('y' in n ? n.y : Math.min(n.y1, n.y2)) < lim;
+        return true;
+      });
     const sc = scene(ctx.width, flow ? flow.height : ctx.height, [g(nodes, flow ? { transform: [1, 0, 0, 1, 0, -flow.offset] } : undefined)]);
     return sc;
   },
@@ -935,10 +952,13 @@ type P3 = (x: number, y: number, z: number) => [number, number];
 function box3d(
   P: P3, t: { grid: string; faint: string }, box: { w: number; d: number; h: number },
   ticks: { x?: { v: number; label: string }[]; y?: { v: number; label: string }[]; z?: { v: number; label: string }[] } = {},
-  parts: { floor?: boolean; axes?: boolean } = {},
+  parts: { floor?: boolean; axes?: boolean; clipH?: number } = {},
 ): Node[] {
   const nodes: Node[] = [];
   const floor = parts.floor !== false, axes = parts.axes !== false;
+  const clipH = parts.clipH;
+  // D4：投影底面刻度标签可能越出画布底部 → 越界跳过
+  const inY = (cy: number) => clipH === undefined || (cy - 8 >= -2 && cy + 8 <= clipH + 2);
   const hw = box.w / 2, hd = box.d / 2;
   const L = (a: [number, number, number], b: [number, number, number], stroke = t.grid, w = 1) => {
     const [x1, y1] = P(a[0], a[1], a[2]); const [x2, y2] = P(b[0], b[1], b[2]);
@@ -956,10 +976,12 @@ function box3d(
     // 刻度标签
     for (const tk of ticks.x ?? []) {
       const [lx, ly] = P(tk.v, 0, hd);
+      if (!inY(ly + 18)) continue;
       nodes.push({ type: 'text', x: lx, y: ly + 12, text: tk.label, font: 'mono', size: 9.5, anchor: 'middle', baseline: 'top', fill: t.faint });
     }
     for (const tk of ticks.z ?? []) {
       const [lx, ly] = P(hw, 0, tk.v);
+      if (!inY(ly + 4)) continue;
       nodes.push({ type: 'text', x: lx + 12, y: ly + 4, text: tk.label, font: 'mono', size: 9.5, anchor: 'start', baseline: 'middle', fill: t.faint });
     }
     // y 竖轴（左后角）+ 背墙水平网格 + 刻度
@@ -970,6 +992,7 @@ function box3d(
       L([-hw, yy, -hd], [-hw, yy, hd]);
       L([-hw, yy, -hd], [hw, yy, -hd]);
       const [lx, ly] = P(-hw, yy, -hd);
+      if (!inY(ly)) continue;
       nodes.push({ type: 'text', x: lx - 10, y: ly, text: tk.label, font: 'mono', size: 9.5, anchor: 'end', baseline: 'middle', fill: t.faint });
     }
   }
@@ -1042,7 +1065,7 @@ export const line3dRenderer: FamilyRenderer<Line3dModel> = {
           x: niceTicks(Math.min(...xs), Math.max(...xs), 5).ticks.map((v) => ({ v: nx(v), label: f(v) })),
           y: niceTicks(Math.min(...ys), Math.max(...ys), 4).ticks.map((v) => ({ v: -ny(v), label: f(v) })),
           z: niceTicks(Math.min(...zs), Math.max(...zs), 4).ticks.map((v) => ({ v: nz(v), label: f(v) })),
-        }, { floor: floorOn }));
+        }, { floor: floorOn, clipH: ctx.height }));
       }
       const c0 = colors[0], c1 = colors[1] ?? colors[0];
       const multi = m.curve.series.length > 1;
@@ -1099,7 +1122,7 @@ export const line3dRenderer: FamilyRenderer<Line3dModel> = {
     const step = Math.max(1, Math.ceil(labels.length / 8));
     const xtks = labels.filter((_, i) => i % step === 0).map((_, i) => ({ v: i * step * gw - plot.w / 2, label: String(labels[i * step]) }));
     const ztks = m.series.map((s, si) => ({ v: zc(si), label: s.name }));
-    nodes.push(...box3d(P, t, { w: plot.w, d: depth + gd, h: gh }, { x: xtks, y: ytks, z: ztks }, { floor: floorOn, axes: axesOn }));
+    nodes.push(...box3d(P, t, { w: plot.w, d: depth + gd, h: gh }, { x: xtks, y: ytks, z: ztks }, { floor: floorOn, axes: axesOn, clipH: ctx.height }));
     // 系列折线（远→近）
     for (let si = m.series.length - 1; si >= 0; si--) {
       const s = m.series[si], c = colors[si % colors.length], z = zc(si);
@@ -1150,7 +1173,7 @@ export const scatter3dRenderer: FamilyRenderer<ScatterModel> = {
         x: niceTicks(Math.min(...xs), Math.max(...xs), 5).ticks.map((v) => ({ v: nx(v), label: f(v) })),
         y: niceTicks(Math.min(...ys), Math.max(...ys), 4).ticks.map((v) => ({ v: -ny(v), label: f(v) })),
         z: niceTicks(Math.min(...zs), Math.max(...zs), 4).ticks.map((v) => ({ v: nz(v), label: f(v) })),
-      }));
+      }, { clipH: ctx.height }));
     }
     const gi = new Map(m.groups.map((gn, i) => [gn, i]));
     const a = (az * Math.PI) / 180;

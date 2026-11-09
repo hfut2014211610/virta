@@ -201,8 +201,8 @@ export async function runComposeFile(cf: ComposeFileShape, dir: string, job: Com
       options: p.spec.options ?? {}, state: p.spec.state,
       format: p.spec.format, annotations: p.spec.annotations, text: undefined,
     } as never);
-    // H7/ADR-0016：逐面板版面检查 → 回执告警（面板 id 前缀）
-    warnings.push(...lintWarnings(lintScene(sc, measureText, { paper: tokens.paper }), `面板「${p.id}」`));
+    // H7/ADR-0016：逐面板版面检查（节点为绝对坐标，越界按面板内框判定）→ 回执告警
+    warnings.push(...lintWarnings(lintScene(sc, measureText, { paper: tokens.paper, bounds: [inner.x, inner.y, inner.x + inner.w, inner.y + inner.h] }), `面板「${p.id}」`));
     children.push(g([...pn, ...sc.root.children]));
   });
   const sc = mkScene(W, H, children, tokens.paper);

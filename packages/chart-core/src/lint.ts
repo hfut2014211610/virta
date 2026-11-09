@@ -100,10 +100,12 @@ function nonFinite(n: Node): boolean {
   return false;
 }
 
-export function lintScene(scene: Scene, measure: MeasureFn, opts?: { paper?: string }): LayoutIssue[] {
+export function lintScene(scene: Scene, measure: MeasureFn, opts?: { paper?: string; bounds?: [number, number, number, number] }): LayoutIssue[] {
   const issues: LayoutIssue[] = [];
   const nodes = walk(scene.root.children);
   const paper = parseColor(opts?.paper ?? scene.background ?? '#ffffff') ?? [1, 1, 1];
+  // 组合页面板：节点为全画布绝对坐标，越界判定应基于面板内框而非 0 基宽高
+  const [bx0, by0, bx1, by1] = opts?.bounds ?? [0, 0, scene.width, scene.height];
   const texts: { n: TextNode; box: Box }[] = [];
 
   // ④ 非有限坐标
@@ -117,9 +119,9 @@ export function lintScene(scene: Scene, measure: MeasureFn, opts?: { paper?: str
     const box = rotatedBox(n, textBox(n, measure));
     texts.push({ n, box });
     const T = LINT_CLIP_TOLERANCE;
-    if (box[0] < -T || box[1] < -T || box[2] > scene.width + T || box[3] > scene.height + T) {
+    if (box[0] < bx0 - T || box[1] < by0 - T || box[2] > bx1 + T || box[3] > by1 + T) {
       issues.push({ kind: 'text-clipped', severity: 'error', texts: [n.text],
-        detail: `「${n.text.slice(0, 24)}」超出画布（[${box.map((v) => Math.round(v)).join(',')}] vs ${scene.width}×${scene.height}）` });
+        detail: `「${n.text.slice(0, 24)}」超出画布（[${box.map((v) => Math.round(v)).join(',')}] vs ${Math.round(bx1 - bx0)}×${Math.round(by1 - by0)}@${Math.round(bx0)},${Math.round(by0)}）` });
     }
   }
 

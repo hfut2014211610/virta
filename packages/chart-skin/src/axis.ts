@@ -43,12 +43,13 @@ export function xTicksFit(values: { pos: number; text: string }[], o: AxisOpts, 
     const n = vals.length;
     return n > 1 ? (vals[n - 1]!.pos - vals[0]!.pos) / (n - 1) : Infinity;
   };
-  // ① 稀疏：相邻标签间至少留 4px 空隙；保证首尾都在
+  // ① 稀疏：等距取点（首尾必含），相邻标签间至少留 4px 空隙
   let vals = values;
-  for (let thin = 1; thin < values.length; thin++) {
-    vals = values.filter((_, i) => i % thin === 0 || i === values.length - 1);
+  for (let thin = 1; thin <= values.length; thin++) {
+    const keep = Math.max(1, Math.ceil(values.length / thin));
+    vals = [...Array(keep)].map((_, i) => values[Math.round((i * (values.length - 1)) / Math.max(1, keep - 1))]!).filter(Boolean);
     const worst = Math.max(0, ...vals.map((v) => W(v.text)));
-    if (step(vals) >= worst + 4) break;
+    if (keep === 1 || step(vals) >= worst + 4) break;
   }
   const gap = step(vals);
   const rot = vals.length > 1 && Math.max(0, ...vals.map((v) => W(v.text))) > gap - 4;

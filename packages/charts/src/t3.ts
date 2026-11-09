@@ -1,7 +1,7 @@
 // T3 简版图族渲染：er / flowchart / sequence / burndown / formula。
 import type { ViewId } from '@virta/contracts';
-import type { Node, Scene } from '@virta/chart-core';
-import { g, measureText, niceTicks, scaleLinear, scene } from '@virta/chart-core';
+import type { LabelCandidate, Node, Scene } from '@virta/chart-core';
+import { g, measureText, niceTicks, placeLabels, scaleLinear, scene } from '@virta/chart-core';
 import { formatNumber, type LegendItem } from '@virta/chart-skin';
 import { accentFor, lerpOklch, paletteColors } from '@virta/design-system';
 import type { BurndownModel, ErModel, FlowchartModel, FormulaModel, SequenceModel } from '@virta/data-engine';
@@ -17,6 +17,7 @@ export const erRenderer: FamilyRenderer<ErModel> = {
     const defs = emptyDefs();
     const nodes: Node[] = [];
     const hits: Scene['hits'] = [];
+    const edgeCands: LabelCandidate[] = [];
     const showTypes = ctx.options?.['fieldTypes'] !== false;
     const showLabels = ctx.options?.['edgeLabels'] !== false;
     const ents = m.entities;
@@ -42,7 +43,7 @@ export const erRenderer: FamilyRenderer<ErModel> = {
       nodes.push({ type: 'path', d: sameRow ? `M${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}` : `M${x1} ${y1} C ${x1} ${my}, ${x2} ${my}, ${x2} ${y2}`, fill: 'none', stroke: t.faint, strokeWidth: 1.3 });
       const ang = Math.atan2(y2 - (sameRow ? y1 : my), x2 - (sameRow ? mx : x2));
       nodes.push({ type: 'path', d: `M${x2} ${y2} l${-7 * Math.cos(ang - 0.4)} ${-7 * Math.sin(ang - 0.4)} l${7 * Math.cos(ang - 0.4) - 7 * Math.cos(ang + 0.4)} ${7 * Math.sin(ang - 0.4) - 7 * Math.sin(ang + 0.4)} Z`, fill: t.faint });
-      if (showLabels && e.label) nodes.push({ type: 'text', x: mx, y: my - 4, text: e.label, font: 'mono', size: 9, anchor: 'middle', baseline: 'bottom', fill: t.faint });
+      if (showLabels && e.label) edgeCands.push({ x: mx, y: my - 4, text: e.label, width: measureText(e.label, 'mono', 9), height: 11, priority: 1, leader: true });
     }
     ents.forEach((e, i) => {
       const p = pos[i], c = colors[i % colors.length], h = boxH(e);
@@ -60,6 +61,9 @@ export const erRenderer: FamilyRenderer<ErModel> = {
       hits.push({ shape: { type: 'rect', x: p.x, y: p.y, w: bw, h }, datum: { kind: 'entity', index: i, series: e.name, label: e.name, tooltip: { title: e.name, rows: [{ name: '字段', value: `${e.fields.length}` }] } } });
       if (ctx.state?.focus != null && ctx.state.focus !== e.name) nodes.push({ type: 'rect', x: p.x, y: p.y, w: bw, h, r: 6, fill: t.paper, opacity: 0.65 });
     });
+    for (const pl of placeLabels(edgeCands, [ctx.plot.x, ctx.plot.y, ctx.plot.x + ctx.plot.w, ctx.plot.y + ctx.plot.h]).placed) {
+      nodes.push({ type: 'text', x: pl.x + pl.w / 2, y: pl.y + pl.h / 2, text: pl.text, font: 'mono', size: 9, anchor: 'middle', baseline: 'middle', fill: t.faint });
+    }
     const sc = scene(ctx.width, ctx.height, [g(nodes)]);
     sc.defs = defs;
     sc.hits = hits;
@@ -205,8 +209,10 @@ export const burndownRenderer: FamilyRenderer<BurndownModel> = {
     const x = scaleLinear([0, n - 1], [plot.x, plot.x + plot.w]);
     const y = scaleLinear([0, vmax], [plot.y + plot.h, plot.y]);
     for (const tk of niceTicks(0, vmax, 5).ticks) {
-      nodes.push({ type: 'line', x1: plot.x, y1: y(tk), x2: plot.x + plot.w, y2: y(tk), stroke: t.grid, strokeWidth: 1 });
-      nodes.push({ type: 'text', x: plot.x - 8, y: y(tk), text: formatNumber(tk, ctx.format, 'number'), font: 'mono', size: 10, anchor: 'end', baseline: 'middle', fill: t.faint });
+      const yy = y(tk);
+      if (yy < plot.y - 1 || yy > plot.y + plot.h + 1) continue; // niceTicks 顶格可能越出画布（D4 clipped）
+      nodes.push({ type: 'line', x1: plot.x, y1: yy, x2: plot.x + plot.w, y2: yy, stroke: t.grid, strokeWidth: 1 });
+      nodes.push({ type: 'text', x: plot.x - 8, y: yy, text: formatNumber(tk, ctx.format, 'number'), font: 'mono', size: 10, anchor: 'end', baseline: 'middle', fill: t.faint });
     }
     const step = Math.max(1, Math.ceil(n / 12));
     m.points.forEach((p, i) => { if (i % step === 0 || i === n - 1) nodes.push({ type: 'text', x: x(i), y: plot.y + plot.h + 4, text: p.day, font: 'mono', size: 9.5, anchor: 'middle', baseline: 'top', fill: t.faint }); });
