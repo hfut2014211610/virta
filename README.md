@@ -11,7 +11,7 @@
 要求 Node ≥ 22。从 GitHub Release 安装 tarball（无需 clone 仓库）：
 
 ```bash
-npm i -g https://github.com/hfut2014211610/virta/releases/download/v0.1.0/virta-0.1.0.tgz
+npm i -g https://github.com/hfut2014211610/virta/releases/download/v0.2.0/virta-0.2.0.tgz
 virta doctor    # 环境自检：Node / resvg / 运行期脚本 / 字体 / CJK 字形 / 临时目录
 ```
 
