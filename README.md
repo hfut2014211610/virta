@@ -1,5 +1,7 @@
 # Virta
 
+**简体中文** · [English](README.en.md)
+
 > Data in motion.
 
 **Virta** 是一个离线优先、Agent 友好的可视化 CLI：读一份 CSV/JSON/XLSX（或 Markdown 文档），自动识别结构、推荐视图、给出中文洞察，产出**零依赖单文件 HTML**（离线可开、可交互）与 SVG/PNG 静态图。
