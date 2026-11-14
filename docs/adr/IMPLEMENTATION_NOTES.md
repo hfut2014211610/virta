@@ -914,3 +914,19 @@
     （series=根名），点中心取消 focus 回顶层；
   ② cohort「对角裁剪」开关生效但视觉无感知——未到期壳格原为
     fill:none+0.7px 虚线，现改淡填充+1px 虚线描边。
+
+## 维护备忘：main 历史改写与英文 README（2026-11-14）
+
+- 起因：GitHub 网页版直改 main 的提交（README 安装命令→v0.2.0）带入
+  真实邮箱作者身份，触发 `test/security/no-leak.test.ts` git-log
+  noreply 检查，main CI 全红。
+- 处理（R4 例外，用户 2026-11-14 当场授权）：仅改写顶端该提交的
+  author/committer 为规定 noreply 身份（76950e6→5421b2d），
+  `push --force-with-lease`；全历史邮箱复扫只剩 noreply。
+- 预防：网页版提交身份由 GitHub 账户「Keep my email addresses
+  private」+「Block pushes that expose email」控制，维护者侧已提示开启。
+- 仓库已迁移至 `ChaldeaTemp/virta`，本地 origin 已改为新地址；
+  `hfut2014211610/virta` 旧链经由 GitHub redirect 仍可用，README
+  安装链接保持原样可装。
+- 新增 `README.en.md`（README.md 全量英译，无 readme-smoke/views
+  标记，契约测试仍只锚定 README.md），两份 README 顶部加语言互链。
